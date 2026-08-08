@@ -9,14 +9,15 @@ type MovementKeys = {
 
 import { WeaponSystem } from "../systems/WeaponSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
-import { HudSystem } from "../systems/HudSystem.ts";
+import { HudSystem } from "../systems/HudSystem";
 import { LivesSystem } from "../systems/LivesSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
+import { Player } from "../entities/Player";
+import type { MovementInput } from "../systems/PlayerMovement";
+import { resolveMovementVector } from "../systems/PlayerMovement";
 
 export class GameScene extends Phaser.Scene {
-  private static readonly PLAYER_SPEED = 260;
-
-  private player!: Phaser.GameObjects.Rectangle;
+  private player!: Player;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private movementKeys!: MovementKeys;
   private weapon!: WeaponSystem;
@@ -28,8 +29,6 @@ export class GameScene extends Phaser.Scene {
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
 
-
-
   public constructor() {
     super({ key: "GameScene" });
   }
@@ -39,20 +38,11 @@ export class GameScene extends Phaser.Scene {
     this.lives = new LivesSystem();
     this.hud = new HudSystem(this, this.lives.getStartingLives());
 
-    this.player = this.add.rectangle(
+    this.player = new Player(
+      this,
       this.scale.width / 2,
       this.scale.height / 2,
-      32,
-      32,
-      0x62e6c8,
     );
-
-    this.player.setStrokeStyle(2, 0xffffff);
-
-    this.physics.add.existing(this.player);
-
-    const playerBody = this.getPlayerBody();
-    playerBody.setCollideWorldBounds(true);
 
     const keyboard = this.input.keyboard;
 
@@ -60,14 +50,14 @@ export class GameScene extends Phaser.Scene {
       throw new Error("Keyboard input is unavailable.");
     }
 
-    this.cursors = keyboard.createCursorKeys();
-
     this.movementKeys = keyboard.addKeys({
       W: Phaser.Input.Keyboard.KeyCodes.W,
       A: Phaser.Input.Keyboard.KeyCodes.A,
       S: Phaser.Input.Keyboard.KeyCodes.S,
       D: Phaser.Input.Keyboard.KeyCodes.D,
     }) as MovementKeys;
+
+    this.cursors = keyboard.createCursorKeys();
 
     this.weapon = new WeaponSystem();
     this.projectiles = new ProjectileSystem(this);
@@ -85,75 +75,31 @@ export class GameScene extends Phaser.Scene {
     if (!this.hasPointerInput) {
       return;
     }
- 
-    const deltaX = pointer.worldX - this.player.x;
-    const deltaY = pointer.worldY - this.player.y;
- 
+
+    const deltaX = pointer.worldX - this.player.getX();
+    const deltaY = pointer.worldY - this.player.getY();
+
     if (deltaX === 0 && deltaY === 0) {
       return;
     }
- 
+
     this.aimAngle = Math.atan2(deltaY, deltaX);
   }
 
 
   public update(time: number): void {
-    const playerBody = this.getPlayerBody();
-
-    let horizontalMovement = 0;
-    let verticalMovement = 0;
-
-    if (
-      this.movementKeys.A.isDown ||
-      this.cursors.left.isDown
-    ) {
-      horizontalMovement -= 1;
-    }
-
-    if (
-      this.movementKeys.D.isDown ||
-      this.cursors.right.isDown
-    ) {
-      horizontalMovement += 1;
-    }
-
-    if (
-      this.movementKeys.W.isDown ||
-      this.cursors.up.isDown
-    ) {
-      verticalMovement -= 1;
-    }
-
-    if (
-      this.movementKeys.S.isDown ||
-      this.cursors.down.isDown
-    ) {
-      verticalMovement += 1;
-    }
-
-    playerBody.setVelocity(
-      horizontalMovement,
-      verticalMovement,
-    );
-
-    if (
-      horizontalMovement !== 0 ||
-      verticalMovement !== 0
-    ) {
-      playerBody.velocity
-        .normalize()
-        .scale(GameScene.PLAYER_SPEED);
-    }
-
     const pointer = this.input.activePointer;
 
     this.updateAimAngle(pointer);
 
+    const movement = resolveMovementVector(this.readMovementInput());
+    this.player.update(movement, this.aimAngle);
+
     const shot = this.weapon.tryFire(
       time,
       pointer.isDown,
-      this.player.x,
-      this.player.y,
+      this.player.getX(),
+      this.player.getY(),
       this.aimAngle,
     );
 
@@ -165,15 +111,12 @@ export class GameScene extends Phaser.Scene {
     this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
   }
 
-  private getPlayerBody(): Phaser.Physics.Arcade.Body {
-    const body = this.player.body;
-
-    if (!(body instanceof Phaser.Physics.Arcade.Body)) {
-      throw new Error(
-        "The player does not have an Arcade Physics body.",
-      );
-    }
-
-    return body;
+  private readMovementInput(): MovementInput {
+    return {
+      up: this.movementKeys.W.isDown || this.cursors.up.isDown,
+      down: this.movementKeys.S.isDown || this.cursors.down.isDown,
+      left: this.movementKeys.A.isDown || this.cursors.left.isDown,
+      right: this.movementKeys.D.isDown || this.cursors.right.isDown,
+    };
   }
 }

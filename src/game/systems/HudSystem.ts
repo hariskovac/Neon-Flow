@@ -15,7 +15,7 @@ export class HudSystem {
   private static readonly PIP_GAP = 6;
 
   private readonly scoreLabel: Phaser.GameObjects.Text;
-  private readonly livesLabel: Phaser.GameObjects.Text;
+  private readonly livesLabel: Phaser.GameObjects.Text; 
   private readonly lifePips: Phaser.GameObjects.Rectangle[] = [];
 
   private lastScore = 0;
