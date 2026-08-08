@@ -16,6 +16,7 @@ import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
 import { ARENA, DEPTH, PALETTE } from "../gameplayConfig";
+import { Chaser } from "../entities/enemies/Chaser";
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -29,6 +30,8 @@ export class GameScene extends Phaser.Scene {
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
+
+  private chasers: Chaser[] = [];
 
   public constructor() {
     super({ key: "GameScene" });
@@ -53,6 +56,12 @@ export class GameScene extends Phaser.Scene {
       this.scale.width / 2,
       this.scale.height / 2,
     );
+
+    this.chasers = [
+      new Chaser(this, ARENA.x + 80, ARENA.y + 80),
+      new Chaser(this, ARENA.x + ARENA.width - 80, ARENA.y + 80),
+      new Chaser(this, ARENA.x + ARENA.width / 2, ARENA.y + ARENA.height - 80),
+    ];
 
     const keyboard = this.input.keyboard;
 
@@ -117,6 +126,10 @@ export class GameScene extends Phaser.Scene {
 
     const movement = resolveMovementVector(this.readMovementInput());
     this.player.update(movement, this.aimAngle);
+
+    for (const chaser of this.chasers) {
+      chaser.update(time, this.player.getX(), this.player.getY());
+    }
 
     const shot = this.weapon.tryFire(
       time,

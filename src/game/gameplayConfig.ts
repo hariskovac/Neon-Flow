@@ -35,6 +35,13 @@ export const WEAPON_CONFIG = {
   maxFireRateMultiplier: 2.5,
 };
 
+export const CHASER_CONFIG = {
+  radius: 10,
+  baseSpeed: 70,
+  accelerationPerSecond: 14,
+  maxSpeed: 220,
+} as const;
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,
@@ -54,6 +61,7 @@ export const PALETTE = {
   lifePipEmpty: 0x2a3550,
   hudPrimary: "#f4f7ff",
   hudMuted: "#aebbd4",
+  chaser: 0xff5f9e,
 };
 
 export const DEPTH = {
