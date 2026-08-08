@@ -9,6 +9,9 @@ type MovementKeys = {
 
 import { WeaponSystem } from "../systems/WeaponSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
+import { HudSystem } from "../systems/HudSystem.ts";
+import { LivesSystem } from "../systems/LivesSystem";
+import { ScoreSystem } from "../systems/ScoreSystem";
 
 export class GameScene extends Phaser.Scene {
   private static readonly PLAYER_SPEED = 260;
@@ -18,6 +21,9 @@ export class GameScene extends Phaser.Scene {
   private movementKeys!: MovementKeys;
   private weapon!: WeaponSystem;
   private projectiles!: ProjectileSystem;
+  private score!: ScoreSystem;
+  private lives!: LivesSystem;
+  private hud!: HudSystem;
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
@@ -29,21 +35,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.add
-      .text(24, 20, "Neon Flow", {
-        color: "#f4f7ff",
-        fontFamily: "Arial, sans-serif",
-        fontSize: "24px",
-      })
-      .setDepth(10);
-
-    this.add
-      .text(24, 54, "Move with WASD or the arrow keys", {
-        color: "#aebbd4",
-        fontFamily: "Arial, sans-serif",
-        fontSize: "16px",
-      })
-      .setDepth(10);
+    this.score = new ScoreSystem();
+    this.lives = new LivesSystem();
+    this.hud = new HudSystem(this, this.lives.getStartingLives());
 
     this.player = this.add.rectangle(
       this.scale.width / 2,
@@ -168,6 +162,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.projectiles.update(time);
+    this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
   }
 
   private getPlayerBody(): Phaser.Physics.Arcade.Body {
