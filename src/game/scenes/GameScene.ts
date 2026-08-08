@@ -1,11 +1,14 @@
 import Phaser from "phaser";
 
 type MovementKeys = {
-W: Phaser.Input.Keyboard.Key;
-    A: Phaser.Input.Keyboard.Key;
-    S: Phaser.Input.Keyboard.Key;
-    D: Phaser.Input.Keyboard.Key;
+  W: Phaser.Input.Keyboard.Key;
+  A: Phaser.Input.Keyboard.Key;
+  S: Phaser.Input.Keyboard.Key;
+  D: Phaser.Input.Keyboard.Key;
 };
+
+import { WeaponSystem } from "../systems/WeaponSystem";
+import { ProjectileSystem } from "../systems/ProjectileSystem";
 
 export class GameScene extends Phaser.Scene {
   private static readonly PLAYER_SPEED = 260;
@@ -13,6 +16,13 @@ export class GameScene extends Phaser.Scene {
   private player!: Phaser.GameObjects.Rectangle;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private movementKeys!: MovementKeys;
+  private weapon!: WeaponSystem;
+  private projectiles!: ProjectileSystem;
+
+  private aimAngle = -Math.PI / 2;
+  private hasPointerInput = false;
+
+
 
   public constructor() {
     super({ key: "GameScene" });
@@ -64,9 +74,36 @@ export class GameScene extends Phaser.Scene {
       S: Phaser.Input.Keyboard.KeyCodes.S,
       D: Phaser.Input.Keyboard.KeyCodes.D,
     }) as MovementKeys;
+
+    this.weapon = new WeaponSystem();
+    this.projectiles = new ProjectileSystem(this);
+
+    this.input.mouse?.disableContextMenu();
+    this.input.on("pointermove", this.markPointerInput, this);
+    this.input.on("pointerdown", this.markPointerInput, this);
   }
 
-  public update(): void {
+  private markPointerInput(): void {
+    this.hasPointerInput = true;
+  }
+
+  private updateAimAngle(pointer: Phaser.Input.Pointer): void {
+    if (!this.hasPointerInput) {
+      return;
+    }
+ 
+    const deltaX = pointer.worldX - this.player.x;
+    const deltaY = pointer.worldY - this.player.y;
+ 
+    if (deltaX === 0 && deltaY === 0) {
+      return;
+    }
+ 
+    this.aimAngle = Math.atan2(deltaY, deltaX);
+  }
+
+
+  public update(time: number): void {
     const playerBody = this.getPlayerBody();
 
     let horizontalMovement = 0;
@@ -113,6 +150,24 @@ export class GameScene extends Phaser.Scene {
         .normalize()
         .scale(GameScene.PLAYER_SPEED);
     }
+
+    const pointer = this.input.activePointer;
+
+    this.updateAimAngle(pointer);
+
+    const shot = this.weapon.tryFire(
+      time,
+      pointer.isDown,
+      this.player.x,
+      this.player.y,
+      this.aimAngle,
+    );
+
+    if (shot !== null) {
+      this.projectiles.spawn(shot);
+    }
+
+    this.projectiles.update(time);
   }
 
   private getPlayerBody(): Phaser.Physics.Arcade.Body {

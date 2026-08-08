@@ -3,7 +3,7 @@ import type { ArenaBounds, EnemyType } from "../types/game";
 export const CANVAS = {
   width: 960,
   height: 540,
-} as const;
+};
 
 export const HUD_BAND_HEIGHT = 48;
 
@@ -22,7 +22,7 @@ export const PLAYER_CONFIG = {
   startingLives: 5,
   respawnInvincibilityMs: 1500,
   respawnFlashIntervalMs: 100,
-} as const;
+};
 
 export const WEAPON_CONFIG = {
   fireIntervalMs: 160,
@@ -33,7 +33,7 @@ export const WEAPON_CONFIG = {
   maxActiveProjectiles: 64,
   minFireRateMultiplier: 1,
   maxFireRateMultiplier: 2.5,
-} as const;
+};
 
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
@@ -54,7 +54,7 @@ export const PALETTE = {
   lifePipEmpty: 0x2a3550,
   hudPrimary: "#f4f7ff",
   hudMuted: "#aebbd4",
-} as const;
+};
 
 export const DEPTH = {
   arena: 0,
@@ -64,10 +64,10 @@ export const DEPTH = {
   enemy: 7,
   hud: 20,
   overlay: 30,
-} as const;
+};
 
 export const HUD_TEXT_STYLE = {
   fontFamily: "Inter, Arial, sans-serif",
   fontSize: "18px",
   color: PALETTE.hudPrimary,
-} as const;
+};
