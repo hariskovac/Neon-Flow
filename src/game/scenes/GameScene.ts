@@ -15,6 +15,7 @@ import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
+import { ARENA, DEPTH, PALETTE } from "../gameplayConfig";
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -34,6 +35,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
+    this.physics.world.setBounds(
+      ARENA.x,
+      ARENA.y,
+      ARENA.width,
+      ARENA.height,
+    );
+
+    this.drawArena();
+
     this.score = new ScoreSystem();
     this.lives = new LivesSystem();
     this.hud = new HudSystem(this, this.lives.getStartingLives());
@@ -65,6 +75,19 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
+  }
+
+  private drawArena(): void {
+    const arena = this.add.rectangle(
+      ARENA.x + ARENA.width / 2,
+      ARENA.y + ARENA.height / 2,
+      ARENA.width,
+      ARENA.height,
+      PALETTE.arenaFloor,
+    );
+
+    arena.setStrokeStyle(2, PALETTE.arenaBorder);
+    arena.setDepth(DEPTH.arena);
   }
 
   private markPointerInput(): void {
