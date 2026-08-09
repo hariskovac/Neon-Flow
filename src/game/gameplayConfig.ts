@@ -43,6 +43,17 @@ export const CHASER_CONFIG = {
   maxSpeed: 220,
 } as const;
 
+export const RANGED_CONFIG = {
+  radius: 11,
+  preferredDistance: 260,
+  distanceTolerance: 40,
+  approachSpeed: 90,
+  retreatSpeed: 110,
+  evasionRadius: 70,
+  evasionSpeed: 150,
+  evasionLookaheadMs: 500,
+} as const;
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,
@@ -63,6 +74,7 @@ export const PALETTE = {
   hudPrimary: "#f4f7ff",
   hudMuted: "#aebbd4",
   chaser: 0xff5f9e,
+  ranged: 0xffa94d,
 };
 
 export const DEPTH = {
