@@ -2,18 +2,26 @@ import Phaser from "phaser";
 
 import type { ArenaBounds } from "../../types/game";
 import { Projectile } from "../entities/Projectile";
-import { ARENA, WEAPON_CONFIG } from "../gameplayConfig";
 import type { ShotRequest } from "./WeaponSystem";
+
+export interface ProjectilePoolConfig {
+  readonly projectileRadius: number;
+  readonly projectileLifetimeMs: number;
+  readonly maxActiveProjectiles: number;
+  readonly color: number;
+}
 
 export class ProjectileSystem {
   private readonly pool: Projectile[] = [];
   private readonly bounds: ArenaBounds;
+  private readonly config: ProjectilePoolConfig;
 
-  public constructor(scene: Phaser.Scene, bounds: ArenaBounds = ARENA) {
+  public constructor(scene: Phaser.Scene, bounds: ArenaBounds, config: ProjectilePoolConfig) {
     this.bounds = bounds;
+    this.config = config;
 
-    for (let index = 0; index < WEAPON_CONFIG.maxActiveProjectiles; index += 1) {
-      this.pool.push(new Projectile(scene));
+    for (let index = 0; index < config.maxActiveProjectiles; index += 1) {
+      this.pool.push(new Projectile(scene, config.projectileRadius, config.color));
     }
   }
 
@@ -33,7 +41,7 @@ export class ProjectileSystem {
       }
 
       const expired =
-        projectile.getAgeMs(now) >= WEAPON_CONFIG.projectileLifetimeMs;
+        projectile.getAgeMs(now) >= this.config.projectileLifetimeMs;
 
       if (expired || this.isOutsideArena(projectile.getX(), projectile.getY())) {
         projectile.deactivate();
@@ -43,6 +51,10 @@ export class ProjectileSystem {
 
   public getActiveProjectiles(): Projectile[] {
     return this.pool.filter((projectile) => projectile.isActive());
+  }
+
+  public getProjectileRadius(): number {
+    return this.config.projectileRadius;
   }
 
   public getActiveCount(): number {
@@ -87,7 +99,7 @@ export class ProjectileSystem {
     }
 
     if (oldest === null) {
-      throw new Error("The projectile pool has not been initialised.");
+      throw new Error("The projectile pool hasn't been initialised");
     }
 
     oldest.deactivate();
@@ -96,7 +108,7 @@ export class ProjectileSystem {
   }
 
   private isOutsideArena(x: number, y: number): boolean {
-    const margin = WEAPON_CONFIG.projectileRadius * 2;
+    const margin = this.config.projectileRadius * 2;
 
     return (
       x < this.bounds.x - margin ||

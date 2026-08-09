@@ -8,7 +8,7 @@ import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
-import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG } from "../gameplayConfig";
+import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG } from "../gameplayConfig";
 import { Chaser } from "../entities/enemies/Chaser";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { Ranged } from "../entities/enemies/Ranged";
@@ -26,6 +26,7 @@ export class GameScene extends Phaser.Scene {
   private movementKeys!: MovementKeys;
   private weapon!: WeaponSystem;
   private projectiles!: ProjectileSystem;
+  private enemyProjectiles!: ProjectileSystem;
   private score!: ScoreSystem;
   private lives!: LivesSystem;
   private hud!: HudSystem;
@@ -58,12 +59,24 @@ export class GameScene extends Phaser.Scene {
 
     this.player = new Player(
       this,
-      this.scale.width / 2,
-      this.scale.height / 2,
+      ARENA.x + ARENA.width / 2,
+      ARENA.y + ARENA.height / 2,
     );
 
     this.weapon = new WeaponSystem();
-    this.projectiles = new ProjectileSystem(this);
+    this.projectiles = new ProjectileSystem(this, ARENA, {
+      projectileRadius: WEAPON_CONFIG.projectileRadius,
+      projectileLifetimeMs: WEAPON_CONFIG.projectileLifetimeMs,
+      maxActiveProjectiles: WEAPON_CONFIG.maxActiveProjectiles,
+      color: PALETTE.projectile,
+    });
+
+    this.enemyProjectiles = new ProjectileSystem(this, ARENA, {
+      projectileRadius: ENEMY_WEAPON_CONFIG.projectileRadius,
+      projectileLifetimeMs: ENEMY_WEAPON_CONFIG.projectileLifetimeMs,
+      maxActiveProjectiles: ENEMY_WEAPON_CONFIG.maxActiveProjectiles,
+      color: PALETTE.enemyProjectile,
+    });
 
     this.chasers = [
       new Chaser(this, ARENA.x + 80, ARENA.y + 80),
@@ -77,16 +90,24 @@ export class GameScene extends Phaser.Scene {
         ARENA.x + 120,
         ARENA.y + ARENA.height - 100,
         this.projectiles,
+        this. enemyProjectiles,
       ),
       new Ranged (
         this,
         ARENA.x + ARENA.width - 120,
         ARENA.y + ARENA.height - 100,
         this.projectiles,
+        this.enemyProjectiles,
       ),
     ];
 
-    this.collisions = new CollisionSystem(this.projectiles, this.chasers, this.ranged, this.player);
+    this.collisions = new CollisionSystem(
+      this.projectiles,
+      this.enemyProjectiles,
+      this.chasers,
+      this.ranged,
+      this.player,
+    );
 
     const keyboard = this.input.keyboard;
 
@@ -154,7 +175,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const attacker of this.ranged) {
-      attacker.update(this.player.getX(), this.player.getY());
+      attacker.update(time, this.player.getX(), this.player.getY());
     }
 
     const shot = this.weapon.tryFire(
@@ -170,6 +191,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.projectiles.update(time);
+    this.enemyProjectiles.update(time);
 
     const result = this.collisions.update();
 

@@ -36,12 +36,22 @@ export const WEAPON_CONFIG = {
   maxFireRateMultiplier: 2.5,
 };
 
+export const ENEMY_WEAPON_CONFIG = {
+  attackIntervalMs: 1600,
+  projectileSpeed: 260,
+  projectileRadius: 5,
+  projectileLifetimeMs: 4000,
+  muzzleOffset: 16,
+  maxActiveProjectiles: 48,
+  maxFiringRange: 420,
+};
+
 export const CHASER_CONFIG = {
   radius: 10,
   baseSpeed: 70,
   accelerationPerSecond: 14,
   maxSpeed: 220,
-} as const;
+};
 
 export const RANGED_CONFIG = {
   radius: 11,
@@ -52,7 +62,7 @@ export const RANGED_CONFIG = {
   evasionRadius: 70,
   evasionSpeed: 150,
   evasionLookaheadMs: 500,
-} as const;
+};
 
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
@@ -69,6 +79,7 @@ export const PALETTE = {
   playerOutline: 0xffffff,
   turret: 0xf4f7ff,
   projectile: 0xffe066,
+  enemyProjectile: 0xff6b6b,
   lifePipFilled: 0x62e6c8,
   lifePipEmpty: 0x2a3550,
   hudPrimary: "#f4f7ff",

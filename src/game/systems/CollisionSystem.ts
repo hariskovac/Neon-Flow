@@ -1,5 +1,5 @@
 import type { Chaser } from "../entities/enemies/Chaser";
-import { CHASER_CONFIG, WEAPON_CONFIG, PLAYER_CONFIG, RANGED_CONFIG } from "../gameplayConfig";
+import { CHASER_CONFIG, PLAYER_CONFIG, RANGED_CONFIG } from "../gameplayConfig";
 import type { ProjectileSystem } from "./ProjectileSystem";
 import type { Player } from "../entities/Player";
 import type { Ranged } from "../entities/enemies/Ranged";
@@ -26,13 +26,15 @@ export interface CollisionResult {
 }
 
 export class CollisionSystem {
-  private readonly projectiles: ProjectileSystem;
+  private readonly playerProjectiles: ProjectileSystem;
+  private readonly enemyProjectiles: ProjectileSystem;
   private readonly chasers: Chaser[];
   private readonly player: Player;
   private readonly ranged: Ranged[];
 
-  public constructor(projectiles: ProjectileSystem, chasers: Chaser[], ranged: Ranged[], player: Player) {
-    this.projectiles = projectiles;
+  public constructor(playerProjectiles: ProjectileSystem, enemyProjectiles: ProjectileSystem, chasers: Chaser[], ranged: Ranged[], player: Player) {
+    this.playerProjectiles = playerProjectiles;
+    this.enemyProjectiles = enemyProjectiles;
     this.chasers = chasers;
     this.ranged = ranged;
     this.player = player;
@@ -44,7 +46,9 @@ export class CollisionSystem {
     let rangedKilled = 0;
     let playerHit = false;
 
-    for (const projectile of this.projectiles.getActiveProjectiles()) {
+    const projectileRadius = this.playerProjectiles.getProjectileRadius();
+
+    for (const projectile of this.playerProjectiles.getActiveProjectiles()) {
       for (const chaser of this.chasers) {
         if (!chaser.isAlive()) {
           continue;
@@ -53,7 +57,7 @@ export class CollisionSystem {
         const hit = circlesOverlap(
           projectile.getX(),
           projectile.getY(),
-          WEAPON_CONFIG.projectileRadius,
+          projectileRadius,
           chaser.getX(),
           chaser.getY(),
           CHASER_CONFIG.radius,
@@ -69,7 +73,7 @@ export class CollisionSystem {
       }
     }
 
-    for (const projectile of this.projectiles.getActiveProjectiles()) {
+    for (const projectile of this.playerProjectiles.getActiveProjectiles()) {
       for (const attacker of this.ranged) {
         if (!attacker.isAlive()) {
           continue;
@@ -78,7 +82,7 @@ export class CollisionSystem {
         const hit = circlesOverlap(
           projectile.getX(),
           projectile.getY(),
-          WEAPON_CONFIG.projectileRadius,
+          projectileRadius,
           attacker.getX(),
           attacker.getY(),
           RANGED_CONFIG.radius,
@@ -94,6 +98,8 @@ export class CollisionSystem {
       }
     }
 
+    const playerRadius = PLAYER_CONFIG.size / 2;
+
     for (const chaser of this.chasers) {
       if (!chaser.isAlive()) {
         continue;
@@ -102,7 +108,7 @@ export class CollisionSystem {
       const contact = circlesOverlap(
         this.player.getX(),
         this.player.getY(),
-        PLAYER_CONFIG.size / 2,
+        playerRadius,
         chaser.getX(),
         chaser.getY(),
         CHASER_CONFIG.radius,
@@ -123,7 +129,7 @@ export class CollisionSystem {
       const contact = circlesOverlap(
         this.player.getX(),
         this.player.getY(),
-        PLAYER_CONFIG.size / 2,
+        playerRadius,
         ranged.getX(),
         ranged.getY(),
         RANGED_CONFIG.radius,
@@ -136,13 +142,32 @@ export class CollisionSystem {
       }
     }
 
+    for (const projectile of this.enemyProjectiles.getActiveProjectiles()) {
+      const contact = circlesOverlap(
+        this.player.getX(),
+        this.player.getY(),
+        playerRadius,
+        projectile.getX(),
+        projectile.getY(),
+        this.enemyProjectiles.getProjectileRadius(),
+      );
+
+      if (contact) {
+        projectile.deactivate();
+        playerHit = true;
+
+        break;
+      }
+    }
+
     return  { chasersKilled, rangedKilled, playerHit };
   }
 
   public clearRespawnArea(x: number, y: number, radius: number): void {
     const liveChasers = this.chasers.filter((chaser) => chaser.isAlive());
     const liveRanged = this.ranged.filter((ranged) => ranged.isAlive());
-    const angleStep = (Math.PI * 2) / Math.max(liveChasers.length, 1);
+    const chaserStep = (Math.PI * 2) / Math.max(liveChasers.length, 1);
+    const rangedStep = (Math.PI * 2) / Math.max(liveRanged.length, 1);
 
     liveChasers.forEach((chaser, index) => {
       const deltaX = chaser.getX() - x;
@@ -157,7 +182,7 @@ export class CollisionSystem {
       const bearing = distance === 0 ? 
         -Math.PI / 2 : Math.atan2(deltaY, deltaX);
 
-      const angle = bearing + index * angleStep;
+      const angle = bearing + index * chaserStep;
 
       chaser.setPosition(
         x + Math.cos(angle) * radius,
@@ -178,7 +203,7 @@ export class CollisionSystem {
       const bearing = distance === 0 ? 
         -Math.PI / 2 : Math.atan2(deltaY, deltaX);
 
-      const angle = bearing + index * angleStep;
+      const angle = bearing + index * rangedStep;
 
       ranged.setPosition(
         x + Math.cos(angle) * radius,

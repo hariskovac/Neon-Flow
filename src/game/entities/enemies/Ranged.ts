@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 
 import type { ProjectileSystem } from "../../systems/ProjectileSystem";
-import { DEPTH, PALETTE, RANGED_CONFIG } from "../../gameplayConfig";
+import { DEPTH, PALETTE, RANGED_CONFIG, ENEMY_WEAPON_CONFIG } from "../../gameplayConfig";
 import {
   resolveEvasion,
   resolveStandoffVector,
@@ -11,17 +11,24 @@ import type { Vector2 } from "../../../types/game";
 export class Ranged {
   private readonly view: Phaser.GameObjects.Arc;
   private readonly body: Phaser.Physics.Arcade.Body;
-  private readonly projectiles: ProjectileSystem;
+  private readonly playerProjectiles: ProjectileSystem;
+  private readonly enemyProjectiles: ProjectileSystem;
 
   private alive = true;
+  private lastShotAt: number;
 
   public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
-    projectiles: ProjectileSystem,
+    playerProjectiles: ProjectileSystem,
+    enemyProjectiles: ProjectileSystem,
   ) {
-    this.projectiles = projectiles;
+    this.playerProjectiles = playerProjectiles;
+    this.enemyProjectiles = enemyProjectiles;
+
+    // prevents firing immediately upon spawn
+    this.lastShotAt = scene.time.now;
 
     this.view = scene.add.circle(x, y, RANGED_CONFIG.radius, PALETTE.ranged);
     this.view.setDepth(DEPTH.enemy);
@@ -42,7 +49,7 @@ export class Ranged {
     this.body.setCollideWorldBounds(true);
   }
 
-  public update(targetX: number, targetY: number): void {
+  public update(time: number, targetX: number, targetY: number): void {
     if (!this.alive) {
       return;
     }
@@ -76,10 +83,12 @@ export class Ranged {
       : RANGED_CONFIG.retreatSpeed;
 
     this.body.setVelocity(standoff.x * speed, standoff.y * speed);
+
+    this.tryFire(time, targetX, targetY);
   }
 
   private resolveEvasion(): Vector2 | null {
-    for (const projectile of this.projectiles.getActiveProjectiles()) {
+    for (const projectile of this.playerProjectiles.getActiveProjectiles()) {
       const body = projectile.getBody();
 
       const evasion = resolveEvasion(
@@ -99,6 +108,34 @@ export class Ranged {
     }
 
     return null;
+  }
+
+  private tryFire(time: number, targetX: number, targetY: number): void {
+    if (time - this.lastShotAt < ENEMY_WEAPON_CONFIG.attackIntervalMs) {
+      return;
+    }
+
+    const deltaX = targetX - this.view.x;
+    const deltaY = targetY - this.view.y;
+    const distance = Math.hypot(deltaX, deltaY);
+
+    if (distance === 0 || distance > ENEMY_WEAPON_CONFIG.maxFiringRange) {
+      return;
+    }
+
+    const directionX = deltaX / distance;
+    const directionY = deltaY / distance;
+
+    this.lastShotAt = time;
+
+    this.enemyProjectiles.spawn({
+      originX: this.view.x + directionX * ENEMY_WEAPON_CONFIG.muzzleOffset,
+      originY: this.view.y + directionY * ENEMY_WEAPON_CONFIG.muzzleOffset,
+      velocityX: directionX * ENEMY_WEAPON_CONFIG.projectileSpeed,
+      velocityY: directionY * ENEMY_WEAPON_CONFIG.projectileSpeed,
+      angle: Math.atan2(deltaY, deltaX),
+      firedAt: time,
+    });
   }
 
   public isAlive(): boolean {

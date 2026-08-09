@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import { DEPTH, PALETTE, WEAPON_CONFIG } from "../gameplayConfig";
+import { DEPTH, WEAPON_CONFIG } from "../gameplayConfig";
 import type { ShotRequest } from "../systems/WeaponSystem";
 
 export class Projectile {
@@ -9,12 +9,12 @@ export class Projectile {
 
   private firedAt = 0;
 
-  public constructor(scene: Phaser.Scene) {
+  public constructor(scene: Phaser.Scene, radius: number, color: number) {
     this.view = scene.add.circle(
       0,
       0,
-      WEAPON_CONFIG.projectileRadius,
-      PALETTE.projectile,
+      radius,
+      color,
     );
 
     this.view.setDepth(DEPTH.projectile);
