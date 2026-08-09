@@ -69,7 +69,7 @@ export class GameScene extends Phaser.Scene {
       new Chaser(this, ARENA.x + ARENA.width / 2, ARENA.y + ARENA.height - 80),
     ];
 
-    this.collisions = new CollisionSystem(this.projectiles, this.chasers);
+    this.collisions = new CollisionSystem(this.projectiles, this.chasers, this.player);
 
     const keyboard = this.input.keyboard;
 
@@ -130,7 +130,7 @@ export class GameScene extends Phaser.Scene {
     this.updateAimAngle(pointer);
 
     const movement = resolveMovementVector(this.readMovementInput());
-    this.player.update(movement, this.aimAngle);
+    this.player.update(time, movement, this.aimAngle);
 
     for (const chaser of this.chasers) {
       chaser.update(time, this.player.getX(), this.player.getY());
@@ -149,10 +149,21 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.projectiles.update(time);
-    const chasersKilled = this.collisions.update();
 
-    for (let index = 0; index < chasersKilled; index += 1) {
+    const result = this.collisions.update();
+
+    for (let index = 0; index < result.chasersKilled; index += 1) {
       this.score.addKill("chaser");
+    }
+
+    if (result.playerHit && !this.player.isInvincible(time)) {
+      this.lives.loseLife();
+
+      this.player.respawn(
+        time,
+        ARENA.x + ARENA.width / 2,
+        ARENA.y + ARENA.height / 2,
+      );
     }
 
     this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());

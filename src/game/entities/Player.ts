@@ -8,6 +8,8 @@ export class Player {
   private readonly turret: Phaser.GameObjects.Rectangle;
   private readonly body: Phaser.Physics.Arcade.Body;
 
+  private invincibleUntil = 0;
+
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     this.turret = scene.add.rectangle(
       x,
@@ -44,7 +46,7 @@ export class Player {
     this.body.setCollideWorldBounds(true);
   }
 
-  public update(movement: Vector2, aimAngle: number): void {
+  public update(time: number, movement: Vector2, aimAngle: number): void {
     this.body.setVelocity(
       movement.x * PLAYER_CONFIG.speed,
       movement.y * PLAYER_CONFIG.speed,
@@ -52,6 +54,27 @@ export class Player {
 
     this.turret.setPosition(this.view.x, this.view.y);
     this.turret.setRotation(aimAngle);
+    this.updateInvincibilityFlash(time);
+  }
+
+  public respawn(time: number, x: number, y: number): void {
+    this.body.reset(x, y);
+    this.turret.setPosition(x, y);
+
+    this.invincibleUntil = time + PLAYER_CONFIG.respawnInvincibilityMs;
+  }
+
+  public isInvincible(time: number): boolean {
+    return time < this.invincibleUntil;
+  }
+
+  private updateInvincibilityFlash(time: number): void {
+    const flashOn = Math.floor(time / PLAYER_CONFIG.respawnFlashIntervalMs) % 2 === 0;
+
+    const visible = !this.isInvincible(time) || flashOn;
+
+    this.view.setVisible(visible);
+    this.turret.setVisible(visible);
   }
 
   public getX(): number {
