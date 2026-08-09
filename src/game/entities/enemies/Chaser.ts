@@ -82,4 +82,8 @@ export class Chaser {
     this.body.enable = false;
     this.view.destroy();
   }
+
+  public setPosition(x: number, y: number): void {
+    this.body.reset(x, y);
+  }
 }

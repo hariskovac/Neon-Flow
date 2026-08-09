@@ -87,4 +87,30 @@ export class CollisionSystem {
 
     return  { chasersKilled, playerHit };
   }
+
+  public clearRespawnArea(x: number, y: number, radius: number): void {
+    const liveChasers = this.chasers.filter((chaser) => chaser.isAlive());
+    const angleStep = (Math.PI * 2) / Math.max(liveChasers.length, 1);
+
+    liveChasers.forEach((chaser, index) => {
+      const deltaX = chaser.getX() - x;
+      const deltaY = chaser.getY() - y;
+      const distance = Math.hypot(deltaX, deltaY);
+
+      if (distance >= radius) {
+        return;
+      }
+
+      // fan out chasers around spawn point
+      const bearing = distance === 0 ? 
+        -Math.PI / 2 : Math.atan2(deltaY, deltaX);
+
+      const angle = bearing + index * angleStep;
+
+      chaser.setPosition(
+        x + Math.cos(angle) * radius,
+        y + Math.sin(angle) * radius,
+      );
+    });
+  }
 }

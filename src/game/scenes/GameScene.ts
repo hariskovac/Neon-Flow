@@ -8,7 +8,7 @@ import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
-import { ARENA, DEPTH, PALETTE } from "../gameplayConfig";
+import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG } from "../gameplayConfig";
 import { Chaser } from "../entities/enemies/Chaser";
 import { CollisionSystem } from "../systems/CollisionSystem";
 
@@ -157,13 +157,18 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {
+      const respawnX = ARENA.x + ARENA.width / 2;
+      const respawnY = ARENA.y + ARENA.height / 2;
+
       this.lives.loseLife();
 
-      this.player.respawn(
-        time,
-        ARENA.x + ARENA.width / 2,
-        ARENA.y + ARENA.height / 2,
+      this.collisions.clearRespawnArea(
+        respawnX,
+        respawnY,
+        PLAYER_CONFIG.respawnPushbackRadius,
       );
+
+      this.player.respawn(time, respawnX, respawnY);
     }
 
     this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());

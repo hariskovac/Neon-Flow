@@ -22,6 +22,7 @@ export const PLAYER_CONFIG = {
   startingLives: 5,
   respawnInvincibilityMs: 1500,
   respawnFlashIntervalMs: 100,
+  respawnPushbackRadius: 240,
 };
 
 export const WEAPON_CONFIG = {
