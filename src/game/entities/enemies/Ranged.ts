@@ -7,8 +7,10 @@ import {
   resolveStandoffVector,
 } from "../../systems/RangedMovement";
 import type { Vector2 } from "../../../types/game";
+import type { Enemy } from "./Enemy";
+import type { EnemyType } from "../../../types/game";
 
-export class Ranged {
+export class Ranged implements Enemy {
   private readonly view: Phaser.GameObjects.Arc;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly playerProjectiles: ProjectileSystem;
@@ -162,5 +164,13 @@ export class Ranged {
     this.alive = false;
     this.body.enable = false;
     this.view.destroy();
+  }
+
+  public getRadius(): number {
+    return RANGED_CONFIG.radius;
+  }
+
+  public getType(): EnemyType {
+    return "ranged";
   }
 }

@@ -1,8 +1,8 @@
-import type { Chaser } from "../entities/enemies/Chaser";
-import { CHASER_CONFIG, PLAYER_CONFIG, RANGED_CONFIG } from "../gameplayConfig";
+import { PLAYER_CONFIG } from "../gameplayConfig";
 import type { ProjectileSystem } from "./ProjectileSystem";
 import type { Player } from "../entities/Player";
-import type { Ranged } from "../entities/enemies/Ranged";
+import type { EnemyType } from "../../types/game";
+import type { Enemy } from "../entities/enemies/Enemy";
 
 export function circlesOverlap(
   aX: number,
@@ -20,37 +20,33 @@ export function circlesOverlap(
 }
 
 export interface CollisionResult {
-  readonly chasersKilled: number;
-  readonly rangedKilled: number;
+  readonly killed: EnemyType[];
   readonly playerHit: boolean;
 }
 
 export class CollisionSystem {
   private readonly playerProjectiles: ProjectileSystem;
   private readonly enemyProjectiles: ProjectileSystem;
-  private readonly chasers: Chaser[];
+  private readonly enemies: Enemy[];
   private readonly player: Player;
-  private readonly ranged: Ranged[];
 
-  public constructor(playerProjectiles: ProjectileSystem, enemyProjectiles: ProjectileSystem, chasers: Chaser[], ranged: Ranged[], player: Player) {
+  public constructor(playerProjectiles: ProjectileSystem, enemyProjectiles: ProjectileSystem, enemies: Enemy[],player: Player) {
     this.playerProjectiles = playerProjectiles;
     this.enemyProjectiles = enemyProjectiles;
-    this.chasers = chasers;
-    this.ranged = ranged;
+    this.enemies = enemies;
     this.player = player;
   }
 
 
   public update(): CollisionResult {
-    let chasersKilled = 0;
-    let rangedKilled = 0;
+    const killed: EnemyType[] = [];
     let playerHit = false;
 
     const projectileRadius = this.playerProjectiles.getProjectileRadius();
 
     for (const projectile of this.playerProjectiles.getActiveProjectiles()) {
-      for (const chaser of this.chasers) {
-        if (!chaser.isAlive()) {
+      for (const enemy of this.enemies) {
+        if (!enemy.isAlive()) {
           continue;
         }
 
@@ -58,40 +54,15 @@ export class CollisionSystem {
           projectile.getX(),
           projectile.getY(),
           projectileRadius,
-          chaser.getX(),
-          chaser.getY(),
-          CHASER_CONFIG.radius,
+          enemy.getX(),
+          enemy.getY(),
+          enemy.getRadius(),
         );
 
         if (hit) {
           projectile.deactivate();
-          chaser.kill();
-          chasersKilled += 1;
-
-          break;
-        }
-      }
-    }
-
-    for (const projectile of this.playerProjectiles.getActiveProjectiles()) {
-      for (const attacker of this.ranged) {
-        if (!attacker.isAlive()) {
-          continue;
-        }
-
-        const hit = circlesOverlap(
-          projectile.getX(),
-          projectile.getY(),
-          projectileRadius,
-          attacker.getX(),
-          attacker.getY(),
-          RANGED_CONFIG.radius,
-        );
-
-        if (hit) {
-          projectile.deactivate();
-          attacker.kill();
-          rangedKilled += 1;
+          killed.push(enemy.getType());
+          enemy.kill();
 
           break;
         }
@@ -100,8 +71,8 @@ export class CollisionSystem {
 
     const playerRadius = PLAYER_CONFIG.size / 2;
 
-    for (const chaser of this.chasers) {
-      if (!chaser.isAlive()) {
+    for (const enemy of this.enemies) {
+      if (!enemy.isAlive()) {
         continue;
       }
 
@@ -109,30 +80,9 @@ export class CollisionSystem {
         this.player.getX(),
         this.player.getY(),
         playerRadius,
-        chaser.getX(),
-        chaser.getY(),
-        CHASER_CONFIG.radius,
-      );
-
-      if (contact) {
-        playerHit = true;
-
-        break;
-      }
-    }
-
-    for (const ranged of this.ranged) {
-      if (!ranged.isAlive()) {
-        continue;
-      }
-
-      const contact = circlesOverlap(
-        this.player.getX(),
-        this.player.getY(),
-        playerRadius,
-        ranged.getX(),
-        ranged.getY(),
-        RANGED_CONFIG.radius,
+        enemy.getX(),
+        enemy.getY(),
+        enemy.getRadius(),
       );
 
       if (contact) {
@@ -159,19 +109,17 @@ export class CollisionSystem {
         break;
       }
     }
-
-    return  { chasersKilled, rangedKilled, playerHit };
+    return { killed, playerHit };
   }
 
-  public clearRespawnArea(x: number, y: number, radius: number): void {
-    const liveChasers = this.chasers.filter((chaser) => chaser.isAlive());
-    const liveRanged = this.ranged.filter((ranged) => ranged.isAlive());
-    const chaserStep = (Math.PI * 2) / Math.max(liveChasers.length, 1);
-    const rangedStep = (Math.PI * 2) / Math.max(liveRanged.length, 1);
 
-    liveChasers.forEach((chaser, index) => {
-      const deltaX = chaser.getX() - x;
-      const deltaY = chaser.getY() - y;
+  public clearRespawnArea(x: number, y: number, radius: number): void {
+    const liveEnemies = this.enemies.filter((enemy) => enemy.isAlive());
+    const angleStep = (Math.PI * 2) / Math.max(liveEnemies.length, 1);
+
+    liveEnemies.forEach((enemy, index) => {
+      const deltaX = enemy.getX() - x;
+      const deltaY = enemy.getY() - y;
       const distance = Math.hypot(deltaX, deltaY);
 
       if (distance >= radius) {
@@ -182,30 +130,9 @@ export class CollisionSystem {
       const bearing = distance === 0 ? 
         -Math.PI / 2 : Math.atan2(deltaY, deltaX);
 
-      const angle = bearing + index * chaserStep;
+      const angle = bearing + index * angleStep;
 
-      chaser.setPosition(
-        x + Math.cos(angle) * radius,
-        y + Math.sin(angle) * radius,
-      );
-    });
-
-    liveRanged.forEach((ranged, index) => {
-      const deltaX = ranged.getX() - x;
-      const deltaY = ranged.getY() - y;
-      const distance = Math.hypot(deltaX, deltaY);
-
-      if (distance >= radius) {
-        return;
-      }
-
-      // fan out ranged attackers around spawn point
-      const bearing = distance === 0 ? 
-        -Math.PI / 2 : Math.atan2(deltaY, deltaX);
-
-      const angle = bearing + index * rangedStep;
-
-      ranged.setPosition(
+      enemy.setPosition(
         x + Math.cos(angle) * radius,
         y + Math.sin(angle) * radius,
       );

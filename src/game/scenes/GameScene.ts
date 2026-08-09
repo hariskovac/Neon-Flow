@@ -12,6 +12,7 @@ import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFI
 import { Chaser } from "../entities/enemies/Chaser";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { Ranged } from "../entities/enemies/Ranged";
+import type { Enemy } from "../entities/enemies/Enemy";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -33,9 +34,9 @@ export class GameScene extends Phaser.Scene {
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
-
   private chasers: Chaser[] = [];
   private ranged: Ranged[] = [];
+  private enemies: Enemy[] = [];
 
   private collisions!: CollisionSystem;
 
@@ -101,11 +102,19 @@ export class GameScene extends Phaser.Scene {
       ),
     ];
 
+    this.enemies = [...this.chasers, ...this.ranged];
+
     this.collisions = new CollisionSystem(
       this.projectiles,
       this.enemyProjectiles,
-      this.chasers,
-      this.ranged,
+      this.enemies,
+      this.player,
+    );
+
+    this.collisions = new CollisionSystem(
+      this.projectiles,
+      this.enemyProjectiles,
+      this.enemies,
       this.player,
     );
 
@@ -195,12 +204,8 @@ export class GameScene extends Phaser.Scene {
 
     const result = this.collisions.update();
 
-    for (let index = 0; index < result.chasersKilled; index += 1) {
-      this.score.addKill("chaser");
-    }
-
-    for (let index = 0; index < result.rangedKilled; index += 1) {
-      this.score.addKill("ranged");
+    for (const enemyType of result.killed) {
+      this.score.addKill(enemyType);
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {

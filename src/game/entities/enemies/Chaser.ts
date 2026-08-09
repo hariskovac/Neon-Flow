@@ -5,8 +5,10 @@ import {
   adjustChaserSpeed,
   setPursuitVector,
 } from "../../systems/ChaserMovement";
+import type { Enemy } from "./Enemy";
+import type { EnemyType } from "../../../types/game";
 
-export class Chaser {
+export class Chaser implements Enemy {
   private readonly view: Phaser.GameObjects.Arc;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly spawnedAt: number;
@@ -85,5 +87,13 @@ export class Chaser {
 
   public setPosition(x: number, y: number): void {
     this.body.reset(x, y);
+  }
+
+  public getRadius(): number {
+    return CHASER_CONFIG.radius;
+  }
+
+  public getType(): EnemyType {
+    return "chaser";
   }
 }
