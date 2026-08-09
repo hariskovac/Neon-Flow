@@ -10,6 +10,7 @@ export class Chaser {
   private readonly view: Phaser.GameObjects.Arc;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly spawnedAt: number;
+  private alive = true;
 
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     this.spawnedAt = scene.time.now;
@@ -39,6 +40,10 @@ export class Chaser {
 
   // steers toward the player and accelerates
   public update(time: number, targetX: number, targetY: number): void {
+    if (!this.alive) {
+      return;
+    }
+
     const speed = adjustChaserSpeed(
       time - this.spawnedAt,
       CHASER_CONFIG.baseSpeed,
@@ -54,5 +59,27 @@ export class Chaser {
     );
 
     this.body.setVelocity(direction.x * speed, direction.y * speed);
+  }
+
+  public isAlive(): boolean {
+    return this.alive;
+  }
+
+  public getX(): number {
+    return this.view.x;
+  }
+
+  public getY(): number {
+    return this.view.y;
+  }
+
+  public kill(): void {
+    if (!this.alive) {
+      return;
+    }
+
+    this.alive = false;
+    this.body.enable = false;
+    this.view.destroy();
   }
 }

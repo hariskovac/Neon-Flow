@@ -1,12 +1,5 @@
 import Phaser from "phaser";
 
-type MovementKeys = {
-  W: Phaser.Input.Keyboard.Key;
-  A: Phaser.Input.Keyboard.Key;
-  S: Phaser.Input.Keyboard.Key;
-  D: Phaser.Input.Keyboard.Key;
-};
-
 import { WeaponSystem } from "../systems/WeaponSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { HudSystem } from "../systems/HudSystem";
@@ -17,6 +10,14 @@ import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
 import { ARENA, DEPTH, PALETTE } from "../gameplayConfig";
 import { Chaser } from "../entities/enemies/Chaser";
+import { CollisionSystem } from "../systems/CollisionSystem";
+
+type MovementKeys = {
+  W: Phaser.Input.Keyboard.Key;
+  A: Phaser.Input.Keyboard.Key;
+  S: Phaser.Input.Keyboard.Key;
+  D: Phaser.Input.Keyboard.Key;
+};
 
 export class GameScene extends Phaser.Scene {
   private player!: Player;
@@ -32,6 +33,8 @@ export class GameScene extends Phaser.Scene {
   private hasPointerInput = false;
 
   private chasers: Chaser[] = [];
+
+  private collisions!: CollisionSystem;
 
   public constructor() {
     super({ key: "GameScene" });
@@ -57,11 +60,16 @@ export class GameScene extends Phaser.Scene {
       this.scale.height / 2,
     );
 
+    this.weapon = new WeaponSystem();
+    this.projectiles = new ProjectileSystem(this);
+
     this.chasers = [
       new Chaser(this, ARENA.x + 80, ARENA.y + 80),
       new Chaser(this, ARENA.x + ARENA.width - 80, ARENA.y + 80),
       new Chaser(this, ARENA.x + ARENA.width / 2, ARENA.y + ARENA.height - 80),
     ];
+
+    this.collisions = new CollisionSystem(this.projectiles, this.chasers);
 
     const keyboard = this.input.keyboard;
 
@@ -77,9 +85,6 @@ export class GameScene extends Phaser.Scene {
     }) as MovementKeys;
 
     this.cursors = keyboard.createCursorKeys();
-
-    this.weapon = new WeaponSystem();
-    this.projectiles = new ProjectileSystem(this);
 
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
@@ -144,6 +149,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.projectiles.update(time);
+    const chasersKilled = this.collisions.update();
+
+    for (let index = 0; index < chasersKilled; index += 1) {
+      this.score.addKill("chaser");
+    }
+
     this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
   }
 
