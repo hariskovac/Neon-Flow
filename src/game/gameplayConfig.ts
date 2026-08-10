@@ -67,12 +67,25 @@ export const RANGED_CONFIG = {
 };
 
 export const DASHER_CONFIG = {
-  radius: 14,
+  collisionRadius: 9,
   maxHealth: 3,
   lockDurationMs: 600,
   dashSpeed: 420,
   overshootDistance: 90,
   pauseDurationMs: 700,
+    hullOutline: [
+    { x: 20, y: 0 },
+    { x: 0, y: 12 },
+    { x: -14, y: 0 },
+    { x: 0, y: -12 },
+  ],
+  noseMarker: [
+    { x: 20, y: 0 },
+    { x: 4, y: 5 },
+    { x: 4, y: -5 },
+  ],
+  hullLineWidth: 2,
+  hullFillAlpha: 0.18,
 };
 
 export const KILL_POINTS: Record<EnemyType, number> = {
@@ -98,6 +111,7 @@ export const PALETTE = {
   chaser: 0xff5f9e,
   ranged: 0xffa94d,
   dasher: 0xb28dff,
+  dasherNose: 0xf4f7ff,
 };
 
 export const DEPTH = {
