@@ -192,7 +192,7 @@ export class GameScene extends Phaser.Scene {
     this.projectiles.update(time);
 
     if (this.waves.isIntermission()) {
-      this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
+      this.updateHud(time);
 
       return;
     }
@@ -226,7 +226,7 @@ export class GameScene extends Phaser.Scene {
       this.player.respawn(time, respawnX, respawnY);
     }
 
-    this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
+    this.updateHud(time);
   }
 
   private readMovementInput(): MovementInput {
@@ -236,5 +236,15 @@ export class GameScene extends Phaser.Scene {
       left: this.movementKeys.A.isDown || this.cursors.left.isDown,
       right: this.movementKeys.D.isDown || this.cursors.right.isDown,
     };
+  }
+
+  private updateHud(time: number): void {
+    this.hud.update({
+      score: this.score.getScore(),
+      livesRemaining: this.lives.getLivesRemaining(),
+      waveNumber: this.waves.getWaveNumber(),
+      remainingMs: this.waves.getPhaseRemainingMs(time),
+      isIntermission: this.waves.isIntermission(),
+    });
   }
 }

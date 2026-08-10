@@ -6,21 +6,38 @@ import {
   HUD_BAND_HEIGHT,
   HUD_TEXT_STYLE,
   PALETTE,
+  WAVE_CONFIG,
 } from "../gameplayConfig";
+
+export interface HudState {
+  readonly score: number;
+  readonly livesRemaining: number;
+  readonly waveNumber: number;
+  readonly remainingMs: number;
+  readonly isIntermission: boolean;
+}
 
 export class HudSystem {
   private static readonly EDGE_PADDING = 20;
   private static readonly PIP_WIDTH = 18;
   private static readonly PIP_HEIGHT = 8;
   private static readonly PIP_GAP = 6;
+  private static readonly WAVE_LABEL_RIGHT = 290;
+  private static readonly WAVE_PIP_LEFT = 302;
+  private static readonly TIMER_CENTRE_X = 640;
 
   private readonly scoreLabel: Phaser.GameObjects.Text;
   private readonly livesLabel: Phaser.GameObjects.Text; 
+  private readonly waveLabel: Phaser.GameObjects.Text;
+  private readonly timerLabel: Phaser.GameObjects.Text;
   private readonly lifePips: Phaser.GameObjects.Rectangle[] = [];
+  private readonly wavePips: Phaser.GameObjects.Rectangle[] = [];
 
   private lastScore = 0;
   private lastLivesRemaining = 0;
   private hasRendered = false;
+  private lastWaveNumber = 0;
+  private lastTimerText = "";
 
   public constructor(scene: Phaser.Scene, startingLives: number) {
     const centreY = HUD_BAND_HEIGHT / 2;
@@ -35,28 +52,41 @@ export class HudSystem {
     this.scoreLabel.setOrigin(0, 0.5);
     this.scoreLabel.setDepth(DEPTH.hud);
 
+    this.waveLabel = scene.add.text(
+      HudSystem.WAVE_LABEL_RIGHT,
+      centreY,
+      "Wave",
+      { ...HUD_TEXT_STYLE, color: PALETTE.hudMuted },
+    );
+
+    this.waveLabel.setOrigin(1, 0.5);
+    this.waveLabel.setDepth(DEPTH.hud);
+
+    this.buildPips(
+      scene,
+      HudSystem.WAVE_PIP_LEFT,
+      centreY,
+      WAVE_CONFIG.totalWaves,
+      this.wavePips,
+    );
+
+    this.timerLabel = scene.add.text(
+      HudSystem.TIMER_CENTRE_X,
+      centreY,
+      "",
+      HUD_TEXT_STYLE,
+    );
+
+    this.timerLabel.setOrigin(0.5, 0.5);
+    this.timerLabel.setDepth(DEPTH.hud);
+
     const pipWidth =
       startingLives * HudSystem.PIP_WIDTH +
       (startingLives - 1) * HudSystem.PIP_GAP;
 
-    const pipRight = CANVAS.width - HudSystem.EDGE_PADDING;
-    const pipLeft = pipRight - pipWidth;
+    const pipLeft = CANVAS.width - HudSystem.EDGE_PADDING - pipWidth;
 
-    for (let index = 0; index < startingLives; index += 1) {
-      const pip = scene.add.rectangle(
-        pipLeft +
-          index * (HudSystem.PIP_WIDTH + HudSystem.PIP_GAP) +
-          HudSystem.PIP_WIDTH / 2,
-        centreY,
-        HudSystem.PIP_WIDTH,
-        HudSystem.PIP_HEIGHT,
-        PALETTE.lifePipFilled,
-      );
-
-      pip.setDepth(DEPTH.hud);
-
-      this.lifePips.push(pip);
-    }
+    this.buildPips(scene, pipLeft, centreY, startingLives, this.lifePips);
 
     this.livesLabel = scene.add.text(pipLeft - 12, centreY, "Lives", {
       ...HUD_TEXT_STYLE,
@@ -66,29 +96,79 @@ export class HudSystem {
     this.livesLabel.setOrigin(1, 0.5);
     this.livesLabel.setDepth(DEPTH.hud);
 
-    this.update(0, startingLives);
+    this.update({
+      score: 0,
+      livesRemaining: startingLives,
+      waveNumber: 1,
+      remainingMs: WAVE_CONFIG.durationMs,
+      isIntermission: false,
+    });
   }
 
-  public update(score: number, livesRemaining: number): void {
+  public update(state: HudState): void {
     const isFirstUpdate = !this.hasRendered;
 
-    if (isFirstUpdate || score !== this.lastScore) {
-      this.scoreLabel.setText(`Score ${String(score)}`);
-      this.lastScore = score;
+    if (isFirstUpdate || state.score !== this.lastScore) {
+      this.scoreLabel.setText(`Score ${String(state.score)}`);
+      this.lastScore = state.score;
     }
 
-    if (isFirstUpdate || livesRemaining !== this.lastLivesRemaining) {
-      this.lifePips.forEach((pip, index) => {
-        pip.setFillStyle(
-          index < livesRemaining
-            ? PALETTE.lifePipFilled
-            : PALETTE.lifePipEmpty,
-        );
-      });
+    if (isFirstUpdate || state.livesRemaining !== this.lastLivesRemaining) {
+      this.fillPips(this.lifePips, state.livesRemaining);
+      this.lastLivesRemaining = state.livesRemaining;
+    }
 
-      this.lastLivesRemaining = livesRemaining;
+    if (isFirstUpdate || state.waveNumber !== this.lastWaveNumber) {
+      this.fillPips(this.wavePips, state.waveNumber);
+      this.lastWaveNumber = state.waveNumber;
+    }
+
+    const seconds = Math.ceil(Math.max(state.remainingMs, 0) / 1000);
+
+    const timerText = state.isIntermission
+      ? `Next wave in ${String(seconds)} s`
+      : `Time ${String(seconds)} s`;
+
+    if (isFirstUpdate || timerText !== this.lastTimerText) {
+      this.timerLabel.setText(timerText);
+      this.lastTimerText = timerText;
     }
 
     this.hasRendered = true;
+  }
+
+  private buildPips(
+    scene: Phaser.Scene,
+    left: number,
+    centreY: number,
+    count: number,
+    target: Phaser.GameObjects.Rectangle[],
+  ): void {
+    for (let index = 0; index < count; index += 1) {
+      const pip = scene.add.rectangle(
+        left +
+          index * (HudSystem.PIP_WIDTH + HudSystem.PIP_GAP) +
+          HudSystem.PIP_WIDTH / 2,
+        centreY,
+        HudSystem.PIP_WIDTH,
+        HudSystem.PIP_HEIGHT,
+        PALETTE.pipFilled,
+      );
+
+      pip.setDepth(DEPTH.hud);
+
+      target.push(pip);
+    }
+  }
+
+  private fillPips(
+    pips: Phaser.GameObjects.Rectangle[],
+    filledCount: number,
+  ): void {
+    pips.forEach((pip, index) => {
+      pip.setFillStyle(
+        index < filledCount ? PALETTE.pipFilled : PALETTE.pipEmpty,
+      );
+    });
   }
 }

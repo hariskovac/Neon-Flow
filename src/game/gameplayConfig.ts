@@ -112,6 +112,7 @@ export const WAVE_CONFIG = {
   spawnStopMs: 35000,
   // gap between waves
   intermissionMs: 8000,
+  totalWaves: 7,
 };
 
 export const KILL_POINTS: Record<EnemyType, number> = {
@@ -130,8 +131,8 @@ export const PALETTE = {
   turret: 0xf4f7ff,
   projectile: 0xffe066,
   enemyProjectile: 0xff6b6b,
-  lifePipFilled: 0x62e6c8,
-  lifePipEmpty: 0x2a3550,
+  pipFilled: 0x62e6c8,
+  pipEmpty: 0x2a3550,
   hudPrimary: "#f4f7ff",
   hudMuted: "#aebbd4",
   chaser: 0xff5f9e,
