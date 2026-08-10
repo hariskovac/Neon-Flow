@@ -170,24 +170,12 @@ export class GameScene extends Phaser.Scene {
       this.spawner.resetSpawnTimer(time);
     }
 
-    if (this.waves.isIntermission()) {
-      this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
-
-      return;
-    }
-    
     const pointer = this.input.activePointer;
 
     this.updateAimAngle(pointer);
 
     const movement = resolveMovementVector(this.readMovementInput());
     this.player.update(time, movement, this.aimAngle);
-
-    this.spawner.update(time, this.player.getX(), this.player.getY());
-
-    for (const enemy of this.spawner.getEnemies()) {
-      enemy.update(time, this.player.getX(), this.player.getY());
-    }
 
     const shot = this.weapon.tryFire(
       time,
@@ -202,6 +190,19 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.projectiles.update(time);
+
+    if (this.waves.isIntermission()) {
+      this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
+
+      return;
+    }
+
+    this.spawner.update(time, this.player.getX(), this.player.getY());
+
+    for (const enemy of this.spawner.getEnemies()) {
+      enemy.update(time, this.player.getX(), this.player.getY());
+    }
+
     this.enemyProjectiles.update(time);
 
     const result = this.collisions.update();
