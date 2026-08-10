@@ -88,6 +88,23 @@ export const DASHER_CONFIG = {
   hullFillAlpha: 0.18,
 };
 
+export const SPAWN_CONFIG = {
+  initialIntervalMs: 2000,
+  // DDA actuator
+  minIntervalMs: 450,
+  maxIntervalMs: 3500,
+  maxActiveEnemies: 50,
+  spawnInset: 28,
+  minDistanceFromPlayer: 180,
+  maxPlacementAttempts: 8,
+  // spawn weights
+  weights: {
+    chaser: 55,
+    ranged: 30,
+    dasher: 15,
+  },
+};
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,
