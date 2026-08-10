@@ -21,3 +21,13 @@ export function createEmptyKillTally(): Record<EnemyType, number> {
     dasher: 0,
   };
 }
+
+export interface WavePerformance {
+  readonly waveNumber: number;
+  readonly killsByType: Record<EnemyType, number>;
+  readonly livesLost: number;
+  readonly shieldHitsAbsorbed: number;
+  readonly enemiesRemaining: number;
+  readonly shotsFired: number;
+  readonly shotsHit: number;
+}

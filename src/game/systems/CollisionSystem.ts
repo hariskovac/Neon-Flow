@@ -24,6 +24,12 @@ export interface CollisionResult {
   readonly playerHit: boolean;
 }
 
+export interface CollisionResult {
+  readonly killed: EnemyType[];
+  readonly shotsHit: number;
+  readonly playerHit: boolean;
+}
+
 export class CollisionSystem {
   private readonly playerProjectiles: ProjectileSystem;
   private readonly enemyProjectiles: ProjectileSystem;
@@ -40,6 +46,7 @@ export class CollisionSystem {
   public update(): CollisionResult {
     const killed: EnemyType[] = [];
     let playerHit = false;
+    let shotsHit = 0;
 
     const projectileRadius = this.playerProjectiles.getProjectileRadius();
 
@@ -60,6 +67,7 @@ export class CollisionSystem {
 
         if (hit) {
           projectile.deactivate();
+          shotsHit += 1;
 
           if (enemy.takeHit()) {
             killed.push(enemy.getType());
@@ -110,7 +118,7 @@ export class CollisionSystem {
         break;
       }
     }
-    return { killed, playerHit };
+    return { killed, shotsHit, playerHit };
   }
 
 

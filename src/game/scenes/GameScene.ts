@@ -12,6 +12,8 @@ import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFI
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
 import { WaveSystem } from "../systems/WaveSystem";
+import { PerformanceMonitor } from "../systems/PerformanceMonitor";
+import type { WavePerformance } from "../../types/game";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -30,6 +32,8 @@ export class GameScene extends Phaser.Scene {
   private score!: ScoreSystem;
   private lives!: LivesSystem;
   private hud!: HudSystem;
+  private performance!: PerformanceMonitor;
+  private completedWaves: WavePerformance[] = [];
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
@@ -43,6 +47,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
+    this.performance = new PerformanceMonitor();
+    this.completedWaves = [];
+
     this.physics.world.setBounds(
       ARENA.x,
       ARENA.y,
@@ -160,6 +167,18 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (transition === "waveEnded") {
+
+      const summary = this.performance.summarise(
+        this.waves.getWaveNumber(),
+        this.spawner.getActiveCount(),
+      );
+
+      this.completedWaves.push(summary);
+      this.performance.reset();
+
+      // TODO: Erase after DDA controller is set up
+      console.log("Wave complete", summary);
+
       this.score.addWaveSurvivalBonus();
       this.spawner.clearAll();
       this.enemyProjectiles.reset();
@@ -187,6 +206,7 @@ export class GameScene extends Phaser.Scene {
 
     if (shot !== null) {
       this.projectiles.spawn(shot);
+      this.performance.recordShotFired();
     }
 
     this.projectiles.update(time);
@@ -207,8 +227,11 @@ export class GameScene extends Phaser.Scene {
 
     const result = this.collisions.update();
 
+    this.performance.recordShotsHit(result.shotsHit);
+
     for (const enemyType of result.killed) {
       this.score.addKill(enemyType);
+      this.performance.recordKill(enemyType);
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {
@@ -216,6 +239,7 @@ export class GameScene extends Phaser.Scene {
       const respawnY = ARENA.y + ARENA.height / 2;
 
       this.lives.loseLife();
+      this.performance.recordLifeLost();
 
       this.collisions.clearRespawnArea(
         respawnX,
