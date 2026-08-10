@@ -12,6 +12,7 @@ import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFI
 import { Chaser } from "../entities/enemies/Chaser";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { Ranged } from "../entities/enemies/Ranged";
+import { Dasher } from "../entities/enemies/Dasher";
 import type { Enemy } from "../entities/enemies/Enemy";
 
 type MovementKeys = {
@@ -36,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   private hasPointerInput = false;
   private chasers: Chaser[] = [];
   private ranged: Ranged[] = [];
+  private dashers: Dasher[] = [];
   private enemies: Enemy[] = [];
 
   private collisions!: CollisionSystem;
@@ -102,7 +104,11 @@ export class GameScene extends Phaser.Scene {
       ),
     ];
 
-    this.enemies = [...this.chasers, ...this.ranged];
+    this.dashers = [
+      new Dasher(this, ARENA.x + ARENA.width / 2, ARENA.y + 90),
+    ];
+
+    this.enemies = [...this.chasers, ...this.ranged, ...this.dashers];
 
     this.collisions = new CollisionSystem(
       this.projectiles,
@@ -185,6 +191,10 @@ export class GameScene extends Phaser.Scene {
 
     for (const attacker of this.ranged) {
       attacker.update(time, this.player.getX(), this.player.getY());
+    }
+
+    for (const dasher of this.dashers) {
+      dasher.update(time, this.player.getX(), this.player.getY());
     }
 
     const shot = this.weapon.tryFire(

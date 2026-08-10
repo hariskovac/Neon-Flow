@@ -7,5 +7,5 @@ export interface Enemy {
   getRadius(): number;
   getType(): EnemyType;
   setPosition(x: number, y: number): void;
-  kill(): void;
+  takeHit(): boolean;
 }

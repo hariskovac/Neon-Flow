@@ -156,14 +156,16 @@ export class Ranged implements Enemy {
     this.body.reset(x, y);
   }
 
-  public kill(): void {
+  public takeHit(): boolean {
     if (!this.alive) {
-      return;
+      return false;
     }
 
     this.alive = false;
     this.body.enable = false;
     this.view.destroy();
+
+    return true;
   }
 
   public getRadius(): number {

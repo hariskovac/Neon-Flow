@@ -37,7 +37,6 @@ export class CollisionSystem {
     this.player = player;
   }
 
-
   public update(): CollisionResult {
     const killed: EnemyType[] = [];
     let playerHit = false;
@@ -61,8 +60,10 @@ export class CollisionSystem {
 
         if (hit) {
           projectile.deactivate();
-          killed.push(enemy.getType());
-          enemy.kill();
+
+          if (enemy.takeHit()) {
+            killed.push(enemy.getType());
+          }
 
           break;
         }

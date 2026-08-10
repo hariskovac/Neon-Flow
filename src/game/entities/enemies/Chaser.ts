@@ -75,14 +75,16 @@ export class Chaser implements Enemy {
     return this.view.y;
   }
 
-  public kill(): void {
+  public takeHit(): boolean {
     if (!this.alive) {
-      return;
+      return false;
     }
 
     this.alive = false;
     this.body.enable = false;
     this.view.destroy();
+
+    return true;
   }
 
   public setPosition(x: number, y: number): void {

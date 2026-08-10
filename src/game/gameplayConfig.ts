@@ -64,6 +64,15 @@ export const RANGED_CONFIG = {
   evasionLookaheadMs: 500,
 };
 
+export const DASHER_CONFIG = {
+  radius: 14,
+  maxHealth: 3,
+  lockDurationMs: 600,
+  dashSpeed: 420,
+  overshootDistance: 90,
+  pauseDurationMs: 700,
+};
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,
@@ -86,6 +95,7 @@ export const PALETTE = {
   hudMuted: "#aebbd4",
   chaser: 0xff5f9e,
   ranged: 0xffa94d,
+  dasher: 0xb28dff,
 };
 
 export const DEPTH = {
