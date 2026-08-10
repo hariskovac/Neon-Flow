@@ -110,4 +110,14 @@ export class Chaser implements Enemy {
   public getType(): EnemyType {
     return "chaser";
   }
+
+  public despawn(): void {
+    if (!this.alive) {
+      return;
+    }
+
+    this.alive = false;
+    this.body.enable = false;
+    this.view.destroy();
+  }
 }

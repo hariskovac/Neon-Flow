@@ -9,4 +9,5 @@ export interface Enemy {
   setPosition(x: number, y: number): void;
   takeHit(): boolean;
   update(time: number, targetX: number, targetY: number): void;
+  despawn(): void;
 }

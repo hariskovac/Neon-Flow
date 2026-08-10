@@ -157,7 +157,7 @@ export class Ranged implements Enemy {
     this.body.reset(x, y);
   }
 
-public takeHit(): boolean {
+  public takeHit(): boolean {
     if (!this.alive) {
       return false;
     }
@@ -185,5 +185,15 @@ public takeHit(): boolean {
 
   public getType(): EnemyType {
     return "ranged";
+  }
+
+  public despawn(): void {
+    if (!this.alive) {
+      return;
+    }
+
+    this.alive = false;
+    this.body.enable = false;
+    this.view.destroy();
   }
 }

@@ -190,4 +190,15 @@ export class Dasher implements Enemy {
   public setPosition(x: number, y: number): void {
     this.body.reset(x, y);
   }
+
+  public despawn(): void {
+    if (!this.alive) {
+      return;
+    }
+
+    this.alive = false;
+    this.body.enable = false;
+    this.ship.destroy();
+    this.hitbox.destroy();
+  }
 }

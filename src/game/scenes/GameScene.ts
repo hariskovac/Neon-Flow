@@ -11,6 +11,7 @@ import { resolveMovementVector } from "../systems/PlayerMovement";
 import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
+import { WaveSystem } from "../systems/WaveSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -35,6 +36,7 @@ export class GameScene extends Phaser.Scene {
   private spawner!: SpawnSystem;
 
   private collisions!: CollisionSystem;
+  private waves!: WaveSystem;
 
   public constructor() {
     super({ key: "GameScene" });
@@ -114,6 +116,7 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
+    this.waves = new WaveSystem(this.time.now);
   }
 
   private drawArena(): void {
@@ -150,6 +153,29 @@ export class GameScene extends Phaser.Scene {
 
 
   public update(time: number): void {
+    const transition = this.waves.update(time);
+
+    if (transition === "spawningStopped") {
+      this.spawner.setSpawningEnabled(false);
+    }
+
+    if (transition === "waveEnded") {
+      this.score.addWaveSurvivalBonus();
+      this.spawner.clearAll();
+      this.enemyProjectiles.reset();
+    }
+
+    if (transition === "waveStarted") {
+      this.spawner.setSpawningEnabled(true);
+      this.spawner.resetSpawnTimer(time);
+    }
+
+    if (this.waves.isIntermission()) {
+      this.hud.update(this.score.getScore(), this.lives.getLivesRemaining());
+
+      return;
+    }
+    
     const pointer = this.input.activePointer;
 
     this.updateAimAngle(pointer);

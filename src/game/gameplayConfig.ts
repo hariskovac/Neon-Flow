@@ -105,6 +105,15 @@ export const SPAWN_CONFIG = {
   },
 };
 
+export const WAVE_CONFIG = {
+  // wave duration
+  durationMs: 40000,
+  // when enemies stop spawning
+  spawnStopMs: 35000,
+  // gap between waves
+  intermissionMs: 8000,
+};
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,

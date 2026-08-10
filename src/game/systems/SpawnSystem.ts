@@ -17,6 +17,7 @@ export class SpawnSystem {
 
   private intervalMs = SPAWN_CONFIG.initialIntervalMs;
   private nextSpawnAt: number;
+  private spawningEnabled = true;
 
   public constructor(
     scene: Phaser.Scene,
@@ -34,6 +35,10 @@ export class SpawnSystem {
 
   public update(time: number, playerX: number, playerY: number): void {
     this.removeDeadEnemies();
+
+    if (!this.spawningEnabled) {
+      return;
+    }
 
     if (time < this.nextSpawnAt) {
       return;
@@ -134,5 +139,25 @@ export class SpawnSystem {
     }
 
     return new Dasher(this.scene, x, y);
+  }
+
+  public setSpawningEnabled(enabled: boolean): void {
+    this.spawningEnabled = enabled;
+  }
+
+  public clearAll(): void {
+    for (const enemy of this.enemies) {
+      enemy.despawn();
+    }
+
+    this.enemies.length = 0;
+  }
+
+  public getActiveCount(): number {
+    return this.enemies.length;
+  }
+
+  public resetSpawnTimer(time: number): void {
+    this.nextSpawnAt = time + this.intervalMs;
   }
 }
