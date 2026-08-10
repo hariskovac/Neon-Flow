@@ -13,6 +13,7 @@ export class Chaser implements Enemy {
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly spawnedAt: number;
   private alive = true;
+  private health = CHASER_CONFIG.maxHealth;
 
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     this.spawnedAt = scene.time.now;
@@ -77,6 +78,17 @@ export class Chaser implements Enemy {
 
   public takeHit(): boolean {
     if (!this.alive) {
+      return false;
+    }
+
+    this.health -= 1;
+
+    if (this.health > 0) {
+      this.view.setFillStyle(
+        PALETTE.chaser,
+        0.35 + 0.65 * (this.health / CHASER_CONFIG.maxHealth),
+      );
+
       return false;
     }
 

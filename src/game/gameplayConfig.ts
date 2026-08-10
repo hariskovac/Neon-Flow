@@ -48,6 +48,7 @@ export const ENEMY_WEAPON_CONFIG = {
 
 export const CHASER_CONFIG = {
   radius: 10,
+  maxHealth: 2,
   baseSpeed: 70,
   accelerationPerSecond: 14,
   maxSpeed: 220,
@@ -55,6 +56,7 @@ export const CHASER_CONFIG = {
 
 export const RANGED_CONFIG = {
   radius: 11,
+  maxHealth: 1,
   preferredDistance: 260,
   distanceTolerance: 40,
   approachSpeed: 90,

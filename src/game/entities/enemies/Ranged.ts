@@ -18,6 +18,7 @@ export class Ranged implements Enemy {
 
   private alive = true;
   private lastShotAt: number;
+  private health = RANGED_CONFIG.maxHealth;
 
   public constructor(
     scene: Phaser.Scene,
@@ -156,8 +157,19 @@ export class Ranged implements Enemy {
     this.body.reset(x, y);
   }
 
-  public takeHit(): boolean {
+public takeHit(): boolean {
     if (!this.alive) {
+      return false;
+    }
+
+    this.health -= 1;
+
+    if (this.health > 0) {
+      this.view.setFillStyle(
+        PALETTE.ranged,
+        0.35 + 0.65 * (this.health / RANGED_CONFIG.maxHealth),
+      );
+
       return false;
     }
 
@@ -167,7 +179,6 @@ export class Ranged implements Enemy {
 
     return true;
   }
-
   public getRadius(): number {
     return RANGED_CONFIG.radius;
   }
