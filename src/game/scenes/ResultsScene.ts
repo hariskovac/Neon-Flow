@@ -2,6 +2,7 @@ import Phaser from "phaser";
 
 import type { GameEndReason, WavePerformance } from "../../types/game";
 import { CANVAS, HUD_TEXT_STYLE, PALETTE } from "../gameplayConfig";
+import { session } from "../../experiment/SessionManager";
 
 export interface ResultsData {
   readonly finalScore: number;
@@ -11,21 +12,16 @@ export interface ResultsData {
 }
 
 export class ResultsScene extends Phaser.Scene {
-  private results!: ResultsData;
 
   public constructor() {
     super({ key: "ResultsScene" });
-  }
-
-  public init(data: ResultsData): void {
-    this.results = data;
   }
 
   public create(): void {
     const centerX = CANVAS.width / 2;
 
     const heading =
-      this.results.gameEndReason === "completed"
+      session.getTerminationReason() === "completed"
         ? "All waves complete"
         : "Out of lives";
 
@@ -34,7 +30,7 @@ export class ResultsScene extends Phaser.Scene {
     this.addCenteredText(
       centerX,
       220,
-      `Final score ${String(this.results.finalScore)}`,
+      `Final score ${String(session.getFinalScore())}`,
       "26px",
       PALETTE.hudPrimary,
     );
@@ -42,7 +38,7 @@ export class ResultsScene extends Phaser.Scene {
     this.addCenteredText(
       centerX,
       270,
-      `Waves completed ${String(this.results.completedWaves.length)}`,
+      `Waves completed ${String(session.getCompletedWaveCount())}`,
       "20px",
       PALETTE.hudMuted,
     );
@@ -50,7 +46,7 @@ export class ResultsScene extends Phaser.Scene {
     this.addCenteredText(
       centerX,
       304,
-      `Lives remaining ${String(this.results.livesRemaining)}`,
+      `Lives remaining ${String(session.getLivesRemaining())}`,
       "20px",
       PALETTE.hudMuted,
     );
@@ -69,10 +65,9 @@ export class ResultsScene extends Phaser.Scene {
       throw new Error("Keyboard input is unavailable.");
     }
 
-    // Temporary: phase 9 replaces this with the questionnaire, and a research
-    // session cannot be replayed as a recorded run (section 2.3).
     keyboard.once("keydown-SPACE", () => {
-      this.scene.start("GameScene");
+      session.reset();
+      this.scene.start("CalibrationScene");;
     });
   }
 

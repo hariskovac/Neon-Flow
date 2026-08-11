@@ -115,6 +115,10 @@ export const WAVE_CONFIG = {
   totalWaves: 7,
 };
 
+export const CALIBRATION_CONFIG = {
+  durationMs: 45000,
+};
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,

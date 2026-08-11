@@ -1,20 +1,26 @@
 import Phaser from "phaser";
 
-import { WeaponSystem } from "../systems/WeaponSystem";
-import { ProjectileSystem } from "../systems/ProjectileSystem";
+import { session } from "../../experiment/SessionManager";
+import { Player } from "../entities/Player";
+import {
+  ARENA,
+  CALIBRATION_CONFIG,
+  DEPTH,
+  ENEMY_WEAPON_CONFIG,
+  PALETTE,
+  PLAYER_CONFIG,
+  WEAPON_CONFIG,
+} from "../gameplayConfig";
+import { CollisionSystem } from "../systems/CollisionSystem";
+import { PerformanceMonitor } from "../systems/PerformanceMonitor";
 import { HudSystem } from "../systems/HudSystem";
 import { LivesSystem } from "../systems/LivesSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
-import { Player } from "../entities/Player";
+import { SpawnSystem } from "../systems/SpawnSystem";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
-import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG, WAVE_CONFIG } from "../gameplayConfig";
-import { CollisionSystem } from "../systems/CollisionSystem";
-import { SpawnSystem } from "../systems/SpawnSystem";
-import { WaveSystem } from "../systems/WaveSystem";
-import { PerformanceMonitor } from "../systems/PerformanceMonitor";
-import type { GameEndReason } from "../../types/game";
-import { session } from "../../experiment/SessionManager";
+import { ProjectileSystem } from "../systems/ProjectileSystem";
+import { WeaponSystem } from "../systems/WeaponSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -23,31 +29,34 @@ type MovementKeys = {
   D: Phaser.Input.Keyboard.Key;
 };
 
-export class GameScene extends Phaser.Scene {
+export class CalibrationScene extends Phaser.Scene {
   private player!: Player;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private movementKeys!: MovementKeys;
   private weapon!: WeaponSystem;
   private projectiles!: ProjectileSystem;
   private enemyProjectiles!: ProjectileSystem;
+  private spawner!: SpawnSystem;
+  private collisions!: CollisionSystem;
   private score!: ScoreSystem;
   private lives!: LivesSystem;
   private hud!: HudSystem;
   private performance!: PerformanceMonitor;
 
+  private startedAt = 0;
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
-  private spawner!: SpawnSystem;
-
-  private collisions!: CollisionSystem;
-  private waves!: WaveSystem;
+  private finished = false;
 
   public constructor() {
-    super({ key: "GameScene" });
+    super({ key: "CalibrationScene" });
   }
 
   public create(): void {
-    this.performance = new PerformanceMonitor();
+    this.startedAt = this.time.now;
+    this.finished = false;
+    this.aimAngle = -Math.PI / 2;
+    this.hasPointerInput = false;
 
     this.physics.world.setBounds(
       ARENA.x,
@@ -60,6 +69,7 @@ export class GameScene extends Phaser.Scene {
 
     this.score = new ScoreSystem();
     this.lives = new LivesSystem();
+    this.performance = new PerformanceMonitor();
     this.hud = new HudSystem(this, this.lives.getStartingLives());
 
     this.player = new Player(
@@ -69,6 +79,7 @@ export class GameScene extends Phaser.Scene {
     );
 
     this.weapon = new WeaponSystem();
+
     this.projectiles = new ProjectileSystem(this, ARENA, {
       projectileRadius: WEAPON_CONFIG.projectileRadius,
       projectileLifetimeMs: WEAPON_CONFIG.projectileLifetimeMs,
@@ -100,7 +111,7 @@ export class GameScene extends Phaser.Scene {
     const keyboard = this.input.keyboard;
 
     if (!keyboard) {
-      throw new Error("Keyboard input is unavailable.");
+      throw new Error("Keyboard input not available");
     }
 
     this.movementKeys = keyboard.addKeys({
@@ -115,65 +126,19 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
-    this.waves = new WaveSystem(this.time.now);
   }
-
-  private drawArena(): void {
-    const arena = this.add.rectangle(
-      ARENA.x + ARENA.width / 2,
-      ARENA.y + ARENA.height / 2,
-      ARENA.width,
-      ARENA.height,
-      PALETTE.arenaFloor,
-    );
-
-    arena.setStrokeStyle(2, PALETTE.arenaBorder);
-    arena.setDepth(DEPTH.arena);
-  }
-
-  private markPointerInput(): void {
-    this.hasPointerInput = true;
-  }
-
-  private updateAimAngle(pointer: Phaser.Input.Pointer): void {
-    if (!this.hasPointerInput) {
-      return;
-    }
-
-    const deltaX = pointer.worldX - this.player.getX();
-    const deltaY = pointer.worldY - this.player.getY();
-
-    if (deltaX === 0 && deltaY === 0) {
-      return;
-    }
-
-    this.aimAngle = Math.atan2(deltaY, deltaX);
-  }
-
 
   public update(time: number): void {
-    const transition = this.waves.update(time);
-
-    if (transition === "spawningStopped") {
-      this.spawner.setSpawningEnabled(false);
+    if (this.finished) {
+      return;
     }
 
-    if (transition === "waveEnded") {
-      this.recordWave(time);
-      this.score.addWaveSurvivalBonus();
-      this.spawner.clearAll();
-      this.enemyProjectiles.reset();
+    const elapsed = time - this.startedAt;
 
-      if (session.getCompletedWaveCount() >= WAVE_CONFIG.totalWaves) {
-        this.endSession("completed");
+    if (elapsed >= CALIBRATION_CONFIG.durationMs) {
+      this.finish(elapsed);
 
-        return;
-      }
-    } 
-
-    if (transition === "waveStarted") {
-      this.spawner.setSpawningEnabled(true);
-      this.spawner.resetSpawnTimer(time);
+      return;
     }
 
     const pointer = this.input.activePointer;
@@ -197,12 +162,6 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.projectiles.update(time);
-
-    if (this.waves.isIntermission()) {
-      this.updateHud(time);
-
-      return;
-    }
 
     this.spawner.update(time, this.player.getX(), this.player.getY());
 
@@ -237,16 +196,70 @@ export class GameScene extends Phaser.Scene {
       this.player.respawn(time, respawnX, respawnY);
 
       if (!this.lives.isAlive()) {
-        this.recordWave(time);
-        this.spawner.clearAll();
-        this.enemyProjectiles.reset();
-        this.endSession("lives_exhausted");
+        this.finish(elapsed);
 
         return;
       }
     }
 
-    this.updateHud(time);
+    this.hud.update({
+      score: this.score.getScore(),
+      livesRemaining: this.lives.getLivesRemaining(),
+      waveNumber: 0,
+      remainingMs: CALIBRATION_CONFIG.durationMs - elapsed,
+      isIntermission: false,
+      isCalibration: true,
+    });
+  }
+
+  // hands calibration summary off to session manager
+  private finish(elapsed: number): void {
+    this.finished = true;
+
+    const summary = this.performance.summarise(
+      0,
+      this.spawner.getActiveCount(),
+      elapsed,
+    );
+
+    session.setCalibration(summary);
+    this.spawner.clearAll();
+
+    console.log("Calibration complete", summary);
+
+    this.scene.start("GameScene");
+  }
+
+  private drawArena(): void {
+    const arena = this.add.rectangle(
+      ARENA.x + ARENA.width / 2,
+      ARENA.y + ARENA.height / 2,
+      ARENA.width,
+      ARENA.height,
+      PALETTE.arenaFloor,
+    );
+
+    arena.setStrokeStyle(2, PALETTE.arenaBorder);
+    arena.setDepth(DEPTH.arena);
+  }
+
+  private markPointerInput(): void {
+    this.hasPointerInput = true;
+  }
+
+  private updateAimAngle(pointer: Phaser.Input.Pointer): void {
+    if (!this.hasPointerInput) {
+      return;
+    }
+
+    const deltaX = pointer.worldX - this.player.getX();
+    const deltaY = pointer.worldY - this.player.getY();
+
+    if (deltaX === 0 && deltaY === 0) {
+      return;
+    }
+
+    this.aimAngle = Math.atan2(deltaY, deltaX);
   }
 
   private readMovementInput(): MovementInput {
@@ -256,39 +269,5 @@ export class GameScene extends Phaser.Scene {
       left: this.movementKeys.A.isDown || this.cursors.left.isDown,
       right: this.movementKeys.D.isDown || this.cursors.right.isDown,
     };
-  }
-
-  private updateHud(time: number): void {
-    this.hud.update({
-      score: this.score.getScore(),
-      livesRemaining: this.lives.getLivesRemaining(),
-      waveNumber: this.waves.getWaveNumber(),
-      remainingMs: this.waves.getPhaseRemainingMs(time),
-      isIntermission: this.waves.isIntermission(),
-      isCalibration: false,
-    });
-  }
-
-  private recordWave(time: number): void {
-    const summary = this.performance.summarise(
-      this.waves.getWaveNumber(),
-      this.spawner.getActiveCount(),
-      this.waves.getPhaseElapsedMs(time),
-    );
-
-    session.addCompletedWave(summary);
-    this.performance.reset();
-
-    console.log("Wave complete", summary);
-  }
-
-  private endSession(reason: GameEndReason): void {
-    session.setOutcome(
-      this.score.getScore(),
-      this.lives.getLivesRemaining(),
-      reason,
-    );
-
-    this.scene.start("ResultsScene");
   }
 }

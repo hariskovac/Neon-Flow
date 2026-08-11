@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { session } from "../../experiment/SessionManager";
 
 export class BootScene extends Phaser.Scene {
   public constructor() {
@@ -6,6 +7,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.scene.start("GameScene");
+    session.reset();
+    this.scene.start("CalibrationScene");
   }
 }

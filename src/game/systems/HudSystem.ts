@@ -15,6 +15,7 @@ export interface HudState {
   readonly waveNumber: number;
   readonly remainingMs: number;
   readonly isIntermission: boolean;
+  readonly isCalibration: boolean;
 }
 
 export class HudSystem {
@@ -97,6 +98,7 @@ export class HudSystem {
     this.livesLabel.setDepth(DEPTH.hud);
 
     this.update({
+      isCalibration: false,
       score: 0,
       livesRemaining: startingLives,
       waveNumber: 1,
@@ -107,6 +109,12 @@ export class HudSystem {
 
   public update(state: HudState): void {
     const isFirstUpdate = !this.hasRendered;
+
+    this.waveLabel.setVisible(!state.isCalibration);
+
+    for (const pip of this.wavePips) {
+      pip.setVisible(!state.isCalibration);
+    }
 
     if (isFirstUpdate || state.score !== this.lastScore) {
       this.scoreLabel.setText(`Score ${String(state.score)}`);
