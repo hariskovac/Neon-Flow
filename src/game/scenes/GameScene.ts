@@ -8,12 +8,12 @@ import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
-import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG } from "../gameplayConfig";
+import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG, WAVE_CONFIG } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
 import { WaveSystem } from "../systems/WaveSystem";
 import { PerformanceMonitor } from "../systems/PerformanceMonitor";
-import type { WavePerformance } from "../../types/game";
+import type { GameEndReason, WavePerformance } from "../../types/game";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -167,22 +167,17 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (transition === "waveEnded") {
-
-      const summary = this.performance.summarise(
-        this.waves.getWaveNumber(),
-        this.spawner.getActiveCount(),
-      );
-
-      this.completedWaves.push(summary);
-      this.performance.reset();
-
-      // TODO: Erase after DDA controller is set up
-      console.log("Wave complete", summary);
-
+      this.recordWave(time);
       this.score.addWaveSurvivalBonus();
       this.spawner.clearAll();
       this.enemyProjectiles.reset();
-    }
+
+      if (this.completedWaves.length >= WAVE_CONFIG.totalWaves) {
+        this.endSession("completed");
+
+        return;
+      }
+    } 
 
     if (transition === "waveStarted") {
       this.spawner.setSpawningEnabled(true);
@@ -248,6 +243,15 @@ export class GameScene extends Phaser.Scene {
       );
 
       this.player.respawn(time, respawnX, respawnY);
+
+      if (!this.lives.isAlive()) {
+        this.recordWave(time);
+        this.spawner.clearAll();
+        this.enemyProjectiles.reset();
+        this.endSession("lives_exhausted");
+
+        return;
+      }
     }
 
     this.updateHud(time);
@@ -269,6 +273,28 @@ export class GameScene extends Phaser.Scene {
       waveNumber: this.waves.getWaveNumber(),
       remainingMs: this.waves.getPhaseRemainingMs(time),
       isIntermission: this.waves.isIntermission(),
+    });
+  }
+
+  private recordWave(time: number): void {
+    const summary = this.performance.summarise(
+      this.waves.getWaveNumber(),
+      this.spawner.getActiveCount(),
+      this.waves.getPhaseElapsedMs(time),
+    );
+
+    this.completedWaves.push(summary);
+    this.performance.reset();
+
+    console.log("Wave complete", summary);
+  }
+
+  private endSession(reason: GameEndReason): void {
+    this.scene.start("ResultsScene", {
+      finalScore: this.score.getScore(),
+      completedWaves: this.completedWaves,
+      gameEndReason: reason,
+      livesRemaining: this.lives.getLivesRemaining(),
     });
   }
 }

@@ -121,7 +121,7 @@ export const KILL_POINTS: Record<EnemyType, number> = {
   dasher: 200,
 };
 
-export const WAVE_SURVIVAL_BONUS = 250;
+export const WAVE_SURVIVAL_BONUS = 2500;
 
 export const PALETTE = {
   arenaFloor: 0x0e1526,

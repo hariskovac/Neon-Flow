@@ -65,4 +65,8 @@ export class WaveSystem {
 
     return Math.max(total - (time - this.phaseStartedAt), 0);
   }
+
+  public getPhaseElapsedMs(time: number): number {
+    return time - this.phaseStartedAt;
+  }
 }

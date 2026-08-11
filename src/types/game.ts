@@ -1,6 +1,6 @@
 export type EnemyType = "chaser" | "ranged" | "dasher";
-
 export type PowerUpType = "shield" | "speed" | "fireRate";
+export type GameEndReason = "completed" | "lives_exhausted";
 
 export interface Vector2 {
   readonly x: number;
@@ -24,6 +24,7 @@ export function createEmptyKillTally(): Record<EnemyType, number> {
 
 export interface WavePerformance {
   readonly waveNumber: number;
+  readonly durationMs: number;
   readonly killsByType: Record<EnemyType, number>;
   readonly livesLost: number;
   readonly shieldHitsAbsorbed: number;

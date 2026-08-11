@@ -31,9 +31,11 @@ export class PerformanceMonitor {
   public summarise(
     waveNumber: number,
     enemiesRemaining: number,
+    durationMs: number,
   ): WavePerformance {
     return {
       waveNumber,
+      durationMs,
       killsByType: { ...this.killsByType },
       livesLost: this.livesLost,
       shieldHitsAbsorbed: this.shieldHitsAbsorbed,

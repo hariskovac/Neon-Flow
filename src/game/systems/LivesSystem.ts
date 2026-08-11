@@ -31,4 +31,8 @@ export class LivesSystem {
   public getStartingLives(): number {
     return this.startingLives;
   }
+
+  public isAlive(): boolean {
+    return this.livesRemaining > 0;
+  }
 }
