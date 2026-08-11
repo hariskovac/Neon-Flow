@@ -31,4 +31,5 @@ export interface WavePerformance {
   readonly enemiesRemaining: number;
   readonly shotsFired: number;
   readonly shotsHit: number;
+  readonly enemiesSpawned: number;
 }

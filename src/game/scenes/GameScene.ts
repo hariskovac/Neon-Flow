@@ -174,6 +174,7 @@ export class GameScene extends Phaser.Scene {
     if (transition === "waveStarted") {
       this.spawner.setSpawningEnabled(true);
       this.spawner.resetSpawnTimer(time);
+      this.spawner.resetWaveCounters();
     }
 
     const pointer = this.input.activePointer;
@@ -274,6 +275,7 @@ export class GameScene extends Phaser.Scene {
       this.waves.getWaveNumber(),
       this.spawner.getActiveCount(),
       this.waves.getPhaseElapsedMs(time),
+      this.spawner.getSpawnedThisWave()
     );
 
     session.addCompletedWave(summary);

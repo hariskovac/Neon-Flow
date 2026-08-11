@@ -220,6 +220,7 @@ export class CalibrationScene extends Phaser.Scene {
       0,
       this.spawner.getActiveCount(),
       elapsed,
+      this.spawner.getSpawnedThisWave()
     );
 
     session.setCalibration(summary);

@@ -18,6 +18,7 @@ export class SpawnSystem {
   private intervalMs = SPAWN_CONFIG.initialIntervalMs;
   private nextSpawnAt: number;
   private spawningEnabled = true;
+  private spawnedThisWave = 0;
 
   public constructor(
     scene: Phaser.Scene,
@@ -55,6 +56,8 @@ export class SpawnSystem {
     this.enemies.push(
       this.createEnemy(this.chooseEnemyType(), point.x, point.y),
     );
+
+    this.spawnedThisWave += 1;
   }
 
   public getEnemies(): Enemy[] {
@@ -159,5 +162,13 @@ export class SpawnSystem {
 
   public resetSpawnTimer(time: number): void {
     this.nextSpawnAt = time + this.intervalMs;
+  }
+
+  public getSpawnedThisWave(): number {
+    return this.spawnedThisWave;
+  }
+
+  public resetWaveCounters(): void {
+    this.spawnedThisWave = 0;
   }
 }

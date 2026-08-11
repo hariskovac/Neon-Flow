@@ -32,6 +32,7 @@ export class PerformanceMonitor {
     waveNumber: number,
     enemiesRemaining: number,
     durationMs: number,
+    enemiesSpawned: number,
   ): WavePerformance {
     return {
       waveNumber,
@@ -42,6 +43,7 @@ export class PerformanceMonitor {
       enemiesRemaining,
       shotsFired: this.shotsFired,
       shotsHit: this.shotsHit,
+      enemiesSpawned,
     };
   }
 
