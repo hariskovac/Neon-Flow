@@ -2,6 +2,11 @@ import type { WavePerformance } from "../types/game";
 import { STABILITY_CONFIG, clampLevel } from "./DifficultyConfig";
 import type { EvidenceClass } from "./PerformanceEvaluator";
 import { classifyPerformance } from "./PerformanceEvaluator";
+import type { Explanation } from "./ExplanationGenerator";
+import { generateExplanation } from "./ExplanationGenerator";
+import type { ParameterChange } from "./ParameterChanges";
+import { resolveParameterChanges } from "./ParameterChanges";
+
 
 export type DifficultyDirection = "increase" | "decrease" | "unchanged";
 
@@ -13,6 +18,9 @@ export interface DifficultyDecision {
   readonly evidence: EvidenceClass;
   readonly reasons: string[];
   readonly suppressedByHysteresis: boolean;
+  readonly parameterChanges: ParameterChange[];
+  readonly explanation: Explanation;
+
 }
 
 function resolveDirection(evidence: EvidenceClass): DifficultyDirection {
@@ -83,6 +91,8 @@ export class DifficultyController {
     this.lastDirection = direction;
     this.wavesEvaluated += 1;
 
+    const parameterChanges = resolveParameterChanges(previousLevel, nextLevel);
+
     return {
       waveNumber: performance.waveNumber,
       previousLevel,
@@ -91,6 +101,13 @@ export class DifficultyController {
       evidence: result.evidence,
       reasons: result.reasons,
       suppressedByHysteresis,
+      parameterChanges,
+      explanation: generateExplanation(
+        direction,
+        parameterChanges,
+        result.reasons,
+      ),
+
     };
   }
 
