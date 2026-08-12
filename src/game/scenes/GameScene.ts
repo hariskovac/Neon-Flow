@@ -18,6 +18,7 @@ import { session } from "../../experiment/SessionManager";
 import { DifficultyController } from "../../dda/DifficultyController";
 import { resolveActuators } from "../../dda/DifficultyConfig";
 import { CALIBRATION_CONFIG } from "../gameplayConfig";
+import { mapCalibration } from "../../dda/CalibrationMapper";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -52,7 +53,11 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     this.performance = new PerformanceMonitor();
-    this.difficulty = new DifficultyController(3);
+    const calibration = mapCalibration(session.getCalibration());
+
+    this.difficulty = new DifficultyController(calibration.startingLevel);
+
+    console.log("Calibration mapping", calibration);
 
     this.physics.world.setBounds(
       ARENA.x,
