@@ -126,7 +126,7 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
-    this.waves = new WaveSystem(this.time.now);
+    this.waves = new WaveSystem();
   }
 
   private drawArena(): void {

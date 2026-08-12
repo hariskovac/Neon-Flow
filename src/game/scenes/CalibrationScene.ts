@@ -43,7 +43,7 @@ export class CalibrationScene extends Phaser.Scene {
   private hud!: HudSystem;
   private performance!: PerformanceMonitor;
 
-  private startedAt = 0;
+  private startedAt: number | null = null;
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
   private finished = false;
@@ -53,7 +53,6 @@ export class CalibrationScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.startedAt = this.time.now;
     this.finished = false;
     this.aimAngle = -Math.PI / 2;
     this.hasPointerInput = false;
@@ -131,6 +130,12 @@ export class CalibrationScene extends Phaser.Scene {
 
   public update(time: number): void {
     if (this.finished) {
+      return;
+    }
+
+    if (this.startedAt === null) {
+      this.startedAt = time;
+
       return;
     }
 

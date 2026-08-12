@@ -10,14 +10,15 @@ type WavePhase = "active" | "intermission";
 export class WaveSystem {
   private waveNumber = 1;
   private phase: WavePhase = "active";
-  private phaseStartedAt: number;
+  private phaseStartedAt: number | null = null;
   private spawningStopped = false;
 
-  public constructor(startedAt: number) {
-    this.phaseStartedAt = startedAt;
-  }
-
   public update(time: number): WaveTransition | null {
+    if (this.phaseStartedAt === null) {
+      this.phaseStartedAt = time;
+
+      return null;
+    }
     const elapsed = time - this.phaseStartedAt;
 
     if (this.phase === "active") {
@@ -58,6 +59,12 @@ export class WaveSystem {
   }
 
   public getPhaseRemainingMs(time: number): number {
+    if (this.phaseStartedAt === null) {
+      return this.phase === "active"
+        ? WAVE_CONFIG.durationMs
+        : WAVE_CONFIG.intermissionMs;
+    }
+
     const total =
       this.phase === "active"
         ? WAVE_CONFIG.durationMs
@@ -67,6 +74,10 @@ export class WaveSystem {
   }
 
   public getPhaseElapsedMs(time: number): number {
+    if (this.phaseStartedAt === null) {
+      return 0;
+    }
+
     return time - this.phaseStartedAt;
   }
 }
