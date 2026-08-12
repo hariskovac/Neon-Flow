@@ -11,6 +11,7 @@ export class Dasher implements Enemy {
   private readonly hitbox: Phaser.GameObjects.Rectangle;
   private readonly ship: Phaser.GameObjects.Graphics;
   private readonly body: Phaser.Physics.Arcade.Body;
+  private readonly dashSpeed: number;
 
   private facing = 0;
 
@@ -19,8 +20,13 @@ export class Dasher implements Enemy {
   private state: DasherState = "locking";
   private stateUntil: number;
 
-  public constructor(scene: Phaser.Scene, x: number, y: number) {
+  public constructor(scene: Phaser.Scene, x: number, y: number, speedMultiplier: number) {
     const diameter = DASHER_CONFIG.collisionRadius * 2;
+
+    this.dashSpeed = Math.min(
+      DASHER_CONFIG.dashSpeed * speedMultiplier,
+      DASHER_CONFIG.maxDashSpeed,
+    );
 
     this.hitbox = scene.add.rectangle(x, y, diameter, diameter);
     this.hitbox.setVisible(false);
@@ -99,7 +105,7 @@ export class Dasher implements Enemy {
       this.facing,
       distanceToTarget,
       DASHER_CONFIG.overshootDistance,
-      DASHER_CONFIG.dashSpeed,
+      this.dashSpeed,
     );
 
     if (plan === null) {

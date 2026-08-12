@@ -12,11 +12,14 @@ export class Chaser implements Enemy {
   private readonly view: Phaser.GameObjects.Arc;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly spawnedAt: number;
+  private readonly speedMultiplier: number;
+
   private alive = true;
   private health = CHASER_CONFIG.maxHealth;
 
-  public constructor(scene: Phaser.Scene, x: number, y: number) {
+  public constructor(scene: Phaser.Scene, x: number, y: number, speedMultiplier: number) {
     this.spawnedAt = scene.time.now;
+    this.speedMultiplier = speedMultiplier;
 
     this.view = scene.add.circle(
       x,
@@ -49,7 +52,7 @@ export class Chaser implements Enemy {
 
     const speed = adjustChaserSpeed(
       time - this.spawnedAt,
-      CHASER_CONFIG.baseSpeed,
+      CHASER_CONFIG.baseSpeed * this.speedMultiplier,
       CHASER_CONFIG.accelerationPerSecond,
       CHASER_CONFIG.maxSpeed,
     );

@@ -99,6 +99,7 @@ export class CalibrationScene extends Phaser.Scene {
       ARENA,
       this.projectiles,
       this.enemyProjectiles,
+      CALIBRATION_CONFIG.fixedLevel,
     );
 
     this.collisions = new CollisionSystem(

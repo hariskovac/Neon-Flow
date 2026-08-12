@@ -15,6 +15,9 @@ export class Ranged implements Enemy {
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly playerProjectiles: ProjectileSystem;
   private readonly enemyProjectiles: ProjectileSystem;
+  private readonly approachSpeed: number;
+  private readonly retreatSpeed: number;
+  private readonly attackIntervalMs: number;
 
   private alive = true;
   private lastShotAt: number;
@@ -26,9 +29,23 @@ export class Ranged implements Enemy {
     y: number,
     playerProjectiles: ProjectileSystem,
     enemyProjectiles: ProjectileSystem,
+    speedMultiplier: number,
+    attackIntervalMs: number,
   ) {
     this.playerProjectiles = playerProjectiles;
     this.enemyProjectiles = enemyProjectiles;
+    
+    this.approachSpeed = Math.min(
+      RANGED_CONFIG.approachSpeed * speedMultiplier,
+      RANGED_CONFIG.maxApproachSpeed,
+    );
+
+    this.retreatSpeed = Math.min(
+      RANGED_CONFIG.retreatSpeed * speedMultiplier,
+      RANGED_CONFIG.maxRetreatSpeed,
+    );
+
+    this.attackIntervalMs = attackIntervalMs;
 
     // prevents firing immediately upon spawn
     this.lastShotAt = scene.time.now;
@@ -82,8 +99,8 @@ export class Ranged implements Enemy {
       RANGED_CONFIG.preferredDistance;
 
     const speed = closing
-      ? RANGED_CONFIG.approachSpeed
-      : RANGED_CONFIG.retreatSpeed;
+      ? this.approachSpeed
+      : this.retreatSpeed;
 
     this.body.setVelocity(standoff.x * speed, standoff.y * speed);
 
@@ -114,7 +131,7 @@ export class Ranged implements Enemy {
   }
 
   private tryFire(time: number, targetX: number, targetY: number): void {
-    if (time - this.lastShotAt < ENEMY_WEAPON_CONFIG.attackIntervalMs) {
+    if (time - this.lastShotAt < this.attackIntervalMs) {
       return;
     }
 

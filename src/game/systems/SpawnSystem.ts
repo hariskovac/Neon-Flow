@@ -7,6 +7,8 @@ import { Chaser } from "../entities/enemies/Chaser";
 import { Ranged } from "../entities/enemies/Ranged";
 import { Dasher } from "../entities/enemies/Dasher";
 import type { ProjectileSystem } from "./ProjectileSystem";
+import type { ActuatorValues } from "../../dda/DifficultyConfig";
+import { resolveActuators } from "../../dda/DifficultyConfig";
 
 export class SpawnSystem {
   private readonly scene: Phaser.Scene;
@@ -15,7 +17,7 @@ export class SpawnSystem {
   private readonly playerProjectiles: ProjectileSystem;
   private readonly enemyProjectiles: ProjectileSystem;
 
-  private intervalMs = SPAWN_CONFIG.initialIntervalMs;
+  private actuators: ActuatorValues = resolveActuators(1);
   private nextSpawnAt: number;
   private spawningEnabled = true;
   private spawnedThisWave = 0;
@@ -25,13 +27,15 @@ export class SpawnSystem {
     bounds: ArenaBounds,
     playerProjectiles: ProjectileSystem,
     enemyProjectiles: ProjectileSystem,
+    startingLevel: number,
   ) {
     this.scene = scene;
     this.bounds = bounds;
     this.playerProjectiles = playerProjectiles;
     this.enemyProjectiles = enemyProjectiles;
+    this.actuators = resolveActuators(startingLevel);
 
-    this.nextSpawnAt = scene.time.now + this.intervalMs;
+    this.nextSpawnAt = scene.time.now + this.actuators.spawnIntervalMs;
   }
 
   public update(time: number, playerX: number, playerY: number): void {
@@ -45,7 +49,7 @@ export class SpawnSystem {
       return;
     }
 
-    this.nextSpawnAt = time + this.intervalMs;
+    this.nextSpawnAt = time + this.actuators.spawnIntervalMs;
 
     if (this.enemies.length >= SPAWN_CONFIG.maxActiveEnemies) {
       return;
@@ -128,7 +132,7 @@ export class SpawnSystem {
 
   private createEnemy(type: EnemyType, x: number, y: number): Enemy {
     if (type === "chaser") {
-      return new Chaser(this.scene, x, y);
+      return new Chaser(this.scene, x, y, this.actuators.enemySpeedMultiplier);
     }
 
     if (type === "ranged") {
@@ -138,10 +142,12 @@ export class SpawnSystem {
         y,
         this.playerProjectiles,
         this.enemyProjectiles,
+        this.actuators.enemySpeedMultiplier,
+        this.actuators.rangedAttackIntervalMs,
       );
     }
 
-    return new Dasher(this.scene, x, y);
+    return new Dasher(this.scene, x, y, this.actuators.enemySpeedMultiplier);
   }
 
   public setSpawningEnabled(enabled: boolean): void {
@@ -161,7 +167,7 @@ export class SpawnSystem {
   }
 
   public resetSpawnTimer(time: number): void {
-    this.nextSpawnAt = time + this.intervalMs;
+    this.nextSpawnAt = time + this.actuators.spawnIntervalMs;
   }
 
   public getSpawnedThisWave(): number {
@@ -170,5 +176,10 @@ export class SpawnSystem {
 
   public resetWaveCounters(): void {
     this.spawnedThisWave = 0;
+  }
+
+  // sets actuator values for new difficulty
+  public setActuators(actuators: ActuatorValues): void {
+    this.actuators = actuators;
   }
 }

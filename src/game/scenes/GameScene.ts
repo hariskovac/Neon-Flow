@@ -15,6 +15,9 @@ import { WaveSystem } from "../systems/WaveSystem";
 import { PerformanceMonitor } from "../systems/PerformanceMonitor";
 import type { GameEndReason } from "../../types/game";
 import { session } from "../../experiment/SessionManager";
+import { DifficultyController } from "../../dda/DifficultyController";
+import { resolveActuators } from "../../dda/DifficultyConfig";
+import { CALIBRATION_CONFIG } from "../gameplayConfig";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -34,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   private lives!: LivesSystem;
   private hud!: HudSystem;
   private performance!: PerformanceMonitor;
+  private difficulty!: DifficultyController;
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
@@ -48,6 +52,7 @@ export class GameScene extends Phaser.Scene {
 
   public create(): void {
     this.performance = new PerformanceMonitor();
+    this.difficulty = new DifficultyController(3);
 
     this.physics.world.setBounds(
       ARENA.x,
@@ -88,6 +93,7 @@ export class GameScene extends Phaser.Scene {
       ARENA,
       this.projectiles,
       this.enemyProjectiles,
+      CALIBRATION_CONFIG.fixedLevel,
     );
 
     this.collisions = new CollisionSystem(
@@ -160,6 +166,17 @@ export class GameScene extends Phaser.Scene {
 
     if (transition === "waveEnded") {
       this.recordWave(time);
+
+      const summary = session.getCompletedWaves().at(-1);
+
+      if (summary !== undefined) {
+        const decision = this.difficulty.evaluate(summary);
+
+        this.spawner.setActuators(resolveActuators(decision.nextLevel));
+
+        console.log("DDA decision", decision);
+      }
+
       this.score.addWaveSurvivalBonus();
       this.spawner.clearAll();
       this.enemyProjectiles.reset();

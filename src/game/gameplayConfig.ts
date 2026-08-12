@@ -64,6 +64,8 @@ export const RANGED_CONFIG = {
   evasionRadius: 70,
   evasionSpeed: 150,
   evasionLookaheadMs: 500,
+  maxApproachSpeed: 150,
+  maxRetreatSpeed: 180,
 };
 
 export const DASHER_CONFIG = {
@@ -86,6 +88,7 @@ export const DASHER_CONFIG = {
   ],
   hullLineWidth: 2,
   hullFillAlpha: 0.18,
+  maxDashSpeed: 620,
 };
 
 export const SPAWN_CONFIG = {
@@ -117,6 +120,7 @@ export const WAVE_CONFIG = {
 
 export const CALIBRATION_CONFIG = {
   durationMs: 45000,
+  fixedLevel: 3,
 };
 
 export const KILL_POINTS: Record<EnemyType, number> = {
