@@ -1,8 +1,9 @@
 import { PLAYER_CONFIG } from "../gameplayConfig";
 import type { ProjectileSystem } from "./ProjectileSystem";
 import type { Player } from "../entities/Player";
-import type { EnemyType } from "../../types/game";
+import type { EnemyType, PowerUpType } from "../../types/game";
 import type { Enemy } from "../entities/enemies/Enemy";
+import type { PowerUpSystem } from "./PowerUpSystem";
 
 export function circlesOverlap(
   aX: number,
@@ -19,15 +20,17 @@ export function circlesOverlap(
   return deltaX * deltaX + deltaY * deltaY <= combinedRadius * combinedRadius;
 }
 
-export interface CollisionResult {
-  readonly killed: EnemyType[];
-  readonly playerHit: boolean;
+export interface EnemyKill {
+  readonly type: EnemyType;
+  readonly x: number;
+  readonly y: number;
 }
 
 export interface CollisionResult {
-  readonly killed: EnemyType[];
+  readonly killed: EnemyKill[];
   readonly shotsHit: number;
   readonly playerHit: boolean;
+  readonly collected: PowerUpType[]; 
 }
 
 export class CollisionSystem {
@@ -35,16 +38,25 @@ export class CollisionSystem {
   private readonly enemyProjectiles: ProjectileSystem;
   private readonly enemies: Enemy[];
   private readonly player: Player;
+  private readonly powerUps: PowerUpSystem;
 
-  public constructor(playerProjectiles: ProjectileSystem, enemyProjectiles: ProjectileSystem, enemies: Enemy[],player: Player) {
+  public constructor(
+    playerProjectiles: ProjectileSystem, 
+    enemyProjectiles: ProjectileSystem, 
+    enemies: Enemy[],
+    player: Player,
+    powerUps: PowerUpSystem, 
+  ) {
     this.playerProjectiles = playerProjectiles;
     this.enemyProjectiles = enemyProjectiles;
     this.enemies = enemies;
     this.player = player;
+    this.powerUps = powerUps; 
   }
 
   public update(): CollisionResult {
-    const killed: EnemyType[] = [];
+    const killed: EnemyKill[] = [];
+    const collected: PowerUpType[] = [];
     let playerHit = false;
     let shotsHit = 0;
 
@@ -69,8 +81,11 @@ export class CollisionSystem {
           projectile.deactivate();
           shotsHit += 1;
 
+          const x = enemy.getX();
+          const y = enemy.getY();
+
           if (enemy.takeHit()) {
-            killed.push(enemy.getType());
+            killed.push({ type: enemy.getType(), x, y });
           }
 
           break;
@@ -118,7 +133,28 @@ export class CollisionSystem {
         break;
       }
     }
-    return { killed, shotsHit, playerHit };
+
+    for (const drop of this.powerUps.getDrops()) {
+      if (!drop.isActive()) {
+        continue;
+      }
+
+      const touched = circlesOverlap(
+        this.player.getX(),
+        this.player.getY(),
+        playerRadius,
+        drop.getX(),
+        drop.getY(),
+        drop.getRadius(),
+      );
+
+      if (touched) {
+        collected.push(drop.getType());
+        drop.despawn();
+      }
+    }
+
+    return { killed, shotsHit, playerHit, collected };
   }
 
 
@@ -146,5 +182,9 @@ export class CollisionSystem {
         y + Math.sin(angle) * radius,
       );
     });
+
+    for (const projectile of this.enemyProjectiles.getActiveProjectiles()) {
+      projectile.deactivate();
+    }
   }
 }

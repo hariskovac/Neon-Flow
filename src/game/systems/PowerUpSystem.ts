@@ -1,0 +1,64 @@
+import Phaser from "phaser";
+
+import type { PowerUpType } from "../../types/game";
+import { PowerUp } from "../entities/PowerUp";
+import { POWERUP_CONFIG } from "../gameplayConfig";
+
+const POWERUP_TYPES: PowerUpType[] = ["shield", "speed", "fireRate"];
+
+export class PowerUpSystem {
+  private readonly scene: Phaser.Scene;
+  private readonly drops: PowerUp[] = [];
+
+  private dropChance: number;
+  private spawnedThisWave = 0;
+
+  public constructor(scene: Phaser.Scene, dropChance: number) {
+    this.scene = scene;
+    this.dropChance = dropChance;
+  }
+
+  public setDropChance(dropChance: number): void {
+    this.dropChance = dropChance;
+  }
+
+  // rolls for a drop and returns true when one is dropped
+  public rollForDrop(x: number, y: number, now: number): boolean {
+    if (this.drops.length >= POWERUP_CONFIG.maxActive) {
+      return false;
+    }
+
+    if (Phaser.Math.FloatBetween(0, 1) >= this.dropChance) {
+      return false;
+    }
+
+    const type = POWERUP_TYPES[Phaser.Math.Between(0, POWERUP_TYPES.length - 1)];
+
+    this.drops.push(new PowerUp(this.scene, x, y, type, now));
+    this.spawnedThisWave += 1;
+
+    return true;
+  }
+
+  public update(time: number): void {
+    for (let index = this.drops.length - 1; index >= 0; index -= 1) {
+      this.drops[index].update(time);
+
+      if (!this.drops[index].isActive()) {
+        this.drops.splice(index, 1);
+      }
+    }
+  }
+
+  public getDrops(): PowerUp[] {
+    return this.drops;
+  }
+
+  public getSpawnedThisWave(): number {
+    return this.spawnedThisWave;
+  }
+
+  public resetWaveCounters(): void {
+    this.spawnedThisWave = 0;
+  }
+}

@@ -9,6 +9,7 @@ export class Player {
   private readonly body: Phaser.Physics.Arcade.Body;
 
   private invincibleUntil = 0;
+  private speed: number = PLAYER_CONFIG.speed;
 
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     this.turret = scene.add.rectangle(
@@ -47,10 +48,7 @@ export class Player {
   }
 
   public update(time: number, movement: Vector2, aimAngle: number): void {
-    this.body.setVelocity(
-      movement.x * PLAYER_CONFIG.speed,
-      movement.y * PLAYER_CONFIG.speed,
-    );
+    this.body.setVelocity(movement.x * this.speed, movement.y * this.speed);
 
     this.turret.setPosition(this.view.x, this.view.y);
     this.turret.setRotation(aimAngle);
@@ -75,6 +73,14 @@ export class Player {
 
     this.view.setVisible(visible);
     this.turret.setVisible(visible);
+  }
+
+  public setSpeedMultiplier(multiplier: number): void {
+    this.speed = PLAYER_CONFIG.speed * multiplier;
+  }
+
+  public clearSpeedMultiplier(): void {
+    this.speed = PLAYER_CONFIG.speed;
   }
 
   public getX(): number {

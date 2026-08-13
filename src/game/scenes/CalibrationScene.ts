@@ -21,6 +21,10 @@ import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { WeaponSystem } from "../systems/WeaponSystem";
+import { PowerUpEffects } from "../systems/PowerUpEffects";
+import { PowerUpSystem } from "../systems/PowerUpSystem";
+import { resolveActuators } from "../../dda/DifficultyConfig";
+import { POWERUP_CONFIG } from "../gameplayConfig";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -42,6 +46,8 @@ export class CalibrationScene extends Phaser.Scene {
   private lives!: LivesSystem;
   private hud!: HudSystem;
   private performance!: PerformanceMonitor;
+  private powerUps!: PowerUpEffects;
+  private drops!: PowerUpSystem;
 
   private startedAt: number | null = null;
   private aimAngle = -Math.PI / 2;
@@ -101,11 +107,19 @@ export class CalibrationScene extends Phaser.Scene {
       CALIBRATION_CONFIG.fixedLevel,
     );
 
+    this.powerUps = new PowerUpEffects();
+
+    this.drops = new PowerUpSystem(
+      this,
+      resolveActuators(CALIBRATION_CONFIG.fixedLevel).powerUpDropChance,
+    );
+
     this.collisions = new CollisionSystem(
       this.projectiles,
       this.enemyProjectiles,
       this.spawner.getEnemies(),
       this.player,
+      this.drops,
     );
 
     const keyboard = this.input.keyboard;
@@ -180,31 +194,48 @@ export class CalibrationScene extends Phaser.Scene {
     const result = this.collisions.update();
 
     this.performance.recordShotsHit(result.shotsHit);
+    this.drops.update(time);
+    this.applyPowerUpEffects(time);
 
-    for (const enemyType of result.killed) {
-      this.score.addKill(enemyType);
-      this.performance.recordKill(enemyType);
+    for (const kill of result.killed) {
+      this.score.addKill(kill.type);
+      this.performance.recordKill(kill.type);
+
+      if (this.drops.rollForDrop(kill.x, kill.y, time)) {
+        this.performance.recordPowerUpSpawned();
+      }
+    }
+
+    for (const type of result.collected) {
+      this.powerUps.collect(type, time);
+      this.performance.recordPowerUpCollected();
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {
-      const respawnX = ARENA.x + ARENA.width / 2;
-      const respawnY = ARENA.y + ARENA.height / 2;
+      if (this.powerUps.consumeShield()) {
+        this.performance.recordShieldHit();
 
-      this.lives.loseLife();
-      this.performance.recordLifeLost();
+        this.player.respawn(time, this.player.getX(), this.player.getY());
+      } else {
+        const respawnX = ARENA.x + ARENA.width / 2;
+        const respawnY = ARENA.y + ARENA.height / 2;
 
-      this.collisions.clearRespawnArea(
-        respawnX,
-        respawnY,
-        PLAYER_CONFIG.respawnPushbackRadius,
-      );
+        this.lives.loseLife();
+        this.performance.recordLifeLost();
 
-      this.player.respawn(time, respawnX, respawnY);
+        this.collisions.clearRespawnArea(
+          respawnX,
+          respawnY,
+          PLAYER_CONFIG.respawnPushbackRadius,
+        );
 
-      if (!this.lives.isAlive()) {
-        this.finish(elapsed);
+        this.player.respawn(time, respawnX, respawnY);
 
-        return;
+        if (!this.lives.isAlive()) {
+          this.finish(elapsed);
+
+          return;
+        }
       }
     }
 
@@ -276,5 +307,19 @@ export class CalibrationScene extends Phaser.Scene {
       left: this.movementKeys.A.isDown || this.cursors.left.isDown,
       right: this.movementKeys.D.isDown || this.cursors.right.isDown,
     };
+  }
+
+  private applyPowerUpEffects(time: number): void {
+    if (this.powerUps.isSpeedActive(time)) {
+      this.player.setSpeedMultiplier(POWERUP_CONFIG.speedMultiplier);
+    } else {
+      this.player.clearSpeedMultiplier();
+    }
+
+    if (this.powerUps.isFireRateActive(time)) {
+      this.weapon.setFireRateMultiplier(POWERUP_CONFIG.fireRateMultiplier);
+    } else {
+      this.weapon.clearFireRateMultiplier();
+    }
   }
 }

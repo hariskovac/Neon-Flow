@@ -123,6 +123,18 @@ export const CALIBRATION_CONFIG = {
   fixedLevel: 3,
 };
 
+export const POWERUP_CONFIG = {
+  radius: 10,
+  lifetimeMs: 10000,
+  warningMs: 3000,
+  flashIntervalMs: 150,
+  maxActive: 12,
+  speedDurationMs: 8000,
+  fireRateDurationMs: 8000,
+  speedMultiplier: 1.45,
+  fireRateMultiplier: 1.8,
+};
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,
@@ -147,6 +159,9 @@ export const PALETTE = {
   ranged: 0xffa94d,
   dasher: 0xb28dff,
   dasherNose: 0xf4f7ff,
+  powerUpShield: 0x6bc5ff,
+  powerUpSpeed: 0x7ef7a8,
+  powerUpFireRate: 0xffc857,
 };
 
 export const DEPTH = {
@@ -154,6 +169,7 @@ export const DEPTH = {
   turret: 4,
   player: 5,
   projectile: 6,
+  powerUp: 6,
   enemy: 7,
   hud: 20,
   overlay: 30,

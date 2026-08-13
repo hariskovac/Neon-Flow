@@ -8,7 +8,7 @@ import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
-import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG, WAVE_CONFIG } from "../gameplayConfig";
+import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG, WAVE_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
 import { WaveSystem } from "../systems/WaveSystem";
@@ -17,9 +17,9 @@ import type { GameEndReason } from "../../types/game";
 import { session } from "../../experiment/SessionManager";
 import { DifficultyController } from "../../dda/DifficultyController";
 import { resolveActuators } from "../../dda/DifficultyConfig";
-import { CALIBRATION_CONFIG } from "../gameplayConfig";
 import { mapCalibration } from "../../dda/CalibrationMapper";
-import { generateCalibrationExplanation } from "../../dda/ExplanationGenerator";
+import { PowerUpEffects } from "../systems/PowerUpEffects";
+import { PowerUpSystem } from "../systems/PowerUpSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -48,6 +48,9 @@ export class GameScene extends Phaser.Scene {
   private collisions!: CollisionSystem;
   private waves!: WaveSystem;
 
+  private powerUps!: PowerUpEffects;
+  private drops!: PowerUpSystem;
+
   public constructor() {
     super({ key: "GameScene" });
   }
@@ -55,13 +58,10 @@ export class GameScene extends Phaser.Scene {
   public create(): void {
     this.performance = new PerformanceMonitor();
     const calibration = mapCalibration(session.getCalibration());
-    const calibrationMessage = generateCalibrationExplanation(
-      calibration.startingLevel,
-    );
 
     this.difficulty = new DifficultyController(calibration.startingLevel);
 
-    console.log("Calibration", calibration, calibrationMessage);
+    console.log("Calibration", calibration);
 
     this.physics.world.setBounds(
       ARENA.x,
@@ -102,7 +102,14 @@ export class GameScene extends Phaser.Scene {
       ARENA,
       this.projectiles,
       this.enemyProjectiles,
-      CALIBRATION_CONFIG.fixedLevel,
+      this.difficulty.getLevel(),
+    );
+
+    this.powerUps = new PowerUpEffects();
+
+    this.drops = new PowerUpSystem(
+      this,
+      resolveActuators(this.difficulty.getLevel()).powerUpDropChance,
     );
 
     this.collisions = new CollisionSystem(
@@ -110,6 +117,7 @@ export class GameScene extends Phaser.Scene {
       this.enemyProjectiles,
       this.spawner.getEnemies(),
       this.player,
+      this.drops,
     );
 
     const keyboard = this.input.keyboard;
@@ -183,6 +191,10 @@ export class GameScene extends Phaser.Scene {
 
         this.spawner.setActuators(resolveActuators(decision.nextLevel));
 
+        this.drops.setDropChance(
+          resolveActuators(decision.nextLevel).powerUpDropChance,
+        );
+
         console.log("DDA decision", decision);
       }
 
@@ -201,6 +213,7 @@ export class GameScene extends Phaser.Scene {
       this.spawner.setSpawningEnabled(true);
       this.spawner.resetSpawnTimer(time);
       this.spawner.resetWaveCounters();
+      this.drops.resetWaveCounters();
     }
 
     const pointer = this.input.activePointer;
@@ -225,6 +238,9 @@ export class GameScene extends Phaser.Scene {
 
     this.projectiles.update(time);
 
+    this.drops.update(time);
+    this.applyPowerUpEffects(time);
+
     if (this.waves.isIntermission()) {
       this.updateHud(time);
 
@@ -243,37 +259,53 @@ export class GameScene extends Phaser.Scene {
 
     this.performance.recordShotsHit(result.shotsHit);
 
-    for (const enemyType of result.killed) {
-      this.score.addKill(enemyType);
-      this.performance.recordKill(enemyType);
+    for (const kill of result.killed) {
+      this.score.addKill(kill.type);
+      this.performance.recordKill(kill.type);
+
+      if (this.drops.rollForDrop(kill.x, kill.y, time)) {
+        this.performance.recordPowerUpSpawned();
+      }
+    }
+
+    for (const type of result.collected) {
+      this.powerUps.collect(type, time);
+      this.performance.recordPowerUpCollected();
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {
-      const respawnX = ARENA.x + ARENA.width / 2;
-      const respawnY = ARENA.y + ARENA.height / 2;
+      if (this.powerUps.consumeShield()) {
+        this.performance.recordShieldHit();
 
-      this.lives.loseLife();
-      this.performance.recordLifeLost();
+        this.player.respawn(time, this.player.getX(), this.player.getY());
+      } else {
+        const respawnX = ARENA.x + ARENA.width / 2;
+        const respawnY = ARENA.y + ARENA.height / 2;
 
-      this.collisions.clearRespawnArea(
-        respawnX,
-        respawnY,
-        PLAYER_CONFIG.respawnPushbackRadius,
-      );
+        this.lives.loseLife();
+        this.performance.recordLifeLost();
 
-      this.player.respawn(time, respawnX, respawnY);
+        this.collisions.clearRespawnArea(
+          respawnX,
+          respawnY,
+          PLAYER_CONFIG.respawnPushbackRadius,
+        );
 
-      if (!this.lives.isAlive()) {
-        this.recordWave(time);
-        this.spawner.clearAll();
-        this.enemyProjectiles.reset();
-        this.endSession("lives_exhausted");
+        this.player.respawn(time, respawnX, respawnY);
 
-        return;
+        if (!this.lives.isAlive()) {
+          this.recordWave(time);
+          this.spawner.clearAll();
+          this.enemyProjectiles.reset();
+          this.endSession("lives_exhausted");
+
+          return;
+        }
       }
     }
 
     this.updateHud(time);
+
   }
 
   private readMovementInput(): MovementInput {
@@ -308,6 +340,20 @@ export class GameScene extends Phaser.Scene {
     this.performance.reset();
 
     console.log("Wave complete", summary);
+  }
+
+  private applyPowerUpEffects(time: number): void {
+    if (this.powerUps.isSpeedActive(time)) {
+      this.player.setSpeedMultiplier(POWERUP_CONFIG.speedMultiplier);
+    } else {
+      this.player.clearSpeedMultiplier();
+    }
+
+    if (this.powerUps.isFireRateActive(time)) {
+      this.weapon.setFireRateMultiplier(POWERUP_CONFIG.fireRateMultiplier);
+    } else {
+      this.weapon.clearFireRateMultiplier();
+    }
   }
 
   private endSession(reason: GameEndReason): void {

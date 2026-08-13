@@ -7,6 +7,8 @@ export class PerformanceMonitor {
   private killsByType: Record<EnemyType, number> = createEmptyKillTally();
   private livesLost = 0;
   private shieldHitsAbsorbed = 0;
+  private powerUpsSpawned = 0;
+  private powerUpsCollected = 0;
 
   public recordShotFired(): void {
     this.shotsFired += 1;
@@ -26,6 +28,14 @@ export class PerformanceMonitor {
 
   public recordLifeLost(): void {
     this.livesLost += 1;
+  }
+
+  public recordPowerUpSpawned(): void {
+    this.powerUpsSpawned += 1;
+  }
+
+  public recordPowerUpCollected(): void {
+    this.powerUpsCollected += 1;
   }
 
   public summarise(
