@@ -35,6 +35,8 @@ function calibration(overrides: CalibrationOverrides = {}): WavePerformance {
     shotsFired: 120,
     shotsHit: 50,
     durationMs: overrides.durationMs ?? 45000,
+    powerUpsSpawned: 0,
+    powerUpsCollected: 0,
   };
 }
 

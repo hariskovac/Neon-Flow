@@ -1,4 +1,4 @@
-import type { GameEndReason, WavePerformance } from "../types/game";
+import type { GameEndReason, WavePerformance, PowerUpType } from "../types/game";
 
 export class SessionManager {
   private calibration: WavePerformance | null = null;
@@ -50,12 +50,27 @@ export class SessionManager {
     return this.terminationReason;
   }
 
+  private powerUpsCollectedByType: Record<PowerUpType, number> = {
+    shield: 0,
+    speed: 0,
+    fireRate: 0,
+  };
+
+  public recordPowerUpCollected(type: PowerUpType): void {
+    this.powerUpsCollectedByType[type] += 1;
+  }
+
+  public getPowerUpsCollectedByType(): Record<PowerUpType, number> {
+    return { ...this.powerUpsCollectedByType };
+  }
+
   public reset(): void {
     this.calibration = null;
     this.completedWaves = [];
     this.livesRemaining = 0;
     this.finalScore = 0;
     this.terminationReason = "completed";
+    this.powerUpsCollectedByType = { shield: 0, speed: 0, fireRate: 0 };
   }
 }
 

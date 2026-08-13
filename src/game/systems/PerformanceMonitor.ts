@@ -54,6 +54,8 @@ export class PerformanceMonitor {
       shotsFired: this.shotsFired,
       shotsHit: this.shotsHit,
       enemiesSpawned,
+      powerUpsSpawned: this.powerUpsSpawned,
+      powerUpsCollected: this.powerUpsCollected,
     };
   }
 
@@ -63,5 +65,7 @@ export class PerformanceMonitor {
     this.killsByType = createEmptyKillTally();
     this.livesLost = 0;
     this.shieldHitsAbsorbed = 0;
+    this.powerUpsSpawned = 0;
+    this.powerUpsCollected = 0;
   }
 }

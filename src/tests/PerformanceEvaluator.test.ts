@@ -28,6 +28,8 @@ function wave(overrides: WaveOverrides = {}): WavePerformance {
     shotsFired: 100,
     shotsHit: 40,
     durationMs: 40000,
+    powerUpsSpawned: 0,
+    powerUpsCollected: 0,
   };
 }
 

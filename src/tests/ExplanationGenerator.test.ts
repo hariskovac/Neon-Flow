@@ -30,6 +30,8 @@ function wave(kills: number, livesLost = 0): WavePerformance {
     shotsFired: 100,
     shotsHit: 40,
     durationMs: 40000,
+    powerUpsSpawned: 0,
+    powerUpsCollected: 0,
   };
 }
 

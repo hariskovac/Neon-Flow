@@ -271,6 +271,7 @@ export class GameScene extends Phaser.Scene {
     for (const type of result.collected) {
       this.powerUps.collect(type, time);
       this.performance.recordPowerUpCollected();
+      session.recordPowerUpCollected(type);
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {
