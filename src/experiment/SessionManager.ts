@@ -1,4 +1,4 @@
-import type { GameEndReason, WavePerformance, PowerUpType } from "../types/game";
+import type { GameEndReason, WavePerformance, PowerUpType, Condition } from "../types/game";
 
 export class SessionManager {
   private calibration: WavePerformance | null = null;
@@ -6,6 +6,7 @@ export class SessionManager {
   private livesRemaining = 0;
   private finalScore = 0;
   private terminationReason: GameEndReason = "completed";
+  private condition: Condition = Math.random() < 0.5 ? "hidden" : "transparent";
 
   // calibration run summary
   public setCalibration(summary: WavePerformance): void {
@@ -64,6 +65,18 @@ export class SessionManager {
     return { ...this.powerUpsCollectedByType };
   }
 
+  public setCondition(condition: Condition): void {
+    this.condition = condition;
+  }
+
+  public getCondition(): Condition {
+    return this.condition;
+  }
+
+  public isTransparent(): boolean {
+    return this.condition === "transparent";
+  }
+
   public reset(): void {
     this.calibration = null;
     this.completedWaves = [];
@@ -71,6 +84,8 @@ export class SessionManager {
     this.finalScore = 0;
     this.terminationReason = "completed";
     this.powerUpsCollectedByType = { shield: 0, speed: 0, fireRate: 0 };
+    // TODO: replace by server-assigned value
+    this.condition = Math.random() < 0.5 ? "hidden" : "transparent";
   }
 }
 

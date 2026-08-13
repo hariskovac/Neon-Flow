@@ -4,6 +4,7 @@ import { BootScene } from "./scenes/BootScene";
 import { GameScene } from "./scenes/GameScene";
 import { ResultsScene } from "./scenes/ResultsScene";
 import { CalibrationScene } from "./scenes/CalibrationScene";
+import { InstructionsScene } from "./scenes/InstructionsScene";
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -33,5 +34,5 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
 
-  scene: [BootScene, GameScene, ResultsScene, CalibrationScene],
+  scene: [BootScene, GameScene, ResultsScene, CalibrationScene, InstructionsScene],
 };

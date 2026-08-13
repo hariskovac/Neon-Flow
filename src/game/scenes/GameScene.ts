@@ -20,6 +20,9 @@ import { resolveActuators } from "../../dda/DifficultyConfig";
 import { mapCalibration } from "../../dda/CalibrationMapper";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { PowerUpSystem } from "../systems/PowerUpSystem";
+import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
+import { generateCalibrationExplanation } from "../../dda/ExplanationGenerator";
+import type { Explanation } from "../../dda/ExplanationGenerator";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -40,6 +43,7 @@ export class GameScene extends Phaser.Scene {
   private hud!: HudSystem;
   private performance!: PerformanceMonitor;
   private difficulty!: DifficultyController;
+  private overlay!: TransparencyOverlay;
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
@@ -60,6 +64,12 @@ export class GameScene extends Phaser.Scene {
     const calibration = mapCalibration(session.getCalibration());
 
     this.difficulty = new DifficultyController(calibration.startingLevel);
+
+    this.overlay = new TransparencyOverlay(this);
+
+    this.showOverlay(
+      generateCalibrationExplanation(calibration.startingLevel),
+    );
 
     console.log("Calibration", calibration);
 
@@ -196,6 +206,7 @@ export class GameScene extends Phaser.Scene {
         );
 
         console.log("DDA decision", decision);
+        this.showOverlay(decision.explanation);
       }
 
       this.score.addWaveSurvivalBonus();
@@ -214,6 +225,7 @@ export class GameScene extends Phaser.Scene {
       this.spawner.resetSpawnTimer(time);
       this.spawner.resetWaveCounters();
       this.drops.resetWaveCounters();
+      this.overlay.hide();
     }
 
     const pointer = this.input.activePointer;
@@ -354,6 +366,14 @@ export class GameScene extends Phaser.Scene {
       this.weapon.setFireRateMultiplier(POWERUP_CONFIG.fireRateMultiplier);
     } else {
       this.weapon.clearFireRateMultiplier();
+    }
+  }
+
+  private showOverlay(explanation: Explanation): void {
+    if (session.isTransparent()) {
+      this.overlay.showExplanation(this, explanation);
+    } else {
+      this.overlay.showNeutral(this);
     }
   }
 

@@ -1,6 +1,7 @@
 export type EnemyType = "chaser" | "ranged" | "dasher";
 export type PowerUpType = "shield" | "speed" | "fireRate";
 export type GameEndReason = "completed" | "lives_exhausted";
+export type Condition = "hidden" | "transparent";
 
 export interface Vector2 {
   readonly x: number;

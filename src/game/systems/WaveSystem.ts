@@ -9,9 +9,10 @@ type WavePhase = "active" | "intermission";
 
 export class WaveSystem {
   private waveNumber = 1;
-  private phase: WavePhase = "active";
+  private phase: WavePhase = "intermission";
   private phaseStartedAt: number | null = null;
   private spawningStopped = false;
+  private beforeFirstWave = true;
 
   public update(time: number): WaveTransition | null {
     if (this.phaseStartedAt === null) {
@@ -39,7 +40,12 @@ export class WaveSystem {
     }
 
     if (elapsed >= WAVE_CONFIG.intermissionMs) {
-      this.waveNumber += 1;
+      if (this.beforeFirstWave) {
+        this.beforeFirstWave = false;
+      } else {
+        this.waveNumber += 1;
+      }
+
       this.phase = "active";
       this.phaseStartedAt = time;
       this.spawningStopped = false;
@@ -56,6 +62,10 @@ export class WaveSystem {
 
   public isIntermission(): boolean {
     return this.phase === "intermission";
+  }
+
+  public isBeforeFirstWave(): boolean {
+    return this.beforeFirstWave;
   }
 
   public getPhaseRemainingMs(time: number): number {
