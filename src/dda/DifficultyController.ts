@@ -20,7 +20,6 @@ export interface DifficultyDecision {
   readonly suppressedByHysteresis: boolean;
   readonly parameterChanges: ParameterChange[];
   readonly explanation: Explanation;
-
 }
 
 function resolveDirection(evidence: EvidenceClass): DifficultyDirection {
@@ -104,10 +103,11 @@ export class DifficultyController {
       parameterChanges,
       explanation: generateExplanation(
         direction,
+        previousLevel,
+        nextLevel,
         parameterChanges,
         result.reasons,
       ),
-
     };
   }
 

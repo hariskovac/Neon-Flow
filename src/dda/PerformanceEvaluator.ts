@@ -39,124 +39,57 @@ export function resolveKillRatio(performance: WavePerformance): number {
   return Math.min(kills / performance.enemiesSpawned, 1);
 }
 
-export function classifyPerformance(
-  performance: WavePerformance,
-): EvidenceResult {
+export function classifyPerformance(performance: WavePerformance): EvidenceResult {
   const killRatio = resolveKillRatio(performance);
   const livesLost = performance.livesLost;
   const enemiesRemaining = performance.enemiesRemaining;
   const reasons: string[] = [];
-
-  // heavy life loss overrides other evidence
+ 
   if (livesLost >= EVIDENCE_THRESHOLDS.heavyLifeLoss) {
     reasons.push("livesLost");
-
-    return {
-      evidence: "strongDecrease",
-      reasons,
-      killRatio,
-      livesLost,
-      enemiesRemaining,
-    };
+    return { evidence: "strongDecrease", reasons, killRatio, livesLost, enemiesRemaining };
   }
-
+ 
   if (livesLost >= EVIDENCE_THRESHOLDS.moderateLifeLoss) {
     reasons.push("livesLost");
-
-    // losing a life + clearing arena is evidence of a fair fight
+ 
     if (killRatio >= EVIDENCE_THRESHOLDS.goodKillRatio) {
-      reasons.push("killRate");
-
-      return {
-        evidence: "targetRange",
-        reasons,
-        killRatio,
-        livesLost,
-        enemiesRemaining,
-      };
+      reasons.push("highKillRate");
+      return { evidence: "targetRange", reasons, killRatio, livesLost, enemiesRemaining };
     }
-
-    return {
-      evidence: "decrease",
-      reasons,
-      killRatio,
-      livesLost,
-      enemiesRemaining,
-    };
+ 
+    return { evidence: "decrease", reasons, killRatio, livesLost, enemiesRemaining };
   }
-
+ 
   if (killRatio >= EVIDENCE_THRESHOLDS.strongKillRatio) {
-    reasons.push("killRate");
+    reasons.push("highKillRate");
     reasons.push("noLivesLost");
-
-    return {
-      evidence: "strongIncrease",
-      reasons,
-      killRatio,
-      livesLost,
-      enemiesRemaining,
-    };
+    return { evidence: "strongIncrease", reasons, killRatio, livesLost, enemiesRemaining };
   }
-
+ 
   if (killRatio >= EVIDENCE_THRESHOLDS.goodKillRatio) {
-    reasons.push("killRate");
-
-    return {
-      evidence: "increase",
-      reasons,
-      killRatio,
-      livesLost,
-      enemiesRemaining,
-    };
+    reasons.push("highKillRate");
+    return { evidence: "increase", reasons, killRatio, livesLost, enemiesRemaining };
   }
-
+ 
   if (killRatio < EVIDENCE_THRESHOLDS.poorKillRatio) {
-    reasons.push("killRate");
-
-    return {
-      evidence: "decrease",
-      reasons,
-      killRatio,
-      livesLost,
-      enemiesRemaining,
-    };
+    reasons.push("lowKillRate");
+    return { evidence: "decrease", reasons, killRatio, livesLost, enemiesRemaining };
   }
-
-  // enemies left are a tiebreak
+ 
   if (
     killRatio < EVIDENCE_THRESHOLDS.weakKillRatio &&
     enemiesRemaining >= EVIDENCE_THRESHOLDS.highRemainingEnemies
   ) {
-    reasons.push("enemiesRemaining");
-
-    return {
-      evidence: "decrease",
-      reasons,
-      killRatio,
-      livesLost,
-      enemiesRemaining,
-    };
+    reasons.push("highEnemiesRemaining");
+    return { evidence: "decrease", reasons, killRatio, livesLost, enemiesRemaining };
   }
-
+ 
   if (enemiesRemaining <= EVIDENCE_THRESHOLDS.lowRemainingEnemies) {
-    reasons.push("enemiesRemaining");
-
-    return {
-      evidence: "increase",
-      reasons,
-      killRatio,
-      livesLost,
-      enemiesRemaining,
-    };
+    reasons.push("lowEnemiesRemaining");
+    return { evidence: "increase", reasons, killRatio, livesLost, enemiesRemaining };
   }
-
-  reasons.push("killRate");
-
-  return {
-    evidence: "targetRange",
-    reasons,
-    killRatio,
-    livesLost,
-    enemiesRemaining,
-  };
+ 
+  reasons.push("steadyKillRate");
+  return { evidence: "targetRange", reasons, killRatio, livesLost, enemiesRemaining };
 }

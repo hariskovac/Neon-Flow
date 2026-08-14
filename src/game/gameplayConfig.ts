@@ -162,6 +162,9 @@ export const PALETTE = {
   powerUpShield: 0x6bc5ff,
   powerUpSpeed: 0x7ef7a8,
   powerUpFireRate: 0xffc857,
+  textPrimary: "#f4f7ff",
+  textMuted: "#8fa3c4",
+  textAccent: "#3ddbff",
 };
 
 export const DEPTH = {

@@ -21,7 +21,7 @@ import { mapCalibration } from "../../dda/CalibrationMapper";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { PowerUpSystem } from "../systems/PowerUpSystem";
 import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
-import { generateCalibrationExplanation } from "../../dda/ExplanationGenerator";
+import { generateCalibrationExplanation, generateNeutralExplanation } from "../../dda/ExplanationGenerator";
 import type { Explanation } from "../../dda/ExplanationGenerator";
 
 type MovementKeys = {
@@ -68,7 +68,7 @@ export class GameScene extends Phaser.Scene {
     this.overlay = new TransparencyOverlay(this);
 
     this.showOverlay(
-      generateCalibrationExplanation(calibration.startingLevel),
+      generateCalibrationExplanation(calibration.startingLevel, 5),
     );
 
     console.log("Calibration", calibration);
@@ -371,9 +371,11 @@ export class GameScene extends Phaser.Scene {
 
   private showOverlay(explanation: Explanation): void {
     if (session.isTransparent()) {
-      this.overlay.showExplanation(this, explanation);
+      this.overlay.show(explanation);
     } else {
-      this.overlay.showNeutral(this);
+      this.overlay.show(
+        generateNeutralExplanation(this.waves.isBeforeFirstWave()),
+      );
     }
   }
 

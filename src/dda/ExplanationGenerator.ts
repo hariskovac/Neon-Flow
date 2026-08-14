@@ -1,5 +1,6 @@
 import type { DifficultyDirection } from "./DifficultyController";
 import type { ActuatorKey, ParameterChange } from "./ParameterChanges";
+import { MAX_DIFFICULTY_LEVEL } from "./DifficultyConfig";
 
 export interface ParameterLine {
   readonly label: string;
@@ -7,61 +8,66 @@ export interface ParameterLine {
 }
 
 export interface Explanation {
-  readonly reasonLine: string;
   readonly headline: string;
-  readonly parameterLines: ParameterLine[];
+  readonly levelLabel: string | null;
+  readonly levelValue: string;
+  readonly note: string | null;
+  readonly changeLines: ParameterLine[];
+  readonly reasonText: string;
+  readonly footer: string | null;
 }
 
-const PARAMETER_LABELS: Record<
+const PARAMETER_WORDING: Record<
   ActuatorKey,
-  { label: string; labelRisesWithValue: boolean }
+  { rising: string; falling: string; labelRisesWithValue: boolean }
 > = {
-  spawnIntervalMs: { label: "Enemy spawn rate", labelRisesWithValue: false },
-  enemySpeedMultiplier: { label: "Enemy speed", labelRisesWithValue: true },
-  rangedAttackIntervalMs: { label: "Enemy fire rate", labelRisesWithValue: false },
-  powerUpDropChance: { label: "Power-up rate", labelRisesWithValue: true },
+  spawnIntervalMs: {
+    rising: "Enemies spawn more often",
+    falling: "Enemies spawn less often",
+    labelRisesWithValue: false,
+  },
+  enemySpeedMultiplier: {
+    rising: "Enemies move faster",
+    falling: "Enemies move slower",
+    labelRisesWithValue: true,
+  },
+  rangedAttackIntervalMs: {
+    rising: "Ranged enemies fire more often",
+    falling: "Ranged enemies fire less often",
+    labelRisesWithValue: false,
+  },
+  powerUpDropChance: {
+    rising: "Power-ups appear more often",
+    falling: "Power-ups appear less often",
+    labelRisesWithValue: true,
+  },
 };
 
 const REASON_PHRASES: Record<string, string> = {
-  killRate: "your kill rate",
-  livesLost: "the lives you lost",
-  noLivesLost: "that you lost no lives",
-  enemiesRemaining: "the enemies left at the end of the wave",
-  noCalibrationData: "the standard starting level",
+  highKillRate: "High kill rate",
+  steadyKillRate: "Steady kill rate",
+  lowKillRate: "Low kill rate",
+  livesLost: "Lives lost",
+  noLivesLost: "No lives lost",
+  highEnemiesRemaining: "Many enemies left",
+  lowEnemiesRemaining: "Few enemies left",
 };
 
-function joinPhrases(phrases: string[]): string {
-  if (phrases.length === 0) {
-    return "";
-  }
-
-  if (phrases.length === 1) {
-    return phrases[0];
-  }
-
-  return `${phrases.slice(0, -1).join(", ")} and ${phrases[phrases.length - 1]}`;
-}
-
-function buildReasonLine(reasons: string[]): string {
-  const phrases = reasons
+function buildReasonText(reasons: string[]): string {
+  return reasons
     .map((reason) => REASON_PHRASES[reason])
-    .filter((phrase): phrase is string => phrase !== undefined);
-
-  if (phrases.length === 0) {
-    return "";
-  }
-
-  return `Based on ${joinPhrases(phrases)} in the previous wave:`;
+    .filter((phrase): phrase is string => phrase !== undefined)
+    .join("  \u2022  ");
 }
-
-function buildParameterLines(changes: ParameterChange[]): ParameterLine[] {
+ 
+function buildChangeLines(changes: ParameterChange[]): ParameterLine[] {
   return changes.map((change) => {
-    const wording = PARAMETER_LABELS[change.parameter];
+    const wording = PARAMETER_WORDING[change.parameter];
     const valueRose = change.nextValue > change.previousValue;
     const labelRises = valueRose === wording.labelRisesWithValue;
-
+ 
     return {
-      label: wording.label,
+      label: labelRises ? wording.rising : wording.falling,
       direction: labelRises ? "up" : "down",
     };
   });
@@ -69,47 +75,106 @@ function buildParameterLines(changes: ParameterChange[]): ParameterLine[] {
 
 export function generateExplanation(
   direction: DifficultyDirection,
+  previousLevel: number,
+  nextLevel: number,
   changes: ParameterChange[],
   reasons: string[],
 ): Explanation {
-  const reasonLine = buildReasonLine(reasons);
+  const reasonText = buildReasonText(reasons);
 
   if (direction === "unchanged" || changes.length === 0) {
     return {
-      reasonLine,
       headline: "Threat level unchanged",
-      parameterLines: [],
+      levelLabel: null,
+      levelValue: `${String(nextLevel)} / ${String(MAX_DIFFICULTY_LEVEL)}`,
+      note: null,
+      changeLines: [],
+      reasonText,
+      footer: null,
     };
   }
 
   return {
-    reasonLine,
     headline:
       direction === "increase"
         ? "Threat level increased"
         : "Threat level reduced",
-    parameterLines: buildParameterLines(changes),
+    levelLabel: null,
+    levelValue: `${String(previousLevel)} \u2192 ${String(nextLevel)}`,
+    note: null,
+    changeLines: buildChangeLines(changes),
+    reasonText,
+    footer: null,
   };
 }
 
 export function generateCalibrationExplanation(
   startingLevel: number,
+  maxStartingLevel: number,
 ): Explanation {
+  const atCap = startingLevel >= maxStartingLevel;
+ 
   return {
-    reasonLine: "Based on your calibration round:",
-    headline: `Starting threat level ${String(startingLevel)} of 10`,
-    parameterLines: [],
+    headline: "Calibration complete",
+    levelLabel: "Starting threat level",
+    levelValue: `${String(startingLevel)} / ${String(MAX_DIFFICULTY_LEVEL)}`,
+    note: atCap ? "Highest possible starting level" : null,
+    changeLines: [],
+    reasonText: "",
+    footer: atCap
+      ? "Difficulty may continue to increase during play."
+      : "Based on your calibration performance.",
+  };
+}
+
+export function generateNeutralExplanation(
+  beforeFirstWave: boolean,
+): Explanation {
+  if (beforeFirstWave) {
+    return {
+      headline: "Get ready",
+      levelLabel: null,
+      levelValue: "",
+      note: null,
+      changeLines: [],
+      reasonText: "",
+      footer: "The first wave begins shortly.",
+    };
+  }
+ 
+  return {
+    headline: "Wave complete",
+    levelLabel: null,
+    levelValue: "",
+    note: null,
+    changeLines: [],
+    reasonText: "",
+    footer: "Prepare for the next wave.",
   };
 }
 
 export function flattenExplanation(explanation: Explanation): string {
-  const parts = explanation.parameterLines.map(
-    (line) => `${line.label} ${line.direction === "up" ? "up" : "down"}`,
-  );
-
-  const changeText = parts.length === 0 ? "" : ` ${parts.join(", ")}.`;
-  const reasonText =
-    explanation.reasonLine === "" ? "" : `${explanation.reasonLine} `;
-
-  return `${reasonText}${explanation.headline}.${changeText}`;
+  const parts: string[] = [explanation.headline];
+ 
+  if (explanation.levelValue !== "") {
+    parts.push(explanation.levelValue);
+  }
+ 
+  if (explanation.note !== null) {
+    parts.push(explanation.note);
+  }
+ 
+  for (const line of explanation.changeLines) {
+    parts.push(`${line.direction === "up" ? "up" : "down"}: ${line.label}`);
+  }
+ 
+  if (explanation.reasonText !== "") {
+    parts.push(explanation.reasonText);
+  }
+ 
+  if (explanation.footer !== null) {
+    parts.push(explanation.footer);
+  }
+ 
+  return parts.join(" | ");
 }
