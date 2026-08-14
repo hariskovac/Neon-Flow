@@ -64,6 +64,7 @@ export class GameScene extends Phaser.Scene {
     const calibration = mapCalibration(session.getCalibration());
 
     this.difficulty = new DifficultyController(calibration.startingLevel);
+    this.waves = new WaveSystem();
 
     this.overlay = new TransparencyOverlay(this);
 
@@ -148,7 +149,6 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
-    this.waves = new WaveSystem();
   }
 
   private drawArena(): void {

@@ -8,11 +8,18 @@ import {
   PALETTE,
 } from "../game/gameplayConfig";
 
+interface LayoutBlock {
+  readonly label: Phaser.GameObjects.Text;
+  readonly x: number;
+  readonly advance: number;
+}
+
 export class TransparencyOverlay {
   private static readonly PANEL_WIDTH = 460;
-  private static readonly PANEL_HEIGHT = 210;
+  private static readonly PADDING = 30;
   private static readonly ROW_HEIGHT = 26;
   private static readonly LEFT_EDGE = -TransparencyOverlay.PANEL_WIDTH / 2 + 34;
+  private readonly panel: Phaser.GameObjects.Rectangle;
 
   private readonly container: Phaser.GameObjects.Container;
   private readonly scene: Phaser.Scene;
@@ -30,16 +37,16 @@ export class TransparencyOverlay {
   public constructor(scene: Phaser.Scene) {
     this.scene = scene;
 
-    const panel = scene.add.rectangle(
+    this.panel = scene.add.rectangle(
       0,
       0,
       TransparencyOverlay.PANEL_WIDTH,
-      TransparencyOverlay.PANEL_HEIGHT,
+      200,
       PALETTE.arenaFloor,
       0.96,
     );
 
-    panel.setStrokeStyle(2, PALETTE.arenaBorder);
+    this.panel.setStrokeStyle(2, PALETTE.arenaBorder);
 
     this.headlineLabel = this.addLabel(scene, "20px", PALETTE.textPrimary, 0.5);
     this.levelNameLabel = this.addLabel(scene, "15px", PALETTE.textMuted, 0.5);
@@ -54,7 +61,7 @@ export class TransparencyOverlay {
       ARENA.x + ARENA.width / 2,
       ARENA.y + ARENA.height / 2,
       [
-        panel,
+        this.panel,
         this.headlineLabel,
         this.levelNameLabel,
         this.levelValueLabel,
@@ -70,128 +77,6 @@ export class TransparencyOverlay {
     this.container.setVisible(false);
   }
 
-  public show(explanation: Explanation): void {
-    let y = -TransparencyOverlay.PANEL_HEIGHT / 2 + 34;
- 
-    this.headlineLabel.setText(explanation.headline);
-    this.headlineLabel.setPosition(0, y);
-    y += 34;
- 
-    if (explanation.levelLabel !== null) {
-      this.levelNameLabel.setText(explanation.levelLabel);
-      this.levelNameLabel.setPosition(0, y);
-      this.levelNameLabel.setVisible(true);
-      y += 26;
-    } else {
-      this.levelNameLabel.setVisible(false);
-    }
- 
-    if (explanation.levelValue !== "") {
-      this.levelValueLabel.setText(explanation.levelValue);
-      this.levelValueLabel.setPosition(0, y);
-      this.levelValueLabel.setVisible(true);
-      y += 34;
-    } else {
-      this.levelValueLabel.setVisible(false);
-    }
- 
-    if (explanation.note !== null) {
-      this.noteLabel.setText(explanation.note);
-      this.noteLabel.setPosition(0, y);
-      this.noteLabel.setVisible(true);
-      y += 26;
-    } else {
-      this.noteLabel.setVisible(false);
-    }
- 
-    y = this.layOutChanges(explanation, y);
-    y = this.layOutReason(explanation, y);
- 
-    if (explanation.footer !== null) {
-      this.footerLabel.setText(explanation.footer);
-      this.footerLabel.setPosition(0, y + 14);
-      this.footerLabel.setVisible(true);
-    } else {
-      this.footerLabel.setVisible(false);
-    }
- 
-    this.container.setVisible(true);
-  }
-
-  public hide(): void {
-    this.container.setVisible(false);
-  }
-
-  private layOutChanges(explanation: Explanation, startY: number): number {
-    if (explanation.changeLines.length === 0) {
-      this.changesHeading.setVisible(false);
- 
-      for (const row of this.changeRows) {
-        row.setVisible(false);
-      }
- 
-      return startY;
-    }
- 
-    let y = startY + 12;
- 
-    this.changesHeading.setText("CHANGES");
-    this.changesHeading.setPosition(TransparencyOverlay.LEFT_EDGE, y);
-    this.changesHeading.setVisible(true);
-    y += 22;
- 
-    // Rows are created on demand and reused, so a decision with fewer changes
-    // leaves the surplus rows hidden rather than reflowing the panel.
-    while (this.changeRows.length < explanation.changeLines.length) {
-      const row = this.addLabel(this.scene, "15px", PALETTE.textPrimary, 0);
- 
-      this.changeRows.push(row);
-      this.container.add(row);
-    }
- 
-    this.changeRows.forEach((row, index) => {
-      if (index >= explanation.changeLines.length) {
-        row.setVisible(false);
- 
-        return;
-      }
- 
-      const line = explanation.changeLines[index];
-      const arrow = line.direction === "up" ? "\u2191" : "\u2193";
- 
-      row.setText(`${arrow}  ${line.label}`);
-      row.setPosition(
-        TransparencyOverlay.LEFT_EDGE,
-        y + index * TransparencyOverlay.ROW_HEIGHT,
-      );
-      row.setVisible(true);
-    });
- 
-    return y + explanation.changeLines.length * TransparencyOverlay.ROW_HEIGHT;
-  }
- 
-  private layOutReason(explanation: Explanation, startY: number): number {
-    if (explanation.reasonText === "") {
-      this.reasonHeading.setVisible(false);
-      this.reasonLabel.setVisible(false);
- 
-      return startY;
-    }
- 
-    let y = startY + 14;
- 
-    this.reasonHeading.setText("WHY");
-    this.reasonHeading.setPosition(TransparencyOverlay.LEFT_EDGE, y);
-    this.reasonHeading.setVisible(true);
-    y += 22;
- 
-    this.reasonLabel.setText(explanation.reasonText);
-    this.reasonLabel.setPosition(TransparencyOverlay.LEFT_EDGE, y);
-    this.reasonLabel.setVisible(true);
- 
-    return y + 20;
-  }
- 
   private addLabel(
     scene: Phaser.Scene,
     fontSize: string,
@@ -204,10 +89,140 @@ export class TransparencyOverlay {
       color: colour,
       wordWrap: { width: TransparencyOverlay.PANEL_WIDTH - 68 },
     });
- 
+
     label.setOrigin(originX, 0.5);
- 
+
     return label;
   }
 
+  public show(explanation: Explanation): void {
+    const blocks: LayoutBlock[] = [];
+
+    this.hideAll();
+
+    blocks.push(this.block(this.headlineLabel, explanation.headline, 0, 34));
+
+    if (explanation.levelLabel !== null) {
+      blocks.push(
+        this.block(this.levelNameLabel, explanation.levelLabel, 0, 24),
+      );
+    }
+
+    if (explanation.levelValue !== "") {
+      blocks.push(
+        this.block(this.levelValueLabel, explanation.levelValue, 0, 40),
+      );
+    }
+
+    if (explanation.note !== null) {
+      blocks.push(this.block(this.noteLabel, explanation.note, 0, 26));
+    }
+
+    if (explanation.changeLines.length > 0) {
+      blocks.push(
+        this.block(
+          this.changesHeading,
+          "CHANGES",
+          TransparencyOverlay.LEFT_EDGE,
+          30,
+        ),
+      );
+
+      while (this.changeRows.length < explanation.changeLines.length) {
+        const row = this.addLabel(this.scene, "15px", PALETTE.textPrimary, 0);
+
+        this.changeRows.push(row);
+        this.container.add(row);
+      }
+
+      explanation.changeLines.forEach((line, index) => {
+        const arrow = line.direction === "up" ? "\u2191" : "\u2193";
+
+        blocks.push(
+          this.block(
+            this.changeRows[index],
+            `${arrow}  ${line.label}`,
+            TransparencyOverlay.LEFT_EDGE,
+            TransparencyOverlay.ROW_HEIGHT,
+          ),
+        );
+      });
+    }
+
+    if (explanation.reasonText !== "") {
+      blocks.push(
+        this.block(
+          this.reasonHeading,
+          "WHY",
+          TransparencyOverlay.LEFT_EDGE,
+          30,
+        ),
+      );
+
+      blocks.push(
+        this.block(
+          this.reasonLabel,
+          explanation.reasonText,
+          TransparencyOverlay.LEFT_EDGE,
+          26,
+        ),
+      );
+    }
+
+    if (explanation.footer !== null) {
+      blocks.push(this.block(this.footerLabel, explanation.footer, 0, 34));
+    }
+
+    let contentHeight = 0;
+
+    for (const item of blocks) {
+      contentHeight += item.advance;
+    }
+
+    this.panel.setSize(
+      TransparencyOverlay.PANEL_WIDTH,
+      contentHeight + TransparencyOverlay.PADDING * 2,
+    );
+
+    let y = -contentHeight / 2;
+
+    for (const item of blocks) {
+      item.label.setPosition(item.x, y + item.advance / 2);
+      item.label.setVisible(true);
+
+      y += item.advance;
+    }
+
+    this.container.setVisible(true);
+  }
+
+  public hide(): void {
+    this.container.setVisible(false);
+  }
+
+  private block(
+    label: Phaser.GameObjects.Text,
+    text: string,
+    x: number,
+    advance: number,
+  ): LayoutBlock {
+    label.setText(text);
+
+    return { label, x, advance };
+  }
+
+  private hideAll(): void {
+    this.headlineLabel.setVisible(false);
+    this.levelNameLabel.setVisible(false);
+    this.levelValueLabel.setVisible(false);
+    this.noteLabel.setVisible(false);
+    this.changesHeading.setVisible(false);
+    this.reasonHeading.setVisible(false);
+    this.reasonLabel.setVisible(false);
+    this.footerLabel.setVisible(false);
+
+    for (const row of this.changeRows) {
+      row.setVisible(false);
+    }
+  }
 }
