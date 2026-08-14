@@ -105,7 +105,7 @@ describe("classifyPerformance", () => {
     );
 
     expect(result.evidence).toBe("decrease");
-    expect(result.reasons).toContain("enemiesRemaining");
+    expect(result.reasons).toContain("highEnemiesRemaining");
   });
 
   it("uses nearly empty arena as tie breaker toward more pressure", () => {
@@ -114,6 +114,6 @@ describe("classifyPerformance", () => {
     );
 
     expect(result.evidence).toBe("increase");
-    expect(result.reasons).toContain("enemiesRemaining");
+    expect(result.reasons).toContain("lowEnemiesRemaining");
   });
 });

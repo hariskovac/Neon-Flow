@@ -1,254 +1,267 @@
-// import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-// import { DifficultyController } from "../dda/DifficultyController";
-// import {
-//   MAX_DIFFICULTY_LEVEL,
-//   MIN_DIFFICULTY_LEVEL,
-// } from "../dda/DifficultyConfig";
-// import {
-//   flattenExplanation,
-//   generateCalibrationExplanation,
-//   generateExplanation,
-// } from "../dda/ExplanationGenerator";
-// import { resolveParameterChanges } from "../dda/ParameterChanges";
-// import type { EnemyType, WavePerformance } from "../types/game";
+import { DifficultyController } from "../dda/DifficultyController";
+import {
+  MAX_DIFFICULTY_LEVEL,
+  MIN_DIFFICULTY_LEVEL,
+} from "../dda/DifficultyConfig";
+import {
+  flattenExplanation,
+  generateCalibrationExplanation,
+  generateExplanation,
+} from "../dda/ExplanationGenerator";
+import { resolveParameterChanges } from "../dda/ParameterChanges";
+import type { EnemyType, WavePerformance } from "../types/game";
 
-// function wave(kills: number, livesLost = 0): WavePerformance {
-//   const killsByType: Record<EnemyType, number> = {
-//     chaser: kills,
-//     ranged: 0,
-//     dasher: 0,
-//   };
+function wave(kills: number, livesLost = 0): WavePerformance {
+  const killsByType: Record<EnemyType, number> = {
+    chaser: kills,
+    ranged: 0,
+    dasher: 0,
+  };
 
-//   return {
-//     waveNumber: 1,
-//     killsByType,
-//     livesLost,
-//     shieldHitsAbsorbed: 0,
-//     enemiesRemaining: 6,
-//     enemiesSpawned: 20,
-//     shotsFired: 100,
-//     shotsHit: 40,
-//     durationMs: 40000,
-//     powerUpsSpawned: 0,
-//     powerUpsCollected: 0,
-//   };
-// }
+  return {
+    waveNumber: 1,
+    killsByType,
+    livesLost,
+    shieldHitsAbsorbed: 0,
+    enemiesRemaining: 6,
+    enemiesSpawned: 20,
+    shotsFired: 100,
+    shotsHit: 40,
+    durationMs: 40000,
+    powerUpsSpawned: 0,
+    powerUpsCollected: 0,
+  };
+}
 
-// describe("resolveParameterChanges", () => {
-//   it("reports no changes when level doesn't move", () => {
-//     expect(resolveParameterChanges(4, 4)).toEqual([]);
-//   });
 
-//   it("reports every actuator when level moves", () => {
-//     const changes = resolveParameterChanges(3, 4);
+describe("resolveParameterChanges", () => {
+  it("reports no changes when level doesn't move", () => {
+    expect(resolveParameterChanges(4, 4)).toEqual([]);
+  });
 
-//     expect(changes.length).toBe(4);
-//   });
+  it("reports every actuator when level moves", () => {
+    const changes = resolveParameterChanges(3, 4);
 
-//   it("marks shorter spawn interval as increasing pressure", () => {
-//     const changes = resolveParameterChanges(3, 5);
-//     const spawn = changes.find((c) => c.parameter === "spawnIntervalMs");
+    expect(changes.length).toBe(4);
+  });
 
-//     expect(spawn?.nextValue).toBeLessThan(spawn?.previousValue ?? 0);
-//     expect(spawn?.increasesPressure).toBe(true);
-//   });
+  it("marks shorter spawn interval as increasing pressure", () => {
+    const changes = resolveParameterChanges(3, 5);
+    const spawn = changes.find((c) => c.parameter === "spawnIntervalMs");
 
-//   it("marks longer spawn interval as reducing pressure", () => {
-//     const changes = resolveParameterChanges(5, 3);
-//     const spawn = changes.find((c) => c.parameter === "spawnIntervalMs");
+    expect(spawn?.nextValue).toBeLessThan(spawn?.previousValue ?? 0);
+    expect(spawn?.increasesPressure).toBe(true);
+  });
 
-//     expect(spawn?.increasesPressure).toBe(false);
-//   });
+  it("marks longer spawn interval as reducing pressure", () => {
+    const changes = resolveParameterChanges(5, 3);
+    const spawn = changes.find((c) => c.parameter === "spawnIntervalMs");
 
-//   it("marks faster enemies as increasing pressure", () => {
-//     const changes = resolveParameterChanges(2, 6);
-//     const speed = changes.find((c) => c.parameter === "enemySpeedMultiplier");
+    expect(spawn?.increasesPressure).toBe(false);
+  });
 
-//     expect(speed?.increasesPressure).toBe(true);
-//   });
+  it("marks faster enemies as increasing pressure", () => {
+    const changes = resolveParameterChanges(2, 6);
+    const speed = changes.find((c) => c.parameter === "enemySpeedMultiplier");
 
-//   it("marks rarer power-ups as increasing pressure", () => {
-//     const changes = resolveParameterChanges(2, 6);
-//     const drops = changes.find((c) => c.parameter === "powerUpDropChance");
+    expect(speed?.increasesPressure).toBe(true);
+  });
 
-//     expect(drops?.nextValue).toBeLessThan(drops?.previousValue ?? 0);
-//     expect(drops?.increasesPressure).toBe(true);
-//   });
-// });
+  it("marks rarer power-ups as increasing pressure", () => {
+    const changes = resolveParameterChanges(2, 6);
+    const drops = changes.find((c) => c.parameter === "powerUpDropChance");
 
-// describe("generateExplanation", () => {
-//   it("names direction when level rises", () => {
-//     const result = generateExplanation(
-//       "increase",
-//       resolveParameterChanges(3, 4),
-//       ["killRate"],
-//     );
+    expect(drops?.nextValue).toBeLessThan(drops?.previousValue ?? 0);
+    expect(drops?.increasesPressure).toBe(true);
+  });
+});
 
-//     expect(result.headline).toBe("Threat level increased");
-//   });
+describe("generateExplanation", () => {
+  it("names direction when level rises", () => {
+    const result = generateExplanation(
+      "increase",
+      3,
+      4,
+      resolveParameterChanges(3, 4),
+      ["highKillRate"],
+    );
 
-//   it("names direction when level falls", () => {
-//     const result = generateExplanation(
-//       "decrease",
-//       resolveParameterChanges(5, 4),
-//       ["livesLost"],
-//     );
+    expect(result.headline).toBe("Threat level increased");
+  });
 
-//     expect(result.headline).toBe("Threat level reduced");
-//   });
+  it("names direction when level falls", () => {
+    const result = generateExplanation(
+      "decrease",
+      5,
+      4,
+      resolveParameterChanges(5, 4),
+      ["livesLost"],
+    );
 
-//   it("reports no change when nothing moved", () => {
-//     const result = generateExplanation("unchanged", [], ["killRate"]);
+    expect(result.headline).toBe("Threat level reduced");
+  });
 
-//     expect(result.headline).toBe("Threat level unchanged");
-//     expect(result.parameterLines).toEqual([]);
-//   });
+  it("reports no change when nothing moved", () => {
+    const result = generateExplanation("unchanged", 4, 4, [], ["highKillRate"]);
 
-//   it("never claims a change when there are no parameter changes", () => {
-//     const result = generateExplanation("increase", [], ["killRate"]);
+    expect(result.headline).toBe("Threat level unchanged");
+    expect(result.changeLines).toEqual([]);
+  });
 
-//     expect(result.headline).toBe("Threat level unchanged");
-//     expect(result.parameterLines).toEqual([]);
-//   });
+  it("never claims a change when there are no parameter changes", () => {
+    const result = generateExplanation("increase", 4, 4, [], ["highKillRate"]);
 
-//   it("labels parameters as rates so the arrow matches the noun", () => {
-//     const result = generateExplanation(
-//       "increase",
-//       resolveParameterChanges(3, 4),
-//       ["killRate"],
-//     );
+    expect(result.headline).toBe("Threat level unchanged");
+    expect(result.changeLines).toEqual([]);
+  });
 
-//     const labels = result.parameterLines.map((line) => line.label);
+  it("labels parameters as rates so the arrow matches the noun", () => {
+    const result = generateExplanation(
+      "increase",
+      3,
+      4,
+      resolveParameterChanges(3, 4),
+      ["highKillRate"],
+    );
 
-//     expect(labels).toEqual([
-//       "Enemy spawn rate",
-//       "Enemy speed",
-//       "Enemy fire rate",
-//       "Power-up rate",
-//     ]);
-//   });
+    const labels = result.changeLines.map((line) => line.label);
 
-//   it("points the arrow at labelled rate, not pressure", () => {
-//     const result = generateExplanation(
-//       "increase",
-//       resolveParameterChanges(3, 5),
-//       ["killRate"],
-//     );
+    expect(labels).toEqual([
+      "Enemies spawn more often",
+      "Enemies move faster",
+      "Ranged enemies fire more often",
+      "Power-ups appear less often",
+    ]);
+  });
 
-//     const byLabel = (label: string): string | undefined =>
-//       result.parameterLines.find((line) => line.label === label)?.direction;
+  it("points the arrow at labelled rate, not pressure", () => {
+    const result = generateExplanation(
+      "increase",
+      3,
+      5,
+      resolveParameterChanges(3, 5),
+      ["highKillRate"],
+    );
 
-//     expect(byLabel("Enemy spawn rate")).toBe("up");
-//     expect(byLabel("Enemy speed")).toBe("up");
-//     expect(byLabel("Enemy fire rate")).toBe("up");
-//     expect(byLabel("Power-up rate")).toBe("down");
-//   });
+    const byLabel = (label: string): string | undefined =>
+      result.changeLines.find((line) => line.label.startsWith(label))?.direction;
 
-//   it("reverses every arrow when the level falls", () => {
-//     const result = generateExplanation(
-//       "decrease",
-//       resolveParameterChanges(5, 3),
-//       ["livesLost"],
-//     );
+    expect(byLabel("Enemies spawn")).toBe("up");
+    expect(byLabel("Enemies move")).toBe("up");
+    expect(byLabel("Ranged enemies")).toBe("up");
+    expect(byLabel("Power-ups")).toBe("down");
+  });
 
-//     const byLabel = (label: string): string | undefined =>
-//       result.parameterLines.find((line) => line.label === label)?.direction;
+  it("reverses every arrow when the level falls", () => {
+    const result = generateExplanation(
+      "decrease",
+      5,
+      3,
+      resolveParameterChanges(5, 3),
+      ["livesLost"],
+    );
 
-//     expect(byLabel("Enemy spawn rate")).toBe("down");
-//     expect(byLabel("Enemy speed")).toBe("down");
-//     expect(byLabel("Enemy fire rate")).toBe("down");
-//     expect(byLabel("Power-up rate")).toBe("up");
-//   });
+    const byLabel = (label: string): string | undefined =>
+      result.changeLines.find((line) => line.label.startsWith(label))?.direction;
 
-//   it("omits reason line when no reasons are supplied", () => {
-//     const result = generateExplanation("unchanged", [], []);
+    expect(byLabel("Enemies spawn")).toBe("down");
+    expect(byLabel("Enemies move")).toBe("down");
+    expect(byLabel("Ranged enemies")).toBe("down");
+    expect(byLabel("Power-ups")).toBe("up");
+  });
 
-//     expect(result.reasonLine).toBe("");
-//   });
+  it("omits reason line when no reasons are supplied", () => {
+    const result = generateExplanation("unchanged", 4, 4, [], []);
 
-//   it("states level in calibration message", () => {
-//     expect(generateCalibrationExplanation(4).headline).toBe(
-//       "Starting threat level 4 of 10",
-//     );
-//   });
+    expect(result.reasonText).toBe("");
+  });
 
-//   it("flattens to one line for telemetry record", () => {
-//     const result = generateExplanation(
-//       "increase",
-//       resolveParameterChanges(3, 4),
-//       ["killRate"],
-//     );
- 
-//     const flat = flattenExplanation(result);
- 
-//     expect(flat).toContain("Threat level increased");
-//     expect(flat).toContain("Enemy spawn rate up");
-//     expect(flat).toContain("Power-up rate down");
-//   });
-// });
+  it("states level in calibration message", () => {
+    expect(generateCalibrationExplanation(4, 5).headline).toBe(
+      "Calibration complete",
+    );
+  });
 
-// describe("explanation accuracy against real decisions", () => {
-//   it("matches direction and changes of increase", () => {
-//     const controller = new DifficultyController(3);
-//     const decision = controller.evaluate(wave(18));
+  it("flattens to one line for telemetry record", () => {
+    const result = generateExplanation(
+      "increase",
+      3,
+      4,
+      resolveParameterChanges(3, 4),
+      ["highKillRate"],
+    );
 
-//     expect(decision.direction).toBe("increase");
-//     expect(decision.parameterChanges.length).toBeGreaterThan(0);
-//     expect(decision.explanation.headline).toBe("Threat level increased");
-//   });
+    const flat = flattenExplanation(result);
 
-//   it("doesn't claim adjustment at maximum level", () => {
-//     const controller = new DifficultyController(MAX_DIFFICULTY_LEVEL);
-//     const decision = controller.evaluate(wave(18));
+    expect(flat).toContain("Threat level increased");
+    expect(flat).toContain("up: Enemies spawn more often");
+    expect(flat).toContain("down: Power-ups appear less often");
+  });
+});
 
-//     expect(decision.parameterChanges).toEqual([]);
-//     expect(decision.explanation.headline).toBe("Threat level unchanged");
-//   });
+describe("explanation accuracy against real decisions", () => {
+  it("matches direction and changes of increase", () => {
+    const controller = new DifficultyController(3);
+    const decision = controller.evaluate(wave(18));
 
-//   it("doesn't claim an adjustment at minimum level", () => {
-//     const controller = new DifficultyController(MIN_DIFFICULTY_LEVEL);
-//     const decision = controller.evaluate(wave(2, 4));
+    expect(decision.direction).toBe("increase");
+    expect(decision.parameterChanges.length).toBeGreaterThan(0);
+    expect(decision.explanation.headline).toBe("Threat level increased");
+  });
 
-//     expect(decision.parameterChanges).toEqual([]);
-//     expect(decision.explanation.headline).toBe("Threat level unchanged");
-//   });
+  it("doesn't claim adjustment at maximum level", () => {
+    const controller = new DifficultyController(MAX_DIFFICULTY_LEVEL);
+    const decision = controller.evaluate(wave(18));
 
-//   it("doesn't claim an adjustment when hysteresis suppresses one", () => {
-//     const controller = new DifficultyController(4);
+    expect(decision.parameterChanges).toEqual([]);
+    expect(decision.explanation.headline).toBe("Threat level unchanged");
+  });
 
-//     controller.evaluate(wave(15));
+  it("doesn't claim an adjustment at minimum level", () => {
+        const controller = new DifficultyController(MIN_DIFFICULTY_LEVEL);
+    const decision = controller.evaluate(wave(2, 4));
 
-//     const suppressed = controller.evaluate(wave(6, 1));
+    expect(decision.parameterChanges).toEqual([]);
+    expect(decision.explanation.headline).toBe("Threat level unchanged");
+  });
 
-//     expect(suppressed.suppressedByHysteresis).toBe(true);
-//     expect(suppressed.parameterChanges).toEqual([]);
-//     expect(suppressed.explanation.headline).toBe("Threat level unchanged");
-//   });
+  it("doesn't claim an adjustment when hysteresis suppresses one", () => {
+        const controller = new DifficultyController(4);
 
-//   it("every parameter named in an explanation actually changed", () => {
-//     const controller = new DifficultyController(2);
+    controller.evaluate(wave(15));
 
-//     for (let index = 0; index < 5; index += 1) {
-//       const decision = controller.evaluate(wave(18));
+    const suppressed = controller.evaluate(wave(6, 1));
 
-//       const labels = decision.explanation.parameterLines.map((l) => l.label);
+    expect(suppressed.suppressedByHysteresis).toBe(true);
+    expect(suppressed.parameterChanges).toEqual([]);
+    expect(suppressed.explanation.headline).toBe("Threat level unchanged");
+  });
 
-//       if (labels.includes("Enemy speed")) {
-//         const speed = decision.parameterChanges.find(
-//           (c) => c.parameter === "enemySpeedMultiplier",
-//         );
+  it("every parameter named in an explanation actually changed", () => {
+    const controller = new DifficultyController(2);
 
-//         expect(speed === undefined).toBe(false);
-//       }
+    for (let index = 0; index < 5; index += 1) {
+      const decision = controller.evaluate(wave(18));
 
-//       if (labels.includes("Enemy fire rate")) {
-//         const ranged = decision.parameterChanges.find(
-//           (c) => c.parameter === "rangedAttackIntervalMs",
-//         );
+      const labels = decision.explanation.changeLines.map((l) => l.label);
 
-//         expect(ranged === undefined).toBe(false);
-//       }
-//     }
-//   });
-// });
+      if (labels.some((l) => l.startsWith("Enemies move"))) {
+        const speed = decision.parameterChanges.find(
+          (c) => c.parameter === "enemySpeedMultiplier",
+        );
+
+        expect(speed === undefined).toBe(false);
+      }
+
+      if (labels.some((l) => l.startsWith("Ranged enemies"))) {
+        const ranged = decision.parameterChanges.find(
+          (c) => c.parameter === "rangedAttackIntervalMs",
+        );
+
+        expect(ranged === undefined).toBe(false);
+      }
+    }
+  });
+});
