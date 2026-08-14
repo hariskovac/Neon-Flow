@@ -182,4 +182,5 @@ export const HUD_TEXT_STYLE = {
   fontFamily: "Inter, Arial, sans-serif",
   fontSize: "18px",
   color: PALETTE.hudPrimary,
+  resolution: 2,
 };
