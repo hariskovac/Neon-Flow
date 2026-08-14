@@ -1,3 +1,5 @@
+import type { ParameterChange } from "../dda/ParameterChanges";
+
 export type EnemyType = "chaser" | "ranged" | "dasher";
 export type PowerUpType = "shield" | "speed" | "fireRate";
 export type GameEndReason = "completed" | "lives_exhausted";
@@ -35,4 +37,17 @@ export interface WavePerformance {
   readonly enemiesSpawned: number;
   readonly powerUpsSpawned: number;
   readonly powerUpsCollected: number;
+}
+
+export interface DDAEvent {
+  readonly waveNumber: number;
+  readonly elapsedTimeMs: number;
+  readonly previousLevel: number;
+  readonly nextLevel: number;
+  readonly direction: "increase" | "decrease" | "unchanged";
+  readonly metricSnapshot: WavePerformance;
+  readonly parameterChanges: ParameterChange[];
+  readonly explanation: string;
+  readonly displayed: boolean;
+  readonly suppressedByHysteresis: boolean;
 }
