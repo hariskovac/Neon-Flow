@@ -34,10 +34,20 @@ export class PowerUpSystem {
 
     const type = POWERUP_TYPES[Phaser.Math.Between(0, POWERUP_TYPES.length - 1)];
 
-    this.drops.push(new PowerUp(this.scene, x, y, type, now));
+    this.drops.push(new PowerUp(this.scene, x, y, type, now + POWERUP_CONFIG.lifetimeMs));
     this.spawnedThisWave += 1;
 
     return true;
+  }
+
+  public place(x: number, y: number, type: PowerUpType, now: number): void {
+    this.drops.push(new PowerUp(this.scene, x, y, type, now));
+  }
+
+  public placePermanent(x: number, y: number, type: PowerUpType): void {
+    this.drops.push(
+      new PowerUp(this.scene, x, y, type, Number.POSITIVE_INFINITY),
+    );
   }
 
   public update(time: number): void {

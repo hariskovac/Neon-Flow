@@ -21,10 +21,10 @@ export class PowerUp {
     x: number,
     y: number,
     type: PowerUpType,
-    now: number,
+    expiresAt: number,
   ) {
     this.type = type;
-    this.expiresAt = now + POWERUP_CONFIG.lifetimeMs;
+    this.expiresAt = expiresAt;
 
     const size = POWERUP_CONFIG.radius * 2;
 

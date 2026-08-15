@@ -17,7 +17,7 @@ export class KeyCapDisplay {
   private readonly container: Phaser.GameObjects.Container;
   private readonly caps: KeyCap[] = [];
 
-  public constructor(scene: Phaser.Scene, centreX: number, centreY: number) {
+  public constructor(scene: Phaser.Scene, centerX: number, centerY: number) {
     const size = TUTORIAL_CONFIG.keyCapSize;
     const step = size + TUTORIAL_CONFIG.keyCapGap;
 
@@ -54,7 +54,7 @@ export class KeyCapDisplay {
       objects.push(box, label);
     }
 
-    this.container = scene.add.container(centreX, centreY, objects);
+    this.container = scene.add.container(centerX, centerY, objects);
     this.container.setDepth(DEPTH.overlay);
   }
 

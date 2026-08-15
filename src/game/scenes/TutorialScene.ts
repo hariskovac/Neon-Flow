@@ -26,7 +26,12 @@ import { Ranged } from "../entities/enemies/Ranged";
 import { HudSystem } from "../systems/HudSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
 import { resolveActuators } from "../../dda/DifficultyConfig";
-import { TUTORIAL_CONFIG } from "../gameplayConfig";
+import { TUTORIAL_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
+import { session } from "../../experiment/SessionManager";
+import { generateExampleExplanation } from "../../dda/ExplanationGenerator";
+import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
+import type { PowerUpType } from "../../types/game";
+import { PowerUpEffects } from "../systems/PowerUpEffects";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -51,11 +56,14 @@ export class TutorialScene extends Phaser.Scene {
   private score!: ScoreSystem;
   private hitMessageUntil = 0;
   private hitLabel!: Phaser.GameObjects.Text;
+  private overlay!: TransparencyOverlay;
+  private powerUps!: PowerUpEffects;
 
   private steps: TutorialStep[] = [];
   private stepIndex = 0;
   private stepStartedAt = 0;
   private keyCaps: KeyCapDisplay | null = null;
+  private readyToStart = false;
 
   private targets: Enemy[] = [];
   private aimAngle = -Math.PI / 2;
@@ -85,6 +93,7 @@ export class TutorialScene extends Phaser.Scene {
     );
 
     this.weapon = new WeaponSystem();
+    this.powerUps = new PowerUpEffects();
 
     this.projectiles = new ProjectileSystem(this, ARENA, {
       projectileRadius: WEAPON_CONFIG.projectileRadius,
@@ -126,6 +135,8 @@ export class TutorialScene extends Phaser.Scene {
     this.prompt = new TutorialPrompt(this);
     this.registerInput();
 
+    this.overlay = new TransparencyOverlay(this);
+
     this.steps = this.buildSteps();
     this.enterStep(this.time.now);
   }
@@ -164,6 +175,7 @@ export class TutorialScene extends Phaser.Scene {
 
     this.projectiles.update(time);
     this.enemyProjectiles.update(time);
+    this.drops.update(time);
 
     const result = this.collisions.update();
 
@@ -177,9 +189,34 @@ export class TutorialScene extends Phaser.Scene {
       this.hitMessageUntil = time + TUTORIAL_CONFIG.hitFlashMs;
     }
 
-    this.hitLabel.setText(
-      time < this.hitMessageUntil ? "Hit! Tutorial lives are unlimited." : "",
-    );
+    for (const type of result.collected) {
+      this.powerUps.collect(type, time);
+    }
+
+    this.applyPowerUpEffects(time);
+
+    if (result.playerHit && !this.player.isInvincible(time)) {
+      if (this.powerUps.consumeShield()) {
+        this.hitLabel.setText("Shield absorbed the hit.");
+        this.hitMessageUntil = time + TUTORIAL_CONFIG.hitFlashMs;
+
+        this.player.respawn(time, this.player.getX(), this.player.getY());
+      } else {
+        this.player.respawn(
+          time,
+          ARENA.x + ARENA.width / 2,
+          ARENA.y + ARENA.height / 2,
+        );
+
+        this.hitMessageUntil = time + TUTORIAL_CONFIG.hitFlashMs;
+      }
+    }
+
+    if (time >= this.hitMessageUntil) {
+      this.hitLabel.setText("");
+    } else if (this.hitLabel.text === "") {
+      this.hitLabel.setText("Hit! Tutorial lives are unlimited.");
+    }
 
     this.hud.update({
       score: this.score.getScore(),
@@ -191,11 +228,14 @@ export class TutorialScene extends Phaser.Scene {
       isTutorial: true,
     });
 
-    this.advanceStep(context, time)
+    this.advanceStep(context, time);
   }
 
   private buildSteps(): TutorialStep[] {
-    return [
+    const centerX = ARENA.x + ARENA.width / 2;
+    const centerY = ARENA.y + ARENA.height / 2;
+
+    const steps: TutorialStep[] = [
       {
         id: "movement",
         title: "Move with WASD",
@@ -203,7 +243,7 @@ export class TutorialScene extends Phaser.Scene {
         onEnter: () => {
           this.keyCaps = new KeyCapDisplay(
             this,
-            ARENA.x + ARENA.width / 2,
+            centerX,
             ARENA.y + ARENA.height - 110,
           );
         },
@@ -221,25 +261,17 @@ export class TutorialScene extends Phaser.Scene {
         title: "Aim with the mouse",
         body: "Hold left click to fire. Destroy the target to continue.",
         onEnter: () => {
-          this.targets.push(
-            new TargetDummy(
-              this,
-              ARENA.x + ARENA.width / 2,
-              ARENA.y + 150,
-            ),
-          );
+          this.targets.push(new TargetDummy(this, centerX, ARENA.y + 150));
         },
-        isComplete: () => this.targets.every((target) => !target.isAlive()),
-        onExit: () => {
-          this.targets.length = 0;
-        },
+        isComplete: () => this.allTargetsCleared(),
+        onExit: () => this.clearTargets(),
       },
       {
         id: "lives",
         title: "Taking damage",
         body:
           "Enemy attacks and collisions each cost one life during the game. " +
-          "You will have five. (Lives are unlimited in this tutorial)",
+          "You will have five. Lives are unlimited in this tutorial.",
         isComplete: (context) => context.now - context.stepStartedAt > 4500,
         minimumMs: 4500,
       },
@@ -274,8 +306,8 @@ export class TutorialScene extends Phaser.Scene {
           this.targets.push(
             new Ranged(
               this,
-              ARENA.x + ARENA.width / 2 + TUTORIAL_CONFIG.rangedSpawnDistance / 2,
-              ARENA.y + ARENA.height / 2,
+              centerX + TUTORIAL_CONFIG.rangedSpawnDistance / 2,
+              centerY,
               this.projectiles,
               this.enemyProjectiles,
               actuators.enemySpeedMultiplier,
@@ -306,7 +338,77 @@ export class TutorialScene extends Phaser.Scene {
         isComplete: () => this.allTargetsCleared(),
         onExit: () => this.clearTargets(),
       },
+      {
+        id: "powerUpsIntro",
+        title: "Power-ups",
+        body:
+          "Power-ups can appear when you defeat enemies. Collect one by " +
+          "touching it.",
+        isComplete: (context) => context.now - context.stepStartedAt > 3000,
+        minimumMs: 3000,
+      },
+      this.buildPowerUpStep(
+        "shield", 
+        "Shield", 
+        "Blocks the next hit you take.",
+        centerX - 180,
+        centerY + 60,
+    ),
+      this.buildPowerUpStep(
+        "speed",
+        "Speed Boost",
+        "Temporarily increases your movement speed.",
+        centerX + 180,
+        centerY + 60,
+      ),
+      this.buildPowerUpStep(
+        "fireRate",
+        "Rapid Fire",
+        "Temporarily increases your firing rate.",
+        centerX,
+        centerY + 130,
+      ),
+      {
+        id: "adaptiveDifficulty",
+        title: "Adaptive difficulty",
+        body:
+          "During the game, the difficulty may increase or decrease based " +
+          "on how you are performing. Please play naturally rather than " +
+          "trying to influence how the game responds.",
+        isComplete: (context) => context.now - context.stepStartedAt > 6000,
+        minimumMs: 6000,
+      },
+      {
+        id: "transparencyExample",
+        title: "Between waves",
+        body:
+          "You will be shown whether the difficulty changed, what changed, " +
+          "and why. It will look like this.",
+        onEnter: () => {
+          this.overlay.show(generateExampleExplanation());
+        },
+        isComplete: (context) => context.now - context.stepStartedAt > 7000,
+        minimumMs: 7000,
+        onExit: () => {
+          this.overlay.hide();
+        },
+      },
+      {
+        id: "ready",
+        title: "Ready",
+        body:
+          "You will now play a short calibration round, which sets your " +
+          "starting difficulty. Press SPACE to begin.",
+        onEnter: () => {
+          this.readyToStart = false;
+        },
+        isComplete: () => this.readyToStart,
+      },
     ];
+
+    return steps.filter(
+      (step) => step.id !== "transparencyExample" || session.isTransparent(),
+    );
   }
 
   private enterStep(time: number): void {
@@ -354,6 +456,38 @@ export class TutorialScene extends Phaser.Scene {
     this.enterStep(time);
   }
 
+  private buildPowerUpStep(
+    type: PowerUpType,
+    title: string,
+    body: string,
+    x: number,
+    y: number,
+  ): TutorialStep {
+    return {
+      id: `powerUp-${type}`,
+      title,
+      body,
+      onEnter: () => {
+        this.drops.placePermanent(x, y, type);
+      },
+      isComplete: () => this.drops.getDrops().length === 0,
+    };
+  }
+
+  private applyPowerUpEffects(time: number): void {
+    if (this.powerUps.isSpeedActive(time)) {
+      this.player.setSpeedMultiplier(POWERUP_CONFIG.speedMultiplier);
+    } else {
+      this.player.clearSpeedMultiplier();
+    }
+
+    if (this.powerUps.isFireRateActive(time)) {
+      this.weapon.setFireRateMultiplier(POWERUP_CONFIG.fireRateMultiplier);
+    } else {
+      this.weapon.clearFireRateMultiplier();
+    }
+  }
+
   private finish(): void {
     this.prompt.hide();
     this.scene.start("CalibrationScene");
@@ -396,6 +530,10 @@ export class TutorialScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
+
+    keyboard.on("keydown-SPACE", () => {
+      this.readyToStart = true;
+    });
   }
 
   private markPointerInput(): void {

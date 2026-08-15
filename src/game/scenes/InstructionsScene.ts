@@ -21,9 +21,9 @@ export class InstructionsScene extends Phaser.Scene {
   }
 
   public create(): void {
-    const centreX = CANVAS.width / 2;
+    const centerX = CANVAS.width / 2;
 
-    const heading = this.add.text(centreX, 70, "Before you begin", {
+    const heading = this.add.text(centerX, 70, "Before you begin", {
       ...HUD_TEXT_STYLE,
       fontSize: "28px",
     });
@@ -31,7 +31,7 @@ export class InstructionsScene extends Phaser.Scene {
     heading.setOrigin(0.5, 0.5);
 
     const body = this.add.text(
-      centreX,
+      centerX,
       190,
       InstructionsScene.COMMON_TEXT,
       {
@@ -46,7 +46,7 @@ export class InstructionsScene extends Phaser.Scene {
 
     if (session.isTransparent()) {
       const extra = this.add.text(
-        centreX,
+        centerX,
         340,
         InstructionsScene.TRANSPARENT_TEXT,
         {
@@ -62,7 +62,7 @@ export class InstructionsScene extends Phaser.Scene {
     }
 
     const prompt = this.add.text(
-      centreX,
+      centerX,
       450,
       "Press SPACE to begin the calibration round",
       { ...HUD_TEXT_STYLE, fontSize: "16px", color: PALETTE.hudMuted },

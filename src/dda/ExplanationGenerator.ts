@@ -153,6 +153,23 @@ export function generateNeutralExplanation(
   };
 }
 
+export function generateExampleExplanation(): Explanation {
+  return {
+    headline: "Threat level increased",
+    levelLabel: null,
+    levelValue: "3 \u2192 4",
+    note: null,
+    changeLines: [
+      { label: "Enemies spawn more often", direction: "up" },
+      { label: "Enemies move faster", direction: "up" },
+      { label: "Ranged enemies fire more often", direction: "up" },
+      { label: "Power-ups appear less often", direction: "down" },
+    ],
+    reasonText: "Example only",
+    footer: "This is an example, not a result.",
+  };
+}
+
 export function flattenExplanation(explanation: Explanation): string {
   const parts: string[] = [explanation.headline];
  

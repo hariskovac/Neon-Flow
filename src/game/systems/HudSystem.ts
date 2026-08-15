@@ -190,7 +190,7 @@ export class HudSystem {
   private buildPips(
     scene: Phaser.Scene,
     left: number,
-    centreY: number,
+    centerY: number,
     count: number,
     target: Phaser.GameObjects.Rectangle[],
   ): void {
@@ -199,7 +199,7 @@ export class HudSystem {
         left +
           index * (HudSystem.PIP_WIDTH + HudSystem.PIP_GAP) +
           HudSystem.PIP_WIDTH / 2,
-        centreY,
+        centerY,
         HudSystem.PIP_WIDTH,
         HudSystem.PIP_HEIGHT,
         PALETTE.pipFilled,
