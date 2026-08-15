@@ -18,6 +18,16 @@ export interface HudState {
   readonly isCalibration: boolean;
 }
 
+export interface HudState {
+  readonly score: number;
+  readonly livesRemaining: number;
+  readonly waveNumber: number;
+  readonly remainingMs: number;
+  readonly isIntermission: boolean;
+  readonly isCalibration: boolean;
+  readonly isTutorial: boolean;
+}
+
 export class HudSystem {
   private static readonly EDGE_PADDING = 20;
   private static readonly PIP_WIDTH = 18;
@@ -31,6 +41,7 @@ export class HudSystem {
   private readonly livesLabel: Phaser.GameObjects.Text; 
   private readonly waveLabel: Phaser.GameObjects.Text;
   private readonly timerLabel: Phaser.GameObjects.Text;
+  private readonly unlimitedLabel: Phaser.GameObjects.Text;
   private readonly lifePips: Phaser.GameObjects.Rectangle[] = [];
   private readonly wavePips: Phaser.GameObjects.Rectangle[] = [];
 
@@ -62,6 +73,17 @@ export class HudSystem {
 
     this.waveLabel.setOrigin(1, 0.5);
     this.waveLabel.setDepth(DEPTH.hud);
+
+    this.unlimitedLabel = scene.add.text(
+      CANVAS.width - HudSystem.EDGE_PADDING,
+      centreY,
+      "Unlimited",
+      { ...HUD_TEXT_STYLE, fontSize: "16px", color: PALETTE.textAccent },
+    );
+
+    this.unlimitedLabel.setOrigin(1, 0.5);
+    this.unlimitedLabel.setDepth(DEPTH.hud);
+    this.unlimitedLabel.setVisible(false);
 
     this.buildPips(
       scene,
@@ -104,16 +126,30 @@ export class HudSystem {
       waveNumber: 1,
       remainingMs: WAVE_CONFIG.durationMs,
       isIntermission: false,
+      isTutorial: false
     });
   }
 
   public update(state: HudState): void {
     const isFirstUpdate = !this.hasRendered;
 
-    this.waveLabel.setVisible(!state.isCalibration);
+    const showWaves = !state.isCalibration && !state.isTutorial
+
+    this.waveLabel.setVisible(showWaves);
 
     for (const pip of this.wavePips) {
-      pip.setVisible(!state.isCalibration);
+      pip.setVisible(showWaves);
+    }
+
+    if (isFirstUpdate || state.score !== this.lastScore) {
+      this.scoreLabel.setText(`Score ${String(state.score)}`);
+      this.lastScore = state.score;
+    }
+
+    this.unlimitedLabel.setVisible(state.isTutorial);
+
+    for (const pip of this.lifePips) {
+      pip.setVisible(!state.isTutorial);
     }
 
     if (isFirstUpdate || state.score !== this.lastScore) {
@@ -131,15 +167,21 @@ export class HudSystem {
       this.lastWaveNumber = state.waveNumber;
     }
 
-    const seconds = Math.ceil(Math.max(state.remainingMs, 0) / 1000);
+    if (state.isTutorial) {
+      this.timerLabel.setVisible(false);
+    } else {
+      this.timerLabel.setVisible(true);
 
-    const timerText = state.isIntermission
-      ? `Next wave in ${String(seconds)} s`
-      : `Time ${String(seconds)} s`;
+      const seconds = Math.ceil(Math.max(state.remainingMs, 0) / 1000);
 
-    if (isFirstUpdate || timerText !== this.lastTimerText) {
-      this.timerLabel.setText(timerText);
-      this.lastTimerText = timerText;
+      const timerText = state.isIntermission
+        ? `Next wave in ${String(seconds)} s`
+        : `Time ${String(seconds)} s`;
+
+      if (isFirstUpdate || timerText !== this.lastTimerText) {
+        this.timerLabel.setText(timerText);
+        this.lastTimerText = timerText;
+      }
     }
 
     this.hasRendered = true;

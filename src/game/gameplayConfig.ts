@@ -140,6 +140,10 @@ export const TUTORIAL_CONFIG = {
   keyCapSize: 40,
   keyCapGap: 6,
   keyCapFontSize: "18px",
+  enemyLevel: 1,
+  rangedSpawnDistance: 340,
+  rangedMinimumMs: 6000,
+  hitFlashMs: 1600,
 };
 
 export const KILL_POINTS: Record<EnemyType, number> = {

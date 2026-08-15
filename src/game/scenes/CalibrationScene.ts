@@ -246,6 +246,7 @@ export class CalibrationScene extends Phaser.Scene {
       remainingMs: CALIBRATION_CONFIG.durationMs - elapsed,
       isIntermission: false,
       isCalibration: true,
+      isTutorial: false,
     });
   }
 

@@ -8,6 +8,8 @@ import {
   DEPTH,
   PALETTE,
   WEAPON_CONFIG,
+  ENEMY_WEAPON_CONFIG,
+  HUD_TEXT_STYLE,
 } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import type { MovementInput } from "../systems/PlayerMovement";
@@ -18,6 +20,13 @@ import { WeaponSystem } from "../systems/WeaponSystem";
 import { TutorialPrompt } from "../tutorial/TutorialPrompt";
 import type { TutorialContext, TutorialStep } from "../tutorial/TutorialStep";
 import { KeyCapDisplay } from "../tutorial/KeyCapDisplay";
+import { Chaser } from "../entities/enemies/Chaser";
+import { Dasher } from "../entities/enemies/Dasher";
+import { Ranged } from "../entities/enemies/Ranged";
+import { HudSystem } from "../systems/HudSystem";
+import { ScoreSystem } from "../systems/ScoreSystem";
+import { resolveActuators } from "../../dda/DifficultyConfig";
+import { TUTORIAL_CONFIG } from "../gameplayConfig";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -37,6 +46,11 @@ export class TutorialScene extends Phaser.Scene {
   private drops!: PowerUpSystem;
   private collisions!: CollisionSystem;
   private prompt!: TutorialPrompt;
+  private enemyProjectiles!: ProjectileSystem;
+  private hud!: HudSystem;
+  private score!: ScoreSystem;
+  private hitMessageUntil = 0;
+  private hitLabel!: Phaser.GameObjects.Text;
 
   private steps: TutorialStep[] = [];
   private stepIndex = 0;
@@ -79,18 +93,31 @@ export class TutorialScene extends Phaser.Scene {
       color: PALETTE.projectile,
     });
 
-    const enemyProjectiles = new ProjectileSystem(this, ARENA, {
-      projectileRadius: WEAPON_CONFIG.projectileRadius,
-      projectileLifetimeMs: WEAPON_CONFIG.projectileLifetimeMs,
-      maxActiveProjectiles: 8,
+    this.enemyProjectiles = new ProjectileSystem(this, ARENA, {
+      projectileRadius: ENEMY_WEAPON_CONFIG.projectileRadius,
+      projectileLifetimeMs: ENEMY_WEAPON_CONFIG.projectileLifetimeMs,
+      maxActiveProjectiles: ENEMY_WEAPON_CONFIG.maxActiveProjectiles,
       color: PALETTE.enemyProjectile,
     });
+
+    this.score = new ScoreSystem();
+    this.hud = new HudSystem(this, 5);
+
+    this.hitLabel = this.add.text(
+      ARENA.x + ARENA.width / 2,
+      ARENA.y + ARENA.height - 60,
+      "",
+      { ...HUD_TEXT_STYLE, fontSize: "17px", color: PALETTE.textAccent },
+    );
+
+    this.hitLabel.setOrigin(0.5, 0.5);
+    this.hitLabel.setDepth(DEPTH.overlay);
 
     this.drops = new PowerUpSystem(this, 0);
 
     this.collisions = new CollisionSystem(
       this.projectiles,
-      enemyProjectiles,
+      this.enemyProjectiles,
       this.targets,
       this.player,
       this.drops,
@@ -131,36 +158,40 @@ export class TutorialScene extends Phaser.Scene {
       this.projectiles.spawn(shot);
     }
 
+    for (const target of this.targets) {
+      target.update(time, this.player.getX(), this.player.getY());
+    }
+
     this.projectiles.update(time);
-    this.collisions.update();
+    this.enemyProjectiles.update(time);
 
-    const step = this.steps[this.stepIndex];
+    const result = this.collisions.update();
 
-    if (step === undefined) {
-      return;
+    if (result.playerHit && !this.player.isInvincible(time)) {
+      this.player.respawn(
+        time,
+        ARENA.x + ARENA.width / 2,
+        ARENA.y + ARENA.height / 2,
+      );
+
+      this.hitMessageUntil = time + TUTORIAL_CONFIG.hitFlashMs;
     }
 
-    step.onUpdate?.(context);
+    this.hitLabel.setText(
+      time < this.hitMessageUntil ? "Hit! Tutorial lives are unlimited." : "",
+    );
 
-    const minimum = step.minimumMs ?? TutorialScene.DEFAULT_MINIMUM_MS;
+    this.hud.update({
+      score: this.score.getScore(),
+      livesRemaining: 5,
+      waveNumber: 0,
+      remainingMs: 0,
+      isIntermission: false,
+      isCalibration: false,
+      isTutorial: true,
+    });
 
-    if (time - this.stepStartedAt < minimum) {
-      return;
-    }
-
-    if (step.isComplete(context)) {
-      step.onExit?.(context);
-
-      this.stepIndex += 1;
-
-      if (this.stepIndex >= this.steps.length) {
-        this.finish();
-
-        return;
-      }
-
-      this.enterStep(time);
-    }
+    this.advanceStep(context, time)
   }
 
   private buildSteps(): TutorialStep[] {
@@ -203,6 +234,78 @@ export class TutorialScene extends Phaser.Scene {
           this.targets.length = 0;
         },
       },
+      {
+        id: "lives",
+        title: "Taking damage",
+        body:
+          "Enemy attacks and collisions each cost one life during the game. " +
+          "You will have five. (Lives are unlimited in this tutorial)",
+        isComplete: (context) => context.now - context.stepStartedAt > 4500,
+        minimumMs: 4500,
+      },
+      {
+        id: "chaser",
+        title: "Chasers",
+        body:
+          "Chasers pursue you. They start slow but get faster the longer " +
+          "they survive. Destroy them quickly.",
+        onEnter: () => {
+          this.targets.push(
+            new Chaser(
+              this,
+              ARENA.x + 120,
+              ARENA.y + 120,
+              this.enemySpeedMultiplier(),
+            ),
+          );
+        },
+        isComplete: () => this.allTargetsCleared(),
+        onExit: () => this.clearTargets(),
+      },
+      {
+        id: "ranged",
+        title: "Ranged enemies",
+        body:
+          "Ranged enemies keep their distance and fire at you. They also " +
+          "move away from your shots. Dodge their fire and take them out.",
+        onEnter: () => {
+          const actuators = resolveActuators(TUTORIAL_CONFIG.enemyLevel);
+
+          this.targets.push(
+            new Ranged(
+              this,
+              ARENA.x + ARENA.width / 2 + TUTORIAL_CONFIG.rangedSpawnDistance / 2,
+              ARENA.y + ARENA.height / 2,
+              this.projectiles,
+              this.enemyProjectiles,
+              actuators.enemySpeedMultiplier,
+              actuators.rangedAttackIntervalMs,
+            ),
+          );
+        },
+        isComplete: () => this.allTargetsCleared(),
+        minimumMs: TUTORIAL_CONFIG.rangedMinimumMs,
+        onExit: () => this.clearTargets(),
+      },
+      {
+        id: "dasher",
+        title: "Dashers",
+        body:
+          "Dashers lock onto your position, then charge. Dodge the dash and " +
+          "attack while they recover.",
+        onEnter: () => {
+          this.targets.push(
+            new Dasher(
+              this,
+              ARENA.x + ARENA.width - 140,
+              ARENA.y + 140,
+              this.enemySpeedMultiplier(),
+            ),
+          );
+        },
+        isComplete: () => this.allTargetsCleared(),
+        onExit: () => this.clearTargets(),
+      },
     ];
   }
 
@@ -217,6 +320,38 @@ export class TutorialScene extends Phaser.Scene {
     this.prompt.show(step.title, step.body);
 
     step.onEnter?.({ scene: this, stepStartedAt: time, now: time });
+  }
+
+  private advanceStep(context: TutorialContext, time: number): void {
+    const step = this.steps[this.stepIndex];
+
+    if (step === undefined) {
+      return;
+    }
+
+    step.onUpdate?.(context);
+
+    const minimum = step.minimumMs ?? TutorialScene.DEFAULT_MINIMUM_MS;
+
+    if (time - this.stepStartedAt < minimum) {
+      return;
+    }
+
+    if (!step.isComplete(context)) {
+      return;
+    }
+
+    step.onExit?.(context);
+
+    this.stepIndex += 1;
+
+    if (this.stepIndex >= this.steps.length) {
+      this.finish();
+
+      return;
+    }
+
+    this.enterStep(time);
   }
 
   private finish(): void {
@@ -302,5 +437,22 @@ export class TutorialScene extends Phaser.Scene {
 
     arena.setStrokeStyle(2, PALETTE.arenaBorder);
     arena.setDepth(DEPTH.arena);
+  }
+
+  private enemySpeedMultiplier(): number {
+    return resolveActuators(TUTORIAL_CONFIG.enemyLevel).enemySpeedMultiplier;
+  }
+
+  private allTargetsCleared(): boolean {
+    return this.targets.every((target) => !target.isAlive());
+  }
+
+  private clearTargets(): void {
+    for (const target of this.targets) {
+      target.despawn();
+    }
+
+    this.targets.length = 0;
+    this.enemyProjectiles.reset();
   }
 }

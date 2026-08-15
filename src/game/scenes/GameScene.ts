@@ -338,6 +338,7 @@ export class GameScene extends Phaser.Scene {
       remainingMs: this.waves.getPhaseRemainingMs(time),
       isIntermission: this.waves.isIntermission(),
       isCalibration: false,
+      isTutorial: false,
     });
   }
 
