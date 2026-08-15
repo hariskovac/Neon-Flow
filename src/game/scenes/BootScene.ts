@@ -8,6 +8,6 @@ export class BootScene extends Phaser.Scene {
 
   public create(): void {
     session.reset();
-    this.scene.start("InstructionsScene");
+    this.scene.start("TutorialScene");
   }
 }

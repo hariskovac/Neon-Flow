@@ -135,6 +135,13 @@ export const POWERUP_CONFIG = {
   fireRateMultiplier: 1.8,
 };
 
+export const TUTORIAL_CONFIG = {
+  dummyHealth: 10,
+  keyCapSize: 40,
+  keyCapGap: 6,
+  keyCapFontSize: "18px",
+};
+
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
   ranged: 150,
@@ -145,6 +152,7 @@ export const WAVE_SURVIVAL_BONUS = 2500;
 
 export const PALETTE = {
   arenaFloor: 0x0e1526,
+  panelText: "#0e1526",
   arenaBorder: 0x263653,
   player: 0x62e6c8,
   playerOutline: 0xffffff,
@@ -165,6 +173,8 @@ export const PALETTE = {
   textPrimary: "#f4f7ff",
   textMuted: "#8fa3c4",
   textAccent: "#3ddbff",
+  textAccentValue: 0x3ddbff,
+  targetDummy: 0x8fa3c4,
 };
 
 export const DEPTH = {
