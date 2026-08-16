@@ -7,12 +7,14 @@ import {
 } from "../../systems/ChaserMovement";
 import type { Enemy } from "./Enemy";
 import type { EnemyType } from "../../../types/game";
+import { drawNeonShape } from "../../render/Neon";
 
 export class Chaser implements Enemy {
-  private readonly view: Phaser.GameObjects.Arc;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly spawnedAt: number;
   private readonly speedMultiplier: number;
+  private readonly hitbox: Phaser.GameObjects.Rectangle;
+  private readonly ship: Phaser.GameObjects.Graphics;
 
   private alive = true;
   private health = CHASER_CONFIG.maxHealth;
@@ -21,18 +23,13 @@ export class Chaser implements Enemy {
     this.spawnedAt = scene.time.now;
     this.speedMultiplier = speedMultiplier;
 
-    this.view = scene.add.circle(
-      x,
-      y,
-      CHASER_CONFIG.radius,
-      PALETTE.chaser,
-    );
+    const diameter = CHASER_CONFIG.radius * 2;
 
-    this.view.setDepth(DEPTH.enemy);
+    this.hitbox = scene.add.rectangle(x, y, diameter, diameter, 0x000000);
 
-    scene.physics.add.existing(this.view);
+    scene.physics.add.existing(this.hitbox);
 
-    const body = this.view.body;
+    const body = this.hitbox.body;
 
     if (!(body instanceof Phaser.Physics.Arcade.Body)) {
       throw new Error("The chaser doesn't have an Arcade Physics body.");
@@ -42,6 +39,14 @@ export class Chaser implements Enemy {
     this.body.setAllowGravity(false);
     this.body.setCircle(CHASER_CONFIG.radius);
     this.body.setCollideWorldBounds(true);
+
+    this.hitbox.setVisible(false);
+
+    this.ship = scene.add.graphics();
+    this.ship.setDepth(DEPTH.enemy);
+    this.ship.setPosition(x, y);
+
+    this.drawHull();
   }
 
   // steers toward the player and accelerates
@@ -58,13 +63,26 @@ export class Chaser implements Enemy {
     );
 
     const direction = setPursuitVector(
-      this.view.x,
-      this.view.y,
+      this.hitbox.x,
+      this.hitbox.y,
       targetX,
       targetY,
     );
 
     this.body.setVelocity(direction.x * speed, direction.y * speed);
+    this.ship.setPosition(this.hitbox.x, this.hitbox.y);
+    this.ship.setRotation((time / 1000) * CHASER_CONFIG.spinRate);
+  }
+
+  private drawHull(): void {
+    this.ship.clear();
+
+    drawNeonShape(
+      this.ship,
+      CHASER_CONFIG.hullOutline,
+      PALETTE.chaser,
+      CHASER_CONFIG.hullLineWidth,
+    );
   }
 
   public isAlive(): boolean {
@@ -72,11 +90,11 @@ export class Chaser implements Enemy {
   }
 
   public getX(): number {
-    return this.view.x;
+    return this.hitbox.x;
   }
 
   public getY(): number {
-    return this.view.y;
+    return this.hitbox.y;
   }
 
   public takeHit(): boolean {
@@ -87,17 +105,12 @@ export class Chaser implements Enemy {
     this.health -= 1;
 
     if (this.health > 0) {
-      this.view.setFillStyle(
-        PALETTE.chaser,
-        0.35 + 0.65 * (this.health / CHASER_CONFIG.maxHealth),
-      );
+      this.ship.setAlpha(0.4 + 0.6 * (this.health / CHASER_CONFIG.maxHealth));
 
       return false;
     }
 
-    this.alive = false;
-    this.body.enable = false;
-    this.view.destroy();
+    this.destroyObjects();
 
     return true;
   }
@@ -114,13 +127,18 @@ export class Chaser implements Enemy {
     return "chaser";
   }
 
+  private destroyObjects(): void {
+    this.alive = false;
+    this.body.enable = false;
+    this.ship.destroy();
+    this.hitbox.destroy();
+  }
+
   public despawn(): void {
     if (!this.alive) {
       return;
     }
 
-    this.alive = false;
-    this.body.enable = false;
-    this.view.destroy();
+    this.destroyObjects();
   }
 }

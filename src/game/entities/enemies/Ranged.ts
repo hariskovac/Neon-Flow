@@ -6,12 +6,13 @@ import {
   resolveEvasion,
   resolveStandoffVector,
 } from "../../systems/RangedMovement";
-import type { Vector2 } from "../../../types/game";
+import type { Vector2, EnemyType } from "../../../types/game";
 import type { Enemy } from "./Enemy";
-import type { EnemyType } from "../../../types/game";
+import { drawNeonShape } from "../../render/Neon";
 
 export class Ranged implements Enemy {
-  private readonly view: Phaser.GameObjects.Arc;
+  private readonly hitbox: Phaser.GameObjects.Rectangle;
+  private readonly ship: Phaser.GameObjects.Graphics;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly playerProjectiles: ProjectileSystem;
   private readonly enemyProjectiles: ProjectileSystem;
@@ -50,12 +51,13 @@ export class Ranged implements Enemy {
     // prevents firing immediately upon spawn
     this.lastShotAt = scene.time.now;
 
-    this.view = scene.add.circle(x, y, RANGED_CONFIG.radius, PALETTE.ranged);
-    this.view.setDepth(DEPTH.enemy);
+    const diameter = RANGED_CONFIG.radius * 2;
 
-    scene.physics.add.existing(this.view);
+    this.hitbox = scene.add.rectangle(x, y, diameter, diameter, 0x000000);
 
-    const body = this.view.body;
+    scene.physics.add.existing(this.hitbox);
+
+    const body = this.hitbox.body;
 
     if (!(body instanceof Phaser.Physics.Arcade.Body)) {
       throw new Error(
@@ -67,12 +69,27 @@ export class Ranged implements Enemy {
     this.body.setAllowGravity(false);
     this.body.setCircle(RANGED_CONFIG.radius);
     this.body.setCollideWorldBounds(true);
+
+    this.hitbox.setVisible(false);
+    this.hitbox.setAlpha(0);
+
+    this.ship = scene.add.graphics();
+    this.ship.setDepth(DEPTH.enemy);
+    this.ship.setPosition(x, y);
+
+    this.drawHull();
   }
 
   public update(time: number, targetX: number, targetY: number): void {
     if (!this.alive) {
       return;
     }
+
+    const deltaX = targetX - this.hitbox.x;
+    const deltaY = targetY - this.hitbox.y;
+
+    this.ship.setPosition(this.hitbox.x, this.hitbox.y);
+    this.ship.setRotation((time / 1000) * RANGED_CONFIG.spinRate);
 
     const evasion = this.resolveEvasion();
 
@@ -86,8 +103,8 @@ export class Ranged implements Enemy {
     }
 
     const standoff = resolveStandoffVector(
-      this.view.x,
-      this.view.y,
+      this.hitbox.x,
+      this.hitbox.y,
       targetX,
       targetY,
       RANGED_CONFIG.preferredDistance,
@@ -95,8 +112,7 @@ export class Ranged implements Enemy {
     );
 
     const closing =
-      Math.hypot(targetX - this.view.x, targetY - this.view.y) >
-      RANGED_CONFIG.preferredDistance;
+      Math.hypot(deltaX, deltaY) > RANGED_CONFIG.preferredDistance;
 
     const speed = closing
       ? this.approachSpeed
@@ -112,8 +128,8 @@ export class Ranged implements Enemy {
       const body = projectile.getBody();
 
       const evasion = resolveEvasion(
-        this.view.x,
-        this.view.y,
+        this.hitbox.x,
+        this.hitbox.y,
         projectile.getX(),
         projectile.getY(),
         body.velocity.x,
@@ -135,8 +151,8 @@ export class Ranged implements Enemy {
       return;
     }
 
-    const deltaX = targetX - this.view.x;
-    const deltaY = targetY - this.view.y;
+    const deltaX = targetX - this.hitbox.x;
+    const deltaY = targetY - this.hitbox.y;
     const distance = Math.hypot(deltaX, deltaY);
 
     if (distance === 0 || distance > ENEMY_WEAPON_CONFIG.maxFiringRange) {
@@ -149,8 +165,8 @@ export class Ranged implements Enemy {
     this.lastShotAt = time;
 
     this.enemyProjectiles.spawn({
-      originX: this.view.x + directionX * ENEMY_WEAPON_CONFIG.muzzleOffset,
-      originY: this.view.y + directionY * ENEMY_WEAPON_CONFIG.muzzleOffset,
+      originX: this.hitbox.x + directionX * ENEMY_WEAPON_CONFIG.muzzleOffset,
+      originY: this.hitbox.y + directionY * ENEMY_WEAPON_CONFIG.muzzleOffset,
       velocityX: directionX * ENEMY_WEAPON_CONFIG.projectileSpeed,
       velocityY: directionY * ENEMY_WEAPON_CONFIG.projectileSpeed,
       angle: Math.atan2(deltaY, deltaX),
@@ -158,20 +174,32 @@ export class Ranged implements Enemy {
     });
   }
 
+  private drawHull(): void {
+    this.ship.clear();
+
+    drawNeonShape(
+      this.ship,
+      RANGED_CONFIG.hullOutline,
+      PALETTE.ranged,
+      RANGED_CONFIG.hullLineWidth,
+    );
+  }
+
   public isAlive(): boolean {
     return this.alive;
   }
 
   public getX(): number {
-    return this.view.x;
+    return this.hitbox.x;
   }
 
   public getY(): number {
-    return this.view.y;
+    return this.hitbox.y;
   }
 
   public setPosition(x: number, y: number): void {
     this.body.reset(x, y);
+    this.ship.setPosition(x, y);
   }
 
   public takeHit(): boolean {
@@ -182,20 +210,16 @@ export class Ranged implements Enemy {
     this.health -= 1;
 
     if (this.health > 0) {
-      this.view.setFillStyle(
-        PALETTE.ranged,
-        0.35 + 0.65 * (this.health / RANGED_CONFIG.maxHealth),
-      );
+      this.ship.setAlpha(0.4 + 0.6 * (this.health / RANGED_CONFIG.maxHealth));
 
       return false;
     }
 
-    this.alive = false;
-    this.body.enable = false;
-    this.view.destroy();
+    this.destroyObjects();
 
     return true;
   }
+
   public getRadius(): number {
     return RANGED_CONFIG.radius;
   }
@@ -209,8 +233,13 @@ export class Ranged implements Enemy {
       return;
     }
 
+    this.destroyObjects();
+  }
+
+  private destroyObjects(): void {
     this.alive = false;
     this.body.enable = false;
-    this.view.destroy();
+    this.ship.destroy();
+    this.hitbox.destroy();
   }
 }

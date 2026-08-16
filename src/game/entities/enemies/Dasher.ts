@@ -1,9 +1,10 @@
 import Phaser from "phaser";
 
-import type { EnemyType, Vector2 } from "../../../types/game";
+import type { EnemyType } from "../../../types/game";
 import { DASHER_CONFIG, DEPTH, PALETTE } from "../../gameplayConfig";
 import { resolveDash } from "../../systems/DasherMovement";
 import type { Enemy } from "./Enemy";
+import { drawNeonShape } from "../../render/Neon";
 
 type DasherState = "locking" | "dashing" | "pausing";
 
@@ -17,19 +18,19 @@ export class Dasher implements Enemy {
 
   private alive = true;
   private health = DASHER_CONFIG.maxHealth;
+  private healthAlpha = 1;
   private state: DasherState = "locking";
   private stateUntil: number;
 
   public constructor(scene: Phaser.Scene, x: number, y: number, speedMultiplier: number) {
-    const diameter = DASHER_CONFIG.collisionRadius * 2;
-
     this.dashSpeed = Math.min(
       DASHER_CONFIG.dashSpeed * speedMultiplier,
       DASHER_CONFIG.maxDashSpeed,
     );
 
+    const diameter = DASHER_CONFIG.collisionRadius * 2;
+
     this.hitbox = scene.add.rectangle(x, y, diameter, diameter);
-    this.hitbox.setVisible(false);
 
     scene.physics.add.existing(this.hitbox);
 
@@ -43,6 +44,8 @@ export class Dasher implements Enemy {
     this.body.setAllowGravity(false);
     this.body.setCircle(DASHER_CONFIG.collisionRadius);
     this.body.setCollideWorldBounds(true);
+
+    this.hitbox.setVisible(false);
 
     this.ship = scene.add.graphics();
     this.ship.setDepth(DEPTH.enemy);
@@ -65,6 +68,16 @@ export class Dasher implements Enemy {
       if (deltaX !== 0 || deltaY !== 0) {
         this.facing = Math.atan2(deltaY, deltaX);
       }
+
+      const pulse = (Math.sin(time / DASHER_CONFIG.lockPulseMs) + 1) / 2;
+
+      const pulseAlpha =
+        DASHER_CONFIG.lockPulseMinAlpha +
+        (1 - DASHER_CONFIG.lockPulseMinAlpha) * pulse;
+
+      this.ship.setAlpha(this.healthAlpha * pulseAlpha);
+    } else {
+      this.ship.setAlpha(this.healthAlpha);
     }
 
     this.ship.setPosition(this.hitbox.x, this.hitbox.y);
@@ -151,26 +164,12 @@ export class Dasher implements Enemy {
   private drawHull(): void {
     this.ship.clear();
 
-    this.ship.fillStyle(PALETTE.dasher, DASHER_CONFIG.hullFillAlpha);
-    this.ship.lineStyle(DASHER_CONFIG.hullLineWidth, PALETTE.dasher, 1);
-    this.tracePath(DASHER_CONFIG.hullOutline);
-    this.ship.fillPath();
-    this.ship.strokePath();
-
-    this.ship.fillStyle(PALETTE.dasherNose, 1);
-    this.tracePath(DASHER_CONFIG.noseMarker);
-    this.ship.fillPath();
-  }
-
-  private tracePath(points: readonly Vector2[]): void {
-    this.ship.beginPath();
-    this.ship.moveTo(points[0].x, points[0].y);
-
-    for (let index = 1; index < points.length; index += 1) {
-      this.ship.lineTo(points[index].x, points[index].y);
-    }
-
-    this.ship.closePath();
+    drawNeonShape(
+      this.ship,
+      DASHER_CONFIG.hullOutline,
+      PALETTE.dasher,
+      DASHER_CONFIG.hullLineWidth,
+    );
   }
 
   public isAlive(): boolean {

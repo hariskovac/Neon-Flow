@@ -1,4 +1,4 @@
-import type { ArenaBounds, EnemyType } from "../types/game";
+import type { ArenaBounds, EnemyType, Vector2 } from "../types/game";
 
 export const CANVAS = {
   width: 1600,
@@ -67,11 +67,19 @@ export const ENEMY_WEAPON_CONFIG = {
 };
 
 export const CHASER_CONFIG = {
-  radius: 10,
+  radius: 11,
   maxHealth: 2,
   baseSpeed: 70,
   accelerationPerSecond: 14,
   maxSpeed: 220,
+  hullOutline: [
+    { x: 0, y: -12 },
+    { x: 11, y: 0 },
+    { x: 0, y: 12 },
+    { x: -11, y: 0 },
+  ],
+  hullLineWidth: 2,
+  spinRate: 0.6,
 };
 
 export const RANGED_CONFIG = {
@@ -86,6 +94,9 @@ export const RANGED_CONFIG = {
   evasionLookaheadMs: 420,
   maxApproachSpeed: 150,
   maxRetreatSpeed: 180,
+  hullOutline: buildRegularPolygon(5, 13),
+  hullLineWidth: 2,
+  spinRate: 0.6,
 };
 
 export const DASHER_CONFIG = {
@@ -95,19 +106,15 @@ export const DASHER_CONFIG = {
   dashSpeed: 520,
   overshootDistance: 130,
   pauseDurationMs: 700,
-    hullOutline: [
-    { x: 20, y: 0 },
-    { x: 0, y: 12 },
-    { x: -14, y: 0 },
-    { x: 0, y: -12 },
-  ],
-  noseMarker: [
-    { x: 20, y: 0 },
-    { x: 4, y: 5 },
-    { x: 4, y: -5 },
+  hullOutline: [
+    { x: 24, y: 0 },
+    { x: -10, y: 14 },
+    { x: -4, y: 0 },
+    { x: -10, y: -14 },
   ],
   hullLineWidth: 2,
-  hullFillAlpha: 0.18,
+  lockPulseMinAlpha: 0.45,
+  lockPulseMs: 140,
   maxDashSpeed: 620,
 };
 
@@ -226,3 +233,18 @@ export const HUD_TEXT_STYLE = {
   color: PALETTE.hudPrimary,
   resolution: 2,
 };
+
+function buildRegularPolygon(sides: number, radius: number): Vector2[] {
+  const points: Vector2[] = [];
+
+  for (let index = 0; index < sides; index += 1) {
+    const angle = (index / sides) * Math.PI * 2;
+
+    points.push({
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    });
+  }
+
+  return points;
+}
