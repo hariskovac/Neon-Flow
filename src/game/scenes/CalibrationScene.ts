@@ -5,7 +5,6 @@ import { Player } from "../entities/Player";
 import {
   ARENA,
   CALIBRATION_CONFIG,
-  DEPTH,
   ENEMY_WEAPON_CONFIG,
   PALETTE,
   PLAYER_CONFIG,
@@ -25,6 +24,7 @@ import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { PowerUpSystem } from "../systems/PowerUpSystem";
 import { resolveActuators } from "../../dda/DifficultyConfig";
 import { POWERUP_CONFIG } from "../gameplayConfig";
+import { drawArenaBackground } from "../render/ArenaBackground";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -70,7 +70,7 @@ export class CalibrationScene extends Phaser.Scene {
       ARENA.height,
     );
 
-    this.drawArena();
+    drawArenaBackground(this);
 
     this.score = new ScoreSystem();
     this.lives = new LivesSystem();
@@ -267,19 +267,6 @@ export class CalibrationScene extends Phaser.Scene {
     console.log("Calibration complete", summary);
 
     this.scene.start("GameScene");
-  }
-
-  private drawArena(): void {
-    const arena = this.add.rectangle(
-      ARENA.x + ARENA.width / 2,
-      ARENA.y + ARENA.height / 2,
-      ARENA.width,
-      ARENA.height,
-      PALETTE.arenaFloor,
-    );
-
-    arena.setStrokeStyle(2, PALETTE.arenaBorder);
-    arena.setDepth(DEPTH.arena);
   }
 
   private markPointerInput(): void {

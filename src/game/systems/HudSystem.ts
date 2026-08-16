@@ -29,13 +29,13 @@ export interface HudState {
 }
 
 export class HudSystem {
-  private static readonly EDGE_PADDING = 20;
+  private static readonly EDGE_PADDING = 24;
   private static readonly PIP_WIDTH = 18;
   private static readonly PIP_HEIGHT = 8;
   private static readonly PIP_GAP = 6;
-  private static readonly WAVE_LABEL_RIGHT = 290;
-  private static readonly WAVE_PIP_LEFT = 302;
-  private static readonly TIMER_CENTRE_X = 640;
+  private static readonly WAVE_LABEL_RIGHT = CANVAS.width / 2 - 250;
+  private static readonly WAVE_PIP_LEFT = CANVAS.width / 2 - 238;
+  private static readonly TIMER_CENTER_X = CANVAS.width / 2;
 
   private readonly scoreLabel: Phaser.GameObjects.Text;
   private readonly livesLabel: Phaser.GameObjects.Text; 
@@ -52,11 +52,11 @@ export class HudSystem {
   private lastTimerText = "";
 
   public constructor(scene: Phaser.Scene, startingLives: number) {
-    const centreY = HUD_BAND_HEIGHT / 2;
+    const centerY = HUD_BAND_HEIGHT / 2;
 
     this.scoreLabel = scene.add.text(
       HudSystem.EDGE_PADDING,
-      centreY,
+      centerY,
       "Score 0",
       HUD_TEXT_STYLE,
     );
@@ -66,7 +66,7 @@ export class HudSystem {
 
     this.waveLabel = scene.add.text(
       HudSystem.WAVE_LABEL_RIGHT,
-      centreY,
+      centerY,
       "Wave",
       { ...HUD_TEXT_STYLE, color: PALETTE.hudMuted },
     );
@@ -76,7 +76,7 @@ export class HudSystem {
 
     this.unlimitedLabel = scene.add.text(
       CANVAS.width - HudSystem.EDGE_PADDING,
-      centreY,
+      centerY,
       "Unlimited",
       { ...HUD_TEXT_STYLE, fontSize: "16px", color: PALETTE.textAccent },
     );
@@ -88,14 +88,14 @@ export class HudSystem {
     this.buildPips(
       scene,
       HudSystem.WAVE_PIP_LEFT,
-      centreY,
+      centerY,
       WAVE_CONFIG.totalWaves,
       this.wavePips,
     );
 
     this.timerLabel = scene.add.text(
-      HudSystem.TIMER_CENTRE_X,
-      centreY,
+      HudSystem.TIMER_CENTER_X,
+      centerY,
       "",
       HUD_TEXT_STYLE,
     );
@@ -109,9 +109,9 @@ export class HudSystem {
 
     const pipLeft = CANVAS.width - HudSystem.EDGE_PADDING - pipWidth;
 
-    this.buildPips(scene, pipLeft, centreY, startingLives, this.lifePips);
+    this.buildPips(scene, pipLeft, centerY, startingLives, this.lifePips);
 
-    this.livesLabel = scene.add.text(pipLeft - 12, centreY, "Lives", {
+    this.livesLabel = scene.add.text(pipLeft - 12, centerY, "Lives", {
       ...HUD_TEXT_STYLE,
       color: PALETTE.hudMuted,
     });

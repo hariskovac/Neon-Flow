@@ -1,11 +1,11 @@
 import type { ArenaBounds, EnemyType } from "../types/game";
 
 export const CANVAS = {
-  width: 960,
-  height: 540,
+  width: 1600,
+  height: 900,
 };
 
-export const HUD_BAND_HEIGHT = 48;
+export const HUD_BAND_HEIGHT = 64;
 
 export const ARENA: ArenaBounds = {
   x: 12,
@@ -14,22 +14,29 @@ export const ARENA: ArenaBounds = {
   height: CANVAS.height - HUD_BAND_HEIGHT - 12,
 };
 
+export const GRID_CONFIG = {
+  cellSize: 64,
+  colour: 0x16304d,
+  lineWidth: 1,
+  alpha: 0.55,
+};
+
 export const PLAYER_CONFIG = {
   size: 26,
   turretLength: 22,
   turretThickness: 5,
-  speed: 260,
+  speed: 340,
   startingLives: 5,
   respawnInvincibilityMs: 1500,
   respawnFlashIntervalMs: 100,
-  respawnPushbackRadius: 240,
+  respawnPushbackRadius: 320,
 };
 
 export const WEAPON_CONFIG = {
   fireIntervalMs: 160,
-  projectileSpeed: 620,
+  projectileSpeed: 760,
   projectileRadius: 4,
-  projectileLifetimeMs: 2000,
+  projectileLifetimeMs: 2600,
   muzzleOffset: 20,
   maxActiveProjectiles: 64,
   minFireRateMultiplier: 1,
@@ -38,12 +45,12 @@ export const WEAPON_CONFIG = {
 
 export const ENEMY_WEAPON_CONFIG = {
   attackIntervalMs: 1600,
-  projectileSpeed: 260,
+  projectileSpeed: 320,
   projectileRadius: 5,
   projectileLifetimeMs: 4000,
   muzzleOffset: 16,
   maxActiveProjectiles: 48,
-  maxFiringRange: 420,
+  maxFiringRange: 560,
 };
 
 export const CHASER_CONFIG = {
@@ -57,13 +64,13 @@ export const CHASER_CONFIG = {
 export const RANGED_CONFIG = {
   radius: 11,
   maxHealth: 1,
-  preferredDistance: 260,
+  preferredDistance: 360,
   distanceTolerance: 40,
   approachSpeed: 90,
   retreatSpeed: 110,
   evasionRadius: 70,
   evasionSpeed: 150,
-  evasionLookaheadMs: 500,
+  evasionLookaheadMs: 420,
   maxApproachSpeed: 150,
   maxRetreatSpeed: 180,
 };
@@ -72,8 +79,8 @@ export const DASHER_CONFIG = {
   collisionRadius: 9,
   maxHealth: 3,
   lockDurationMs: 600,
-  dashSpeed: 420,
-  overshootDistance: 90,
+  dashSpeed: 520,
+  overshootDistance: 130,
   pauseDurationMs: 700,
     hullOutline: [
     { x: 20, y: 0 },
@@ -97,9 +104,9 @@ export const SPAWN_CONFIG = {
   minIntervalMs: 450,
   maxIntervalMs: 3500,
   maxActiveEnemies: 50,
-  spawnInset: 28,
-  minDistanceFromPlayer: 180,
-  maxPlacementAttempts: 8,
+  spawnInset: 40,
+  minDistanceFromPlayer: 260,
+  maxPlacementAttempts: 20,
   // spawn weights
   weights: {
     chaser: 55,

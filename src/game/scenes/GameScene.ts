@@ -8,7 +8,7 @@ import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
-import { ARENA, DEPTH, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG, WAVE_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
+import { ARENA, PALETTE, PLAYER_CONFIG, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG, WAVE_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
 import { WaveSystem } from "../systems/WaveSystem";
@@ -23,6 +23,7 @@ import { PowerUpSystem } from "../systems/PowerUpSystem";
 import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
 import { generateCalibrationExplanation, generateNeutralExplanation } from "../../dda/ExplanationGenerator";
 import type { Explanation } from "../../dda/ExplanationGenerator";
+import { drawArenaBackground } from "../render/ArenaBackground";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -81,7 +82,7 @@ export class GameScene extends Phaser.Scene {
       ARENA.height,
     );
 
-    this.drawArena();
+    drawArenaBackground(this);
 
     this.score = new ScoreSystem();
     this.lives = new LivesSystem();
@@ -149,19 +150,6 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
-  }
-
-  private drawArena(): void {
-    const arena = this.add.rectangle(
-      ARENA.x + ARENA.width / 2,
-      ARENA.y + ARENA.height / 2,
-      ARENA.width,
-      ARENA.height,
-      PALETTE.arenaFloor,
-    );
-
-    arena.setStrokeStyle(2, PALETTE.arenaBorder);
-    arena.setDepth(DEPTH.arena);
   }
 
   private markPointerInput(): void {

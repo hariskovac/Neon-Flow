@@ -32,6 +32,7 @@ import { generateExampleExplanation } from "../../dda/ExplanationGenerator";
 import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
 import type { PowerUpType } from "../../types/game";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
+import { drawArenaBackground } from "../render/ArenaBackground";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -84,7 +85,7 @@ export class TutorialScene extends Phaser.Scene {
     this.targets = [];
 
     this.physics.world.setBounds(ARENA.x, ARENA.y, ARENA.width, ARENA.height);
-    this.drawArena();
+    drawArenaBackground(this);
 
     this.player = new Player(
       this,
@@ -562,19 +563,6 @@ export class TutorialScene extends Phaser.Scene {
       left: this.movementKeys.A.isDown || this.cursors.left.isDown,
       right: this.movementKeys.D.isDown || this.cursors.right.isDown,
     };
-  }
-
-  private drawArena(): void {
-    const arena = this.add.rectangle(
-      ARENA.x + ARENA.width / 2,
-      ARENA.y + ARENA.height / 2,
-      ARENA.width,
-      ARENA.height,
-      PALETTE.arenaFloor,
-    );
-
-    arena.setStrokeStyle(2, PALETTE.arenaBorder);
-    arena.setDepth(DEPTH.arena);
   }
 
   private enemySpeedMultiplier(): number {
