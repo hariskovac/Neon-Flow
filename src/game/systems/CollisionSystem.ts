@@ -1,4 +1,3 @@
-import { PLAYER_CONFIG } from "../gameplayConfig";
 import type { ProjectileSystem } from "./ProjectileSystem";
 import type { Player } from "../entities/Player";
 import type { EnemyType, PowerUpType } from "../../types/game";
@@ -93,7 +92,7 @@ export class CollisionSystem {
       }
     }
 
-    const playerRadius = PLAYER_CONFIG.size / 2;
+    const playerRadius = this.player.getRadius();
 
     for (const enemy of this.enemies) {
       if (!enemy.isAlive()) {

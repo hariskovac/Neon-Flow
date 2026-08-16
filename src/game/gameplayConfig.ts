@@ -15,16 +15,29 @@ export const ARENA: ArenaBounds = {
 };
 
 export const GRID_CONFIG = {
-  cellSize: 64,
+  cellSize: 48,
   colour: 0x16304d,
   lineWidth: 1,
-  alpha: 0.55,
+  alpha: 0.25,
 };
 
 export const PLAYER_CONFIG = {
-  size: 26,
-  turretLength: 22,
-  turretThickness: 5,
+  collisionRadius: 9,
+  hullOutline: [
+    { x: 20, y: 0 },
+    { x: -12, y: 13 },
+    { x: -6, y: 0 },
+    { x: -12, y: -13 },
+  ],
+  hullLineWidth: 2,
+  flameOutline: [
+    { x: -7, y: 6 },
+    { x: -26, y: 0 },
+    { x: -7, y: -6 },
+  ],
+  flameMinScale: 0.65,
+  flameMaxScale: 1.15,
+  flamePulseMs: 15,
   speed: 340,
   startingLives: 5,
   respawnInvincibilityMs: 1500,
@@ -166,8 +179,7 @@ export const PALETTE = {
   panelText: "#0e1526",
   arenaBorder: 0x263653,
   player: 0x62e6c8,
-  playerOutline: 0xffffff,
-  turret: 0xf4f7ff,
+  playerFlame: 0x5ce1ff,
   projectile: 0xffe066,
   enemyProjectile: 0xff6b6b,
   pipFilled: 0x62e6c8,
@@ -188,9 +200,18 @@ export const PALETTE = {
   targetDummy: 0x8fa3c4,
 };
 
+export const NEON_CONFIG = {
+  passes: [
+    { widthScale: 3, alpha: 0.08 },
+    { widthScale: 1.8, alpha: 0.18 },
+    { widthScale: 1, alpha: 1 },
+  ],
+  fillAlpha: 0.06,
+  coreLightness: 0.75,
+};
+
 export const DEPTH = {
   arena: 0,
-  turret: 4,
   player: 5,
   projectile: 6,
   powerUp: 6,
