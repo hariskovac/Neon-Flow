@@ -256,3 +256,36 @@ function buildRegularPolygon(sides: number, radius: number): Vector2[] {
 
   return points;
 }
+
+export const AUDIO_CONFIG = {
+  keys: {
+    music: "music",
+    playerFire: "sfx-player-fire",
+    enemyFire: "sfx-enemy-fire",
+    enemySpawn: "sfx-enemy-spawn",
+    enemyDeath: "sfx-enemy-death",
+    playerHit: "sfx-player-hit",
+    playerDeath: "sfx-player-death",
+    powerUpPickup: "sfx-powerup",
+  },
+  musicVolume: 0.35,
+  sfxVolume: 0.6,
+  levels: {
+    playerFire: 0.35,
+    enemyFire: 0.5,
+    enemySpawn: 0.18,
+    enemyDeath: 0.7,
+    playerHit: 0.8,
+    playerDeath: 1,
+    powerUpPickup: 0.8,
+  },
+  minRepeatMs: {
+    playerFire: 90,
+    enemyFire: 60,
+    enemySpawn: 120,
+    enemyDeath: 45,
+    playerHit: 200,
+    playerDeath: 200,
+    powerUpPickup: 100,
+  },
+};

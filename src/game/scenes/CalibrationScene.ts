@@ -25,6 +25,7 @@ import { PowerUpSystem } from "../systems/PowerUpSystem";
 import { resolveActuators } from "../../dda/DifficultyConfig";
 import { POWERUP_CONFIG } from "../gameplayConfig";
 import { drawArenaBackground } from "../render/ArenaBackground";
+import { audio } from "../../audio/AudioSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -142,6 +143,8 @@ export class CalibrationScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
+
+    audio.attach(this);
   }
 
   public update(time: number): void {
@@ -183,6 +186,7 @@ export class CalibrationScene extends Phaser.Scene {
     }
 
     if (shots.length > 0) {
+      audio.playSfx("playerFire");
       this.performance.recordShotFired();
     }
 

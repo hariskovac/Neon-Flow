@@ -24,6 +24,7 @@ import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
 import { generateCalibrationExplanation, generateNeutralExplanation } from "../../dda/ExplanationGenerator";
 import type { Explanation } from "../../dda/ExplanationGenerator";
 import { drawArenaBackground } from "../render/ArenaBackground";
+import { audio } from "../../audio/AudioSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -152,6 +153,8 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
+
+    audio.attach(this);
   }
 
   private markPointerInput(): void {
@@ -238,6 +241,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (shots.length > 0) {
+      audio.playSfx("playerFire");
       this.performance.recordShotFired();
     }
 

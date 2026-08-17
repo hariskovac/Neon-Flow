@@ -1,5 +1,3 @@
-import Phaser from "phaser";
-
 import { WEAPON_CONFIG } from "../gameplayConfig";
 
 export interface ShotRequest {
@@ -61,7 +59,7 @@ export class WeaponSystem {
     this.lastShotAt = now;
     this.shotsFired += 1;
 
-    const splay = Phaser.Math.DegToRad(WEAPON_CONFIG.barrelSplayDegrees);
+    const splay = (WEAPON_CONFIG.barrelSplayDegrees * Math.PI) / 180;
     const offset = WEAPON_CONFIG.barrelSeparation / 2;
 
     const sideX = Math.cos(aimAngle + Math.PI / 2);

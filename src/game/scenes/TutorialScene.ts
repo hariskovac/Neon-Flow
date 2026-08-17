@@ -33,6 +33,7 @@ import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
 import type { PowerUpType } from "../../types/game";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { drawArenaBackground } from "../render/ArenaBackground";
+import { audio } from "../../audio/AudioSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -142,6 +143,7 @@ export class TutorialScene extends Phaser.Scene {
 
     this.steps = this.buildSteps();
     this.enterStep(this.time.now);
+    audio.attach(this);
   }
 
   public update(time: number): void {
@@ -169,6 +171,7 @@ export class TutorialScene extends Phaser.Scene {
     );
 
     for (const shot of shots) {
+        audio.playSfx("playerFire");
       this.projectiles.spawn(shot);
     }
 
@@ -497,6 +500,8 @@ export class TutorialScene extends Phaser.Scene {
   }
 
   private recordKeysUsed(): void {
+    const before = this.keysUsed.size;
+
     if (this.movementKeys.W.isDown || this.cursors.up.isDown) {
       this.keysUsed.add("up");
     }
@@ -511,6 +516,10 @@ export class TutorialScene extends Phaser.Scene {
 
     if (this.movementKeys.D.isDown || this.cursors.right.isDown) {
       this.keysUsed.add("right");
+    }
+
+    if (before === 0 && this.keysUsed.size > 0) {
+      audio.unlock();
     }
   }
 
