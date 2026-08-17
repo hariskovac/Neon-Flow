@@ -86,3 +86,28 @@ export function drawNeonCircle(
     graphics.strokeCircle(0, 0, radius);
   });
 }
+
+export function drawNeonLine(
+  graphics: Phaser.GameObjects.Graphics,
+  from: Vector2,
+  to: Vector2,
+  colour: number,
+  lineWidth: number,
+  alpha = 1,
+): void {
+  NEON_CONFIG.passes.forEach((pass, index) => {
+    const isCore = index === NEON_CONFIG.passes.length - 1;
+
+    const strokeColour = isCore
+      ? lighten(colour, NEON_CONFIG.coreLightness)
+      : colour;
+
+    graphics.lineStyle(
+      lineWidth * pass.widthScale,
+      strokeColour,
+      pass.alpha * alpha,
+    );
+
+    graphics.lineBetween(from.x, from.y, to.x, to.y);
+  });
+}

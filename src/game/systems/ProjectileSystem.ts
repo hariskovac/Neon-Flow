@@ -9,6 +9,7 @@ export interface ProjectilePoolConfig {
   readonly projectileLifetimeMs: number;
   readonly maxActiveProjectiles: number;
   readonly color: number;
+  readonly lineWidth: number;
 }
 
 export class ProjectileSystem {
@@ -21,7 +22,7 @@ export class ProjectileSystem {
     this.config = config;
 
     for (let index = 0; index < config.maxActiveProjectiles; index += 1) {
-      this.pool.push(new Projectile(scene, config.projectileRadius, config.color));
+      this.pool.push(new Projectile(scene, config.projectileRadius, config.color, config.lineWidth  ));
     }
   }
 
@@ -39,6 +40,8 @@ export class ProjectileSystem {
       if (!projectile.isActive()) {
         continue;
       }
+
+      projectile.syncView();
 
       const expired =
         projectile.getAgeMs(now) >= this.config.projectileLifetimeMs;

@@ -43,7 +43,7 @@ export class TransparencyOverlay {
       TransparencyOverlay.PANEL_WIDTH,
       200,
       PALETTE.arenaFloor,
-      0.96,
+      PALETTE.fillAlpha,
     );
 
     this.panel.setStrokeStyle(2, PALETTE.arenaBorder);

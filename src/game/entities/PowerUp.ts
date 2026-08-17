@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 
-import type { PowerUpType } from "../../types/game";
+import type { PowerUpType, Vector2 } from "../../types/game";
 import { DEPTH, PALETTE, POWERUP_CONFIG } from "../gameplayConfig";
+import { drawNeonLine, drawNeonShape } from "../render/Neon";
 
 const TYPE_COLOURS: Record<PowerUpType, number> = {
   shield: PALETTE.powerUpShield,
@@ -9,10 +10,70 @@ const TYPE_COLOURS: Record<PowerUpType, number> = {
   fireRate: PALETTE.powerUpFireRate,
 };
 
+interface PowerUpGlyph {
+  readonly outline: Vector2[] | null;
+  readonly strokes: Array<[Vector2, Vector2]>;
+  readonly trail?: Array<{ strokes: Array<[Vector2, Vector2]>; alpha: number }>;
+}
+
+const SHIELD_OUTLINE: Vector2[] = [
+  { x: -11, y: -12 },
+  { x: 11, y: -12 },
+  { x: 11, y: -2 },
+  { x: 8, y: 6 },
+  { x: 0, y: 13 },
+  { x: -8, y: 6 },
+  { x: -11, y: -2 },
+];
+
+const SPEED_OUTLINE: Vector2[] = [
+  { x: 14, y: 0 },
+  { x: 1, y: -11 },
+  { x: 1, y: -4 },
+  { x: -4, y: -4 },
+  { x: -4, y: 4 },
+  { x: 1, y: 4 },
+  { x: 1, y: 11 },
+];
+
+const SPEED_TRAIL: Array<{ strokes: Array<[Vector2, Vector2]>; alpha: number }> = [
+  {
+    strokes: [
+      [{ x: -8, y: -8 }, { x: -3, y: 0 }],
+      [{ x: -3, y: 0 }, { x: -8, y: 8 }],
+    ],
+    alpha: 0.7,
+  },
+  {
+    strokes: [
+      [{ x: -14, y: -8 }, { x: -9, y: 0 }],
+      [{ x: -9, y: 0 }, { x: -14, y: 8 }],
+    ],
+    alpha: 0.4,
+  },
+];
+
+const FIRE_RATE_STROKES: Array<[Vector2, Vector2]> = [
+  [{ x: -9, y: 1 }, { x: 0, y: -8 }],
+  [{ x: 0, y: -8 }, { x: 9, y: 1 }],
+  [{ x: -9, y: 7 }, { x: 0, y: -2 }],
+  [{ x: 0, y: -2 }, { x: 9, y: 7 }],
+  [{ x: -9, y: 13 }, { x: 0, y: 4 }],
+  [{ x: 0, y: 4 }, { x: 9, y: 13 }],
+];
+
+const TYPE_GLYPHS: Record<PowerUpType, PowerUpGlyph> = {
+  shield: { outline: SHIELD_OUTLINE, strokes: [] },
+  speed: { outline: SPEED_OUTLINE, strokes: [], trail: SPEED_TRAIL },
+  fireRate: { outline: null, strokes: FIRE_RATE_STROKES },
+};
+
 export class PowerUp {
-  private readonly view: Phaser.GameObjects.Rectangle;
+  private readonly view: Phaser.GameObjects.Graphics;
   private readonly type: PowerUpType;
   private readonly expiresAt: number;
+  private readonly originX: number;
+  private readonly originY: number;
 
   private collected = false;
 
@@ -25,13 +86,14 @@ export class PowerUp {
   ) {
     this.type = type;
     this.expiresAt = expiresAt;
+    this.originX = x;
+    this.originY = y;
 
-    const size = POWERUP_CONFIG.radius * 2;
-
-    this.view = scene.add.rectangle(x, y, size, size, TYPE_COLOURS[type]);
-    this.view.setStrokeStyle(2, 0xffffff);
-    this.view.setAngle(45);
+    this.view = scene.add.graphics();
     this.view.setDepth(DEPTH.powerUp);
+    this.view.setPosition(x, y);
+
+    this.draw();
   }
 
   public update(time: number): void {
@@ -45,6 +107,12 @@ export class PowerUp {
       return;
     }
 
+    const bob =
+      Math.sin((time / POWERUP_CONFIG.bobPeriodMs) * Math.PI * 2) *
+      POWERUP_CONFIG.bobAmplitude;
+
+    this.view.setPosition(this.originX, this.originY + bob);
+
     const remaining = this.expiresAt - time;
 
     if (remaining > POWERUP_CONFIG.warningMs) {
@@ -57,16 +125,55 @@ export class PowerUp {
     this.view.setVisible(flashOn);
   }
 
+  private draw(): void {
+    const colour = TYPE_COLOURS[this.type];
+    const glyph = TYPE_GLYPHS[this.type];
+
+    this.view.clear();
+
+    if (glyph.outline !== null) {
+      drawNeonShape(
+        this.view,
+        glyph.outline,
+        colour,
+        POWERUP_CONFIG.glyphLineWidth,
+      );
+    }
+
+    for (const stroke of glyph.strokes) {
+      drawNeonLine(
+        this.view,
+        stroke[0],
+        stroke[1],
+        colour,
+        POWERUP_CONFIG.glyphLineWidth,
+      );
+    }
+
+    for (const segment of glyph.trail ?? []) {
+      for (const stroke of segment.strokes) {
+        drawNeonLine(
+          this.view,
+          stroke[0],
+          stroke[1],
+          colour,
+          POWERUP_CONFIG.glyphLineWidth,
+          segment.alpha,
+        );
+      }
+    }
+  }
+
   public isActive(): boolean {
     return !this.collected;
   }
 
   public getX(): number {
-    return this.view.x;
+    return this.originX;
   }
 
   public getY(): number {
-    return this.view.y;
+    return this.originY;
   }
 
   public getType(): PowerUpType {

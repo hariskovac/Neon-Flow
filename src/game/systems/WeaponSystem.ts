@@ -1,3 +1,5 @@
+import Phaser from "phaser";
+
 import { WEAPON_CONFIG } from "../gameplayConfig";
 
 export interface ShotRequest {
@@ -51,25 +53,36 @@ export class WeaponSystem {
     playerX: number,
     playerY: number,
     aimAngle: number,
-  ): ShotRequest | null {
+  ): ShotRequest[] {
     if (!isFiring || !this.isReady(now)) {
-      return null;
+      return [];
     }
-
-    const directionX = Math.cos(aimAngle);
-    const directionY = Math.sin(aimAngle);
 
     this.lastShotAt = now;
     this.shotsFired += 1;
 
-    return {
-      originX: playerX + directionX * this.muzzleOffset,
-      originY: playerY + directionY * this.muzzleOffset,
-      velocityX: directionX * this.projectileSpeed,
-      velocityY: directionY * this.projectileSpeed,
-      angle: aimAngle,
-      firedAt: now,
-    };
+    const splay = Phaser.Math.DegToRad(WEAPON_CONFIG.barrelSplayDegrees);
+    const offset = WEAPON_CONFIG.barrelSeparation / 2;
+
+    const sideX = Math.cos(aimAngle + Math.PI / 2);
+    const sideY = Math.sin(aimAngle + Math.PI / 2);
+
+    return [-1, 1].map((side) => {
+      const angle = aimAngle + splay * side;
+      const directionX = Math.cos(angle);
+      const directionY = Math.sin(angle);
+
+      return {
+        originX:
+          playerX + directionX * this.muzzleOffset + sideX * offset * side,
+        originY:
+          playerY + directionY * this.muzzleOffset + sideY * offset * side,
+        velocityX: directionX * this.projectileSpeed,
+        velocityY: directionY * this.projectileSpeed,
+        angle,
+        firedAt: now,
+      };
+    });
   }
 
   // multiplier for firing rate power-up

@@ -54,6 +54,9 @@ export const WEAPON_CONFIG = {
   maxActiveProjectiles: 64,
   minFireRateMultiplier: 1,
   maxFireRateMultiplier: 2.5,
+  projectileLineWidth: 2,
+  barrelSeparation: 7,
+  barrelSplayDegrees: 1,
 };
 
 export const ENEMY_WEAPON_CONFIG = {
@@ -64,6 +67,7 @@ export const ENEMY_WEAPON_CONFIG = {
   muzzleOffset: 16,
   maxActiveProjectiles: 48,
   maxFiringRange: 560,
+  projectileLineWidth: 2,
 };
 
 export const CHASER_CONFIG = {
@@ -151,7 +155,7 @@ export const CALIBRATION_CONFIG = {
 };
 
 export const POWERUP_CONFIG = {
-  radius: 10,
+  radius: 14,
   lifetimeMs: 10000,
   warningMs: 3000,
   flashIntervalMs: 150,
@@ -160,6 +164,9 @@ export const POWERUP_CONFIG = {
   fireRateDurationMs: 8000,
   speedMultiplier: 1.45,
   fireRateMultiplier: 1.8,
+  glyphLineWidth: 2,
+  bobAmplitude: 4,
+  bobPeriodMs: 1400,
 };
 
 export const TUTORIAL_CONFIG = {
@@ -182,7 +189,7 @@ export const KILL_POINTS: Record<EnemyType, number> = {
 export const WAVE_SURVIVAL_BONUS = 2500;
 
 export const PALETTE = {
-  arenaFloor: 0x0e1526,
+  arenaFloor: 0x000000,
   panelText: "#0e1526",
   arenaBorder: 0x263653,
   player: 0x62e6c8,
@@ -205,6 +212,7 @@ export const PALETTE = {
   textAccent: "#3ddbff",
   textAccentValue: 0x3ddbff,
   targetDummy: 0x8fa3c4,
+  fillAlpha: 0.5,
 };
 
 export const NEON_CONFIG = {

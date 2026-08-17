@@ -90,6 +90,7 @@ export class CalibrationScene extends Phaser.Scene {
       projectileLifetimeMs: WEAPON_CONFIG.projectileLifetimeMs,
       maxActiveProjectiles: WEAPON_CONFIG.maxActiveProjectiles,
       color: PALETTE.projectile,
+      lineWidth: WEAPON_CONFIG.projectileLineWidth,
     });
 
     this.enemyProjectiles = new ProjectileSystem(this, ARENA, {
@@ -97,6 +98,7 @@ export class CalibrationScene extends Phaser.Scene {
       projectileLifetimeMs: ENEMY_WEAPON_CONFIG.projectileLifetimeMs,
       maxActiveProjectiles: ENEMY_WEAPON_CONFIG.maxActiveProjectiles,
       color: PALETTE.enemyProjectile,
+      lineWidth: ENEMY_WEAPON_CONFIG.projectileLineWidth,
     });
 
     this.spawner = new SpawnSystem(
@@ -168,7 +170,7 @@ export class CalibrationScene extends Phaser.Scene {
     const movement = resolveMovementVector(this.readMovementInput());
     this.player.update(time, movement, this.aimAngle);
 
-    const shot = this.weapon.tryFire(
+    const shots = this.weapon.tryFire(
       time,
       pointer.isDown,
       this.player.getX(),
@@ -176,8 +178,11 @@ export class CalibrationScene extends Phaser.Scene {
       this.aimAngle,
     );
 
-    if (shot !== null) {
+    for (const shot of shots) {
       this.projectiles.spawn(shot);
+    }
+
+    if (shots.length > 0) {
       this.performance.recordShotFired();
     }
 

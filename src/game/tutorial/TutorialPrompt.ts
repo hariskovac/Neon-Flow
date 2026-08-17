@@ -22,7 +22,7 @@ export class TutorialPrompt {
       TutorialPrompt.PANEL_WIDTH,
       TutorialPrompt.PANEL_HEIGHT,
       PALETTE.arenaFloor,
-      0.94,
+      PALETTE.fillAlpha,
     );
 
     panel.setStrokeStyle(2, PALETTE.arenaBorder);
