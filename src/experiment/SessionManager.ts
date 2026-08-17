@@ -30,8 +30,8 @@ export class SessionManager {
   }
 
   public setOutcome(
-    livesRemaining: number,
     finalScore: number,
+    livesRemaining: number,
     terminationReason: GameEndReason,
   ): void {
     this.livesRemaining = livesRemaining;
