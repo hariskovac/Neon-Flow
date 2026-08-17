@@ -8,6 +8,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   public preload(): void {
+    this.load.setBaseURL(import.meta.env.BASE_URL);
+
     this.load.audio(AUDIO_CONFIG.keys.music, "audio/music.ogg");
     this.load.audio(AUDIO_CONFIG.keys.playerFire, "audio/sfx-player-fire.wav");
     // this.load.audio(AUDIO_CONFIG.keys.enemyFire, "audio/enemy-fire.wav");
