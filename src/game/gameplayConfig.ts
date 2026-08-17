@@ -127,7 +127,7 @@ export const SPAWN_CONFIG = {
   // DDA actuator
   minIntervalMs: 450,
   maxIntervalMs: 3500,
-  maxActiveEnemies: 50,
+  maxActiveEnemies: 100,
   spawnInset: 40,
   minDistanceFromPlayer: 260,
   maxPlacementAttempts: 20,
@@ -137,6 +137,15 @@ export const SPAWN_CONFIG = {
     ranged: 30,
     dasher: 15,
   },
+};
+
+export const BURST_CONFIG = {
+  particleCount: 8,
+  travel: 46,
+  segmentLength: 14,
+  lineWidth: 2,
+  durationMs: 320,
+  poolSize: 100,
 };
 
 export const WAVE_CONFIG = {
@@ -263,29 +272,35 @@ export const AUDIO_CONFIG = {
     playerFire: "sfx-player-fire",
     enemyFire: "sfx-enemy-fire",
     enemySpawn: "sfx-enemy-spawn",
+    enemyHit: "sfx-enemy-hit",
     enemyDeath: "sfx-enemy-death",
     playerHit: "sfx-player-hit",
     playerDeath: "sfx-player-death",
-    powerUpPickup: "sfx-powerup",
+    powerUp: "sfx-power-up",
+    shieldAbsorb: "sfx-shield-absorb",
   },
   musicVolume: 0.35,
   sfxVolume: 0.6,
   levels: {
     playerFire: 0.35,
     enemyFire: 0.5,
-    enemySpawn: 0.18,
+    enemySpawn: 0.35,
+    enemyHit: 0.15,
     enemyDeath: 0.7,
     playerHit: 0.8,
     playerDeath: 1,
-    powerUpPickup: 0.8,
+    powerUp: 0.8,
+    shieldAbsorb: 0.8,
   },
   minRepeatMs: {
     playerFire: 90,
     enemyFire: 60,
     enemySpawn: 120,
+    enemyHit: 60,
     enemyDeath: 45,
     playerHit: 200,
     playerDeath: 200,
-    powerUpPickup: 100,
+    powerUp: 100,
+    shieldAbsorb: 70,
   },
 };

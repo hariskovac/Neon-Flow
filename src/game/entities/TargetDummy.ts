@@ -45,6 +45,10 @@ export class TargetDummy implements Enemy {
     return this.view.y;
   }
 
+  public getColor(): number {
+    return PALETTE.targetDummy;
+  }
+
   public getRadius(): number {
     return CHASER_CONFIG.radius;
   }

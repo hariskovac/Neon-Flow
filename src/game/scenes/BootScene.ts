@@ -12,12 +12,14 @@ export class BootScene extends Phaser.Scene {
 
     this.load.audio(AUDIO_CONFIG.keys.music, "audio/music.ogg");
     this.load.audio(AUDIO_CONFIG.keys.playerFire, "audio/sfx-player-fire.wav");
-    // this.load.audio(AUDIO_CONFIG.keys.enemyFire, "audio/enemy-fire.wav");
-    // this.load.audio(AUDIO_CONFIG.keys.enemySpawn, "audio/enemy-spawn.wav");
-    // this.load.audio(AUDIO_CONFIG.keys.enemyDeath, "audio/enemy-death.wav");
-    // this.load.audio(AUDIO_CONFIG.keys.playerHit, "audio/player-hit.wav");
-    // this.load.audio(AUDIO_CONFIG.keys.playerDeath, "audio/player-death.wav");
-    // this.load.audio(AUDIO_CONFIG.keys.powerUpPickup, "audio/powerup.wav");
+    // this.load.audio(AUDIO_CONFIG.keys.enemyFire, "audio/sfx-enemy-fire.wav");
+    this.load.audio(AUDIO_CONFIG.keys.enemySpawn, "audio/sfx-enemy-spawn.wav");
+    this.load.audio(AUDIO_CONFIG.keys.enemyHit, "audio/sfx-enemy-hit.wav");
+    this.load.audio(AUDIO_CONFIG.keys.enemyDeath, "audio/sfx-enemy-death.wav");
+    // this.load.audio(AUDIO_CONFIG.keys.playerHit, "audio/sfx-player-hit.wav");
+    this.load.audio(AUDIO_CONFIG.keys.playerDeath, "audio/sfx-player-death.wav");
+    this.load.audio(AUDIO_CONFIG.keys.powerUp, "audio/sfx-power-up.wav");
+    this.load.audio(AUDIO_CONFIG.keys.shieldAbsorb, "audio/sfx-shield-absorb.wav");
   }
 
   public create(): void {

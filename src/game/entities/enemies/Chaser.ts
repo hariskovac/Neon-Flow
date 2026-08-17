@@ -97,6 +97,10 @@ export class Chaser implements Enemy {
     return this.hitbox.y;
   }
 
+  public getColor(): number {
+    return PALETTE.chaser;
+  }
+
   public takeHit(): boolean {
     if (!this.alive) {
       return false;

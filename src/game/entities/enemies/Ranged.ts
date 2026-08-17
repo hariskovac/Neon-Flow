@@ -197,6 +197,10 @@ export class Ranged implements Enemy {
     return this.hitbox.y;
   }
 
+  public getColor(): number {
+    return PALETTE.ranged;
+  }
+
   public setPosition(x: number, y: number): void {
     this.body.reset(x, y);
     this.ship.setPosition(x, y);

@@ -25,6 +25,7 @@ import { generateCalibrationExplanation, generateNeutralExplanation } from "../.
 import type { Explanation } from "../../dda/ExplanationGenerator";
 import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
+import { EffectSystem } from "../systems/EffectSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -46,6 +47,7 @@ export class GameScene extends Phaser.Scene {
   private performance!: PerformanceMonitor;
   private difficulty!: DifficultyController;
   private overlay!: TransparencyOverlay;
+  private effects!: EffectSystem;
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
@@ -64,6 +66,8 @@ export class GameScene extends Phaser.Scene {
   public create(): void {
     this.performance = new PerformanceMonitor();
     const calibration = mapCalibration(session.getCalibration());
+
+    this.effects = new EffectSystem(this);
 
     this.difficulty = new DifficultyController(calibration.startingLevel);
     this.waves = new WaveSystem();
@@ -248,6 +252,7 @@ export class GameScene extends Phaser.Scene {
     this.projectiles.update(time);
 
     this.drops.update(time);
+    this.effects.update(time);
     this.applyPowerUpEffects(time);
 
     if (this.waves.isIntermission()) {
@@ -270,6 +275,7 @@ export class GameScene extends Phaser.Scene {
 
     for (const kill of result.killed) {
       this.score.addKill(kill.type);
+      this.effects.burst(kill.x, kill.y, kill.color, time);
       this.performance.recordKill(kill.type);
 
       if (this.drops.rollForDrop(kill.x, kill.y, time)) {
@@ -278,6 +284,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     for (const type of result.collected) {
+      audio.playSfx("powerUp"); 
       this.powerUps.collect(type, time);
       this.performance.recordPowerUpCollected();
       session.recordPowerUpCollected(type);
@@ -285,10 +292,19 @@ export class GameScene extends Phaser.Scene {
 
     if (result.playerHit && !this.player.isInvincible(time)) {
       if (this.powerUps.consumeShield()) {
+        audio.playSfx("shieldAbsorb");
         this.performance.recordShieldHit();
 
         this.player.respawn(time, this.player.getX(), this.player.getY());
       } else {
+        audio.playSfx("playerDeath");
+        this.effects.burst(
+          this.player.getX(),
+          this.player.getY(),
+          PALETTE.player,
+          time,
+        );
+        
         const respawnX = ARENA.x + ARENA.width / 2;
         const respawnY = ARENA.y + ARENA.height / 2;
 

@@ -34,6 +34,7 @@ import type { PowerUpType } from "../../types/game";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
+import { EffectSystem } from "../systems/EffectSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -60,6 +61,7 @@ export class TutorialScene extends Phaser.Scene {
   private hitLabel!: Phaser.GameObjects.Text;
   private overlay!: TransparencyOverlay;
   private powerUps!: PowerUpEffects;
+  private effects!: EffectSystem;
 
   private steps: TutorialStep[] = [];
   private stepIndex = 0;
@@ -84,6 +86,8 @@ export class TutorialScene extends Phaser.Scene {
     this.hasPointerInput = false;
     this.keysUsed.clear();
     this.targets = [];
+
+    this.effects = new EffectSystem(this);
 
     this.physics.world.setBounds(ARENA.x, ARENA.y, ARENA.width, ARENA.height);
     drawArenaBackground(this);
@@ -171,7 +175,7 @@ export class TutorialScene extends Phaser.Scene {
     );
 
     for (const shot of shots) {
-        audio.playSfx("playerFire");
+      audio.playSfx("playerFire");
       this.projectiles.spawn(shot);
     }
 
@@ -181,33 +185,38 @@ export class TutorialScene extends Phaser.Scene {
 
     this.projectiles.update(time);
     this.enemyProjectiles.update(time);
+    this.effects.update(time);
     this.drops.update(time);
 
     const result = this.collisions.update();
 
-    if (result.playerHit && !this.player.isInvincible(time)) {
-      this.player.respawn(
-        time,
-        ARENA.x + ARENA.width / 2,
-        ARENA.y + ARENA.height / 2,
-      );
-
-      this.hitMessageUntil = time + TUTORIAL_CONFIG.hitFlashMs;
-    }
-
     for (const type of result.collected) {
+      audio.playSfx("powerUp");
       this.powerUps.collect(type, time);
     }
 
     this.applyPowerUpEffects(time);
 
+    for (const kill of result.killed) {
+      this.effects.burst(kill.x, kill.y, kill.color, time);
+    }
+
     if (result.playerHit && !this.player.isInvincible(time)) {
       if (this.powerUps.consumeShield()) {
+        audio.playSfx("shieldAbsorb"); 
         this.hitLabel.setText("Shield absorbed the hit.");
         this.hitMessageUntil = time + TUTORIAL_CONFIG.hitFlashMs;
 
         this.player.respawn(time, this.player.getX(), this.player.getY());
       } else {
+        audio.playSfx("playerDeath");
+        this.effects.burst(
+          this.player.getX(),
+          this.player.getY(),
+          PALETTE.player,
+          time,
+        );
+
         this.player.respawn(
           time,
           ARENA.x + ARENA.width / 2,

@@ -3,6 +3,7 @@ import type { Player } from "../entities/Player";
 import type { EnemyType, PowerUpType } from "../../types/game";
 import type { Enemy } from "../entities/enemies/Enemy";
 import type { PowerUpSystem } from "./PowerUpSystem";
+import { audio } from "../../audio/AudioSystem";
 
 export function circlesOverlap(
   aX: number,
@@ -23,6 +24,7 @@ export interface EnemyKill {
   readonly type: EnemyType;
   readonly x: number;
   readonly y: number;
+  readonly color: number;
 }
 
 export interface CollisionResult {
@@ -77,14 +79,16 @@ export class CollisionSystem {
         );
 
         if (hit) {
+          audio.playSfx("enemyHit");
           projectile.deactivate();
           shotsHit += 1;
 
           const x = enemy.getX();
           const y = enemy.getY();
+          const color = enemy.getColor();
 
           if (enemy.takeHit()) {
-            killed.push({ type: enemy.getType(), x, y });
+            killed.push({ type: enemy.getType(), x, y, color });
           }
 
           break;

@@ -10,4 +10,5 @@ export interface Enemy {
   takeHit(): boolean;
   update(time: number, targetX: number, targetY: number): void;
   despawn(): void;
+  getColor(): number;
 }

@@ -26,6 +26,7 @@ import { resolveActuators } from "../../dda/DifficultyConfig";
 import { POWERUP_CONFIG } from "../gameplayConfig";
 import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
+import { EffectSystem } from "../systems/EffectSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -49,6 +50,7 @@ export class CalibrationScene extends Phaser.Scene {
   private performance!: PerformanceMonitor;
   private powerUps!: PowerUpEffects;
   private drops!: PowerUpSystem;
+  private effects!: EffectSystem;
 
   private startedAt: number | null = null;
   private aimAngle = -Math.PI / 2;
@@ -63,6 +65,8 @@ export class CalibrationScene extends Phaser.Scene {
     this.finished = false;
     this.aimAngle = -Math.PI / 2;
     this.hasPointerInput = false;
+
+    this.effects = new EffectSystem(this);
 
     this.physics.world.setBounds(
       ARENA.x,
@@ -203,10 +207,12 @@ export class CalibrationScene extends Phaser.Scene {
     const result = this.collisions.update();
 
     this.performance.recordShotsHit(result.shotsHit);
+    this.effects.update(time);
     this.drops.update(time);
     this.applyPowerUpEffects(time);
 
     for (const kill of result.killed) {
+      this.effects.burst(kill.x, kill.y, kill.color, time);
       this.score.addKill(kill.type);
       this.performance.recordKill(kill.type);
 
@@ -216,16 +222,26 @@ export class CalibrationScene extends Phaser.Scene {
     }
 
     for (const type of result.collected) {
+      audio.playSfx("powerUp");
       this.powerUps.collect(type, time);
       this.performance.recordPowerUpCollected();
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {
       if (this.powerUps.consumeShield()) {
+        audio.playSfx("shieldAbsorb"); 
         this.performance.recordShieldHit();
 
         this.player.respawn(time, this.player.getX(), this.player.getY());
       } else {
+        audio.playSfx("playerDeath");
+        this.effects.burst(
+          this.player.getX(),
+          this.player.getY(),
+          PALETTE.player,
+          time,
+        );
+
         const respawnX = ARENA.x + ARENA.width / 2;
         const respawnY = ARENA.y + ARENA.height / 2;
 

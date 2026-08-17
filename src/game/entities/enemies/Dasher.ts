@@ -184,6 +184,10 @@ export class Dasher implements Enemy {
     return this.hitbox.y;
   }
 
+  public getColor(): number {
+    return PALETTE.dasher;
+  }
+
   public getRadius(): number {
     return DASHER_CONFIG.collisionRadius;
   }
