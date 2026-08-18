@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import { BURST_CONFIG } from "../gameplayConfig";
+import { BURST_CONFIG, PLAYER_BURST_CONFIG } from "../gameplayConfig";
 import { DeathBurst } from "../render/DeathBurst";
 
 export class EffectSystem {
@@ -12,16 +12,28 @@ export class EffectSystem {
     }
   }
 
+  public update(now: number): void {
+    for (const burst of this.pool) {
+      burst.update(now);
+    }
+  }
+
   public burst(x: number, y: number, color: number, now: number): void {
     const burst = this.claim();
 
     burst.start(x, y, color, now);
   }
 
-  public update(now: number): void {
-    for (const burst of this.pool) {
-      burst.update(now);
-    }
+  public playerBurst(x: number, y: number, color: number, now: number): void {
+    this.claim().start(x, y, color, now, PLAYER_BURST_CONFIG, true);
+
+    this.claim().start(x, y, color, now, {
+      particleCount: PLAYER_BURST_CONFIG.innerParticleCount,
+      travel: PLAYER_BURST_CONFIG.innerTravel,
+      segmentLength: PLAYER_BURST_CONFIG.segmentLength,
+      lineWidth: PLAYER_BURST_CONFIG.lineWidth,
+      durationMs: PLAYER_BURST_CONFIG.innerDurationMs,
+    });
   }
 
   public reset(): void {
@@ -30,7 +42,7 @@ export class EffectSystem {
     }
   }
 
-  private claim(): DeathBurst {
+  public claim(): DeathBurst {
     for (const burst of this.pool) {
       if (!burst.isActive()) {
         return burst;

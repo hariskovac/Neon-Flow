@@ -210,7 +210,7 @@ export class TutorialScene extends Phaser.Scene {
         this.player.respawn(time, this.player.getX(), this.player.getY());
       } else {
         audio.playSfx("playerDeath");
-        this.effects.burst(
+        this.effects.playerBurst(
           this.player.getX(),
           this.player.getY(),
           PALETTE.player,

@@ -7,7 +7,6 @@ import {
   CALIBRATION_CONFIG,
   ENEMY_WEAPON_CONFIG,
   PALETTE,
-  PLAYER_CONFIG,
   WEAPON_CONFIG,
 } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
@@ -235,26 +234,29 @@ export class CalibrationScene extends Phaser.Scene {
         this.player.respawn(time, this.player.getX(), this.player.getY());
       } else {
         audio.playSfx("playerDeath");
-        this.effects.burst(
+        this.effects.playerBurst(
           this.player.getX(),
           this.player.getY(),
           PALETTE.player,
           time,
         );
 
-        const respawnX = ARENA.x + ARENA.width / 2;
-        const respawnY = ARENA.y + ARENA.height / 2;
+        this.cameras.main.shake(180, 0.006)
+
+        for (const cleared of this.spawner.clearAllWithEffects()) {
+          this.effects.burst(cleared.x, cleared.y, cleared.color, time);
+        }
+
+        this.enemyProjectiles.reset();
 
         this.lives.loseLife();
         this.performance.recordLifeLost();
 
-        this.collisions.clearRespawnArea(
-          respawnX,
-          respawnY,
-          PLAYER_CONFIG.respawnPushbackRadius,
+        this.player.respawn(
+          time,
+          ARENA.x + ARENA.width / 2,
+          ARENA.y + ARENA.height / 2,
         );
-
-        this.player.respawn(time, respawnX, respawnY);
 
         if (!this.lives.isAlive()) {
           this.finish(elapsed);

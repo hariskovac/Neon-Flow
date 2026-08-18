@@ -148,6 +148,20 @@ export const BURST_CONFIG = {
   poolSize: 100,
 };
 
+export const PLAYER_BURST_CONFIG = {
+  particleCount: 14,
+  travel: 130,
+  segmentLength: 26,
+  lineWidth: 3,
+  durationMs: 620,
+  innerParticleCount: 8,
+  innerTravel: 58,
+  innerDurationMs: 340,
+  ringMaxRadius: 150,
+  ringDurationMs: 480,
+  ringLineWidth: 3,
+};
+
 export const WAVE_CONFIG = {
   // wave duration
   durationMs: 40000,

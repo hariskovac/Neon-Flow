@@ -162,6 +162,20 @@ export class SpawnSystem {
     this.enemies.length = 0;
   }
 
+  public clearAllWithEffects(): Array<{ x: number; y: number; color: number }> {
+    const cleared = this.enemies
+      .filter((enemy) => enemy.isAlive())
+      .map((enemy) => ({
+        x: enemy.getX(),
+        y: enemy.getY(),
+        color: enemy.getColor(),
+      }));
+
+    this.clearAll();
+
+    return cleared;
+  }
+
   public getActiveCount(): number {
     return this.enemies.length;
   }
