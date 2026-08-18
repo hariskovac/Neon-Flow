@@ -16,7 +16,7 @@ export const ARENA: ArenaBounds = {
 
 export const GRID_CONFIG = {
   cellSize: 48,
-  colour: 0x16304d,
+  color: 0x16304d,
   lineWidth: 1,
   alpha: 0.25,
 };
@@ -139,6 +139,24 @@ export const SPAWN_CONFIG = {
   },
 };
 
+export const PLAYER_SPAWN_CONFIG = {
+  durationMs: 620,
+  echoCount: 4,
+  echoStartScale: 4.2,
+  echoSpacing: 0.7,
+  lineWidth: 3,
+  minAlpha: 0.2,
+};
+
+export const SPAWN_EFFECT_CONFIG = {
+  durationMs: 220,
+  echoCount: 3,
+  echoStartScale: 2.6,
+  echoSpacing: 0.45,
+  lineWidth: 2,
+  minAlpha: 0.25,
+};
+
 export const BURST_CONFIG = {
   particleCount: 8,
   travel: 46,
@@ -224,8 +242,8 @@ export const PALETTE = {
   hudPrimary: "#f4f7ff",
   hudMuted: "#aebbd4",
   chaser: 0xff5f9e,
-  ranged: 0xffa94d,
-  dasher: 0xb28dff,
+  ranged: 0xefff10,
+  dasher: 0xd50834,
   dasherNose: 0xf4f7ff,
   powerUpShield: 0x6bc5ff,
   powerUpSpeed: 0x7ef7a8,
@@ -284,6 +302,7 @@ export const AUDIO_CONFIG = {
   keys: {
     music: "music",
     playerFire: "sfx-player-fire",
+    playerSpawn: "sfx-enemy-spawn",
     enemyFire: "sfx-enemy-fire",
     enemySpawn: "sfx-enemy-spawn",
     enemyHit: "sfx-enemy-hit",
@@ -297,6 +316,7 @@ export const AUDIO_CONFIG = {
   sfxVolume: 0.6,
   levels: {
     playerFire: 0.35,
+    playerSpawn: 0.7,
     enemyFire: 0.5,
     enemySpawn: 0.35,
     enemyHit: 0.15,
@@ -308,6 +328,7 @@ export const AUDIO_CONFIG = {
   },
   minRepeatMs: {
     playerFire: 90,
+    playerSpawn: 200,
     enemyFire: 60,
     enemySpawn: 120,
     enemyHit: 60,

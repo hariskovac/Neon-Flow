@@ -65,6 +65,8 @@ export class CalibrationScene extends Phaser.Scene {
     this.aimAngle = -Math.PI / 2;
     this.hasPointerInput = false;
 
+    audio.attach(this);
+
     this.effects = new EffectSystem(this);
 
     this.physics.world.setBounds(
@@ -146,8 +148,6 @@ export class CalibrationScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
-
-    audio.attach(this);
   }
 
   public update(time: number): void {

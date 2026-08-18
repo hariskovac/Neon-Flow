@@ -66,6 +66,7 @@ export class GameScene extends Phaser.Scene {
   public create(): void {
     this.performance = new PerformanceMonitor();
     const calibration = mapCalibration(session.getCalibration());
+    audio.attach(this);
 
     this.effects = new EffectSystem(this);
 
@@ -157,8 +158,6 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
-
-    audio.attach(this);
   }
 
   private markPointerInput(): void {

@@ -16,7 +16,7 @@ export function drawArenaBackground(scene: Phaser.Scene): void {
   const grid = scene.add.graphics();
 
   grid.setDepth(DEPTH.arena);
-  grid.lineStyle(GRID_CONFIG.lineWidth, GRID_CONFIG.colour, GRID_CONFIG.alpha);
+  grid.lineStyle(GRID_CONFIG.lineWidth, GRID_CONFIG.color, GRID_CONFIG.alpha);
 
   for (
     let x = ARENA.x + GRID_CONFIG.cellSize;

@@ -1,6 +1,13 @@
 import Phaser from "phaser";
 
-import { SPAWN_CONFIG } from "../gameplayConfig";
+import { 
+  SPAWN_CONFIG,
+  PALETTE,
+  CHASER_CONFIG,
+  RANGED_CONFIG,
+  DASHER_CONFIG,
+  SPAWN_EFFECT_CONFIG,
+} from "../gameplayConfig";
 import type { ArenaBounds, EnemyType, Vector2 } from "../../types/game";
 import type { Enemy } from "../entities/enemies/Enemy";
 import { Chaser } from "../entities/enemies/Chaser";
@@ -9,11 +16,29 @@ import { Dasher } from "../entities/enemies/Dasher";
 import type { ProjectileSystem } from "./ProjectileSystem";
 import type { ActuatorValues } from "../../dda/DifficultyConfig";
 import { resolveActuators } from "../../dda/DifficultyConfig";
+import { audio } from "../../audio/AudioSystem";
+import { SpawnEffect } from "../render/SpawnEffect";
+
+interface PendingSpawn {
+  readonly type: EnemyType;
+  readonly x: number;
+  readonly y: number;
+  readonly readyAt: number;
+  readonly effect: SpawnEffect;
+}
+
+export const SPAWN_APPEARANCE: Record < EnemyType, { outline: readonly Vector2[]; color: number } > = {
+  chaser: { outline: CHASER_CONFIG.hullOutline, color: PALETTE.chaser },
+  ranged: { outline: RANGED_CONFIG.hullOutline, color: PALETTE.ranged },
+  dasher: { outline: DASHER_CONFIG.hullOutline, color: PALETTE.dasher },
+};
 
 export class SpawnSystem {
   private readonly scene: Phaser.Scene;
   private readonly bounds: ArenaBounds;
   private readonly enemies: Enemy[] = [];
+  private readonly pending: PendingSpawn[] = [];
+  private readonly effectPool: SpawnEffect[] = [];
   private readonly playerProjectiles: ProjectileSystem;
   private readonly enemyProjectiles: ProjectileSystem;
 
@@ -35,11 +60,16 @@ export class SpawnSystem {
     this.enemyProjectiles = enemyProjectiles;
     this.actuators = resolveActuators(startingLevel);
 
+    for (let index = 0; index < 12; index += 1) {
+      this.effectPool.push(new SpawnEffect(scene));
+    }
+
     this.nextSpawnAt = scene.time.now + this.actuators.spawnIntervalMs;
   }
 
   public update(time: number, playerX: number, playerY: number): void {
     this.removeDeadEnemies();
+    this.updatePending(time);
 
     if (!this.spawningEnabled) {
       return;
@@ -51,17 +81,71 @@ export class SpawnSystem {
 
     this.nextSpawnAt = time + this.actuators.spawnIntervalMs;
 
-    if (this.enemies.length >= SPAWN_CONFIG.maxActiveEnemies) {
+    if (this.enemies.length + this.pending.length >= SPAWN_CONFIG.maxActiveEnemies) {
       return;
     }
 
     const point = this.resolveSpawnPoint(playerX, playerY);
+    const type = this.chooseEnemyType();
 
-    this.enemies.push(
-      this.createEnemy(this.chooseEnemyType(), point.x, point.y),
-    );
+    this.beginSpawn(type, point.x, point.y, time);
+  }
 
-    this.spawnedThisWave += 1;
+  private beginSpawn(
+    type: EnemyType,
+    x: number,
+    y: number,
+    time: number,
+  ): void {
+    const effect = this.claimEffect();
+    const appearance = SPAWN_APPEARANCE[type];
+
+    effect.start(x, y, appearance.outline, appearance.color, time);
+
+    audio.playSfx("enemySpawn");
+
+    this.pending.push({
+      type,
+      x,
+      y,
+      readyAt: time + SPAWN_EFFECT_CONFIG.durationMs,
+      effect,
+    });
+  }
+
+  private updatePending(time: number): void {
+    for (const effect of this.effectPool) {
+      effect.update(time);
+    }
+
+    for (let index = this.pending.length - 1; index >= 0; index -= 1) {
+      const spawn = this.pending[index];
+
+      if (time < spawn.readyAt) {
+        continue;
+      }
+
+      spawn.effect.stop();
+
+      this.enemies.push(this.createEnemy(spawn.type, spawn.x, spawn.y));
+      this.spawnedThisWave += 1;
+
+      this.pending.splice(index, 1);
+    }
+  }
+
+  private claimEffect(): SpawnEffect {
+    for (const effect of this.effectPool) {
+      if (!effect.isActive()) {
+        return effect;
+      }
+    }
+
+    const oldest = this.effectPool[0];
+
+    oldest.stop();
+
+    return oldest;
   }
 
   public getEnemies(): Enemy[] {
@@ -160,6 +244,12 @@ export class SpawnSystem {
     }
 
     this.enemies.length = 0;
+
+    for (const spawn of this.pending) {
+      spawn.effect.stop();
+    }
+
+    this.pending.length = 0;
   }
 
   public clearAllWithEffects(): Array<{ x: number; y: number; color: number }> {

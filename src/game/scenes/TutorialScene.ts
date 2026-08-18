@@ -26,15 +26,17 @@ import { Ranged } from "../entities/enemies/Ranged";
 import { HudSystem } from "../systems/HudSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
 import { resolveActuators } from "../../dda/DifficultyConfig";
-import { TUTORIAL_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
+import { TUTORIAL_CONFIG, POWERUP_CONFIG, SPAWN_EFFECT_CONFIG } from "../gameplayConfig";
 import { session } from "../../experiment/SessionManager";
 import { generateExampleExplanation } from "../../dda/ExplanationGenerator";
 import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
-import type { PowerUpType } from "../../types/game";
+import type { PowerUpType, EnemyType } from "../../types/game";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
+import { SpawnEffect } from "../render/SpawnEffect";
+import { SPAWN_APPEARANCE } from "../systems/SpawnSystem";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -45,6 +47,13 @@ type MovementKeys = {
 
 export class TutorialScene extends Phaser.Scene {
   private static readonly DEFAULT_MINIMUM_MS = 1200;
+  private readonly pendingSpawns: Array<{
+    readonly create: () => Enemy;
+    readonly readyAt: number;
+    readonly effect: SpawnEffect;
+  }> = [];
+
+  private readonly spawnEffects: SpawnEffect[] = [];
 
   private player!: Player;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -86,6 +95,8 @@ export class TutorialScene extends Phaser.Scene {
     this.hasPointerInput = false;
     this.keysUsed.clear();
     this.targets = [];
+
+    audio.attach(this);
 
     this.effects = new EffectSystem(this);
 
@@ -145,9 +156,12 @@ export class TutorialScene extends Phaser.Scene {
 
     this.overlay = new TransparencyOverlay(this);
 
+    for (let index = 0; index < 4; index += 1) {
+      this.spawnEffects.push(new SpawnEffect(this));
+    }
+
     this.steps = this.buildSteps();
     this.enterStep(this.time.now);
-    audio.attach(this);
   }
 
   public update(time: number): void {
@@ -177,6 +191,20 @@ export class TutorialScene extends Phaser.Scene {
     for (const shot of shots) {
       audio.playSfx("playerFire");
       this.projectiles.spawn(shot);
+    }
+
+    for (const effect of this.spawnEffects) {
+      effect.update(time);
+    }
+
+    for (let index = this.pendingSpawns.length - 1; index >= 0; index -= 1) {
+      const pending = this.pendingSpawns[index];
+
+      if (time >= pending.readyAt) {
+        pending.effect.stop();
+        this.targets.push(pending.create());
+        this.pendingSpawns.splice(index, 1);
+      }
     }
 
     for (const target of this.targets) {
@@ -296,9 +324,13 @@ export class TutorialScene extends Phaser.Scene {
         body:
           "Chasers pursue you. They start slow but get faster the longer " +
           "they survive. Destroy them quickly.",
-        onEnter: () => {
-          this.targets.push(
-            new Chaser(
+        onEnter: (context) => {
+          this.beginSpawn(
+            "chaser",
+            ARENA.x + 120,
+            ARENA.y + 120,
+            context.now,
+            () => new Chaser(
               this,
               ARENA.x + 120,
               ARENA.y + 120,
@@ -315,19 +347,26 @@ export class TutorialScene extends Phaser.Scene {
         body:
           "Ranged enemies keep their distance and fire at you. They also " +
           "move away from your shots. Dodge their fire and take them out.",
-        onEnter: () => {
+        onEnter: (context) => {
           const actuators = resolveActuators(TUTORIAL_CONFIG.enemyLevel);
+          const spawnX = centerX + TUTORIAL_CONFIG.rangedSpawnDistance / 2;
+          const spawnY = centerY;
 
-          this.targets.push(
-            new Ranged(
-              this,
-              centerX + TUTORIAL_CONFIG.rangedSpawnDistance / 2,
-              centerY,
-              this.projectiles,
-              this.enemyProjectiles,
-              actuators.enemySpeedMultiplier,
-              actuators.rangedAttackIntervalMs,
-            ),
+          this.beginSpawn(
+            "ranged",
+            spawnX,
+            spawnY,
+            context.now,
+            () =>
+              new Ranged(
+                this,
+                spawnX,
+                spawnY,
+                this.projectiles,
+                this.enemyProjectiles,
+                actuators.enemySpeedMultiplier,
+                actuators.rangedAttackIntervalMs,
+              ),
           );
         },
         isComplete: () => this.allTargetsCleared(),
@@ -340,14 +379,17 @@ export class TutorialScene extends Phaser.Scene {
         body:
           "Dashers lock onto your position, then charge. Dodge the dash and " +
           "attack while they recover.",
-        onEnter: () => {
-          this.targets.push(
-            new Dasher(
-              this,
-              ARENA.x + ARENA.width - 140,
-              ARENA.y + 140,
-              this.enemySpeedMultiplier(),
-            ),
+        onEnter: (context) => {
+          const spawnX = ARENA.x + ARENA.width - 140;
+          const spawnY = ARENA.y + 140;
+
+          this.beginSpawn(
+            "dasher",
+            spawnX,
+            spawnY,
+            context.now,
+            () =>
+              new Dasher(this, spawnX, spawnY, this.enemySpeedMultiplier()),
           );
         },
         isComplete: () => this.allTargetsCleared(),
@@ -503,6 +545,33 @@ export class TutorialScene extends Phaser.Scene {
     }
   }
 
+  private beginSpawn(
+    type: EnemyType,
+    x: number,
+    y: number,
+    time: number,
+    create: () => Enemy,
+  ): void {
+    const effect = this.spawnEffects.find((candidate) => !candidate.isActive());
+
+    if (effect === undefined) {
+      this.targets.push(create());
+
+      return;
+    }
+
+    const appearance = SPAWN_APPEARANCE[type];
+
+    effect.start(x, y, appearance.outline, appearance.color, time);
+    audio.playSfx("enemySpawn");
+
+    this.pendingSpawns.push({
+      create,
+      readyAt: time + SPAWN_EFFECT_CONFIG.durationMs,
+      effect,
+    });
+  }
+
   private finish(): void {
     this.prompt.hide();
     this.scene.start("CalibrationScene");
@@ -590,7 +659,11 @@ export class TutorialScene extends Phaser.Scene {
   }
 
   private allTargetsCleared(): boolean {
-    return this.targets.every((target) => !target.isAlive());
+    if (this.pendingSpawns.length > 0) {
+      return false;
+    }
+
+    return this.targets.length > 0 && this.targets.every((t) => !t.isAlive());
   }
 
   private clearTargets(): void {

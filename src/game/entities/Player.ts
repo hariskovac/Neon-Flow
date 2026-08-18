@@ -1,18 +1,22 @@
 import Phaser from "phaser";
 
 import type { Vector2 } from "../../types/game";
-import { DEPTH, PALETTE, PLAYER_CONFIG } from "../gameplayConfig";
+import { DEPTH, PALETTE, PLAYER_CONFIG, PLAYER_SPAWN_CONFIG } from "../gameplayConfig";
 import { drawNeonShape } from "../render/Neon";
+import { audio } from "../../audio/AudioSystem";
+import { SpawnEffect } from "../render/SpawnEffect";
 
 export class Player {
   private readonly hitbox: Phaser.GameObjects.Rectangle;
   private readonly ship: Phaser.GameObjects.Graphics;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly flame: Phaser.GameObjects.Graphics;
+  private readonly spawnEffect: SpawnEffect;
 
   private isMoving = false;
   private invincibleUntil = 0;
   private speed: number = PLAYER_CONFIG.speed;
+  private materialisingUntil = 0;
 
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     const diameter = PLAYER_CONFIG.collisionRadius * 2;
@@ -42,6 +46,9 @@ export class Player {
     this.ship.setPosition(x, y);
 
     this.drawShip();
+
+    this.spawnEffect = new SpawnEffect(scene);
+    this.materialize(scene.time.now, x, y);
   }
 
   public update(time: number, movement: Vector2, aimAngle: number): void {
@@ -54,6 +61,10 @@ export class Player {
 
     this.flame.setPosition(this.hitbox.x, this.hitbox.y);
     this.flame.setRotation(aimAngle);
+
+    this.spawnEffect.setPosition(this.hitbox.x, this.hitbox.y);
+    this.spawnEffect.setRotation(aimAngle);
+    this.spawnEffect.update(time);
 
     this.drawFlame(time);
     this.updateInvincibilityFlash(time);
@@ -91,12 +102,28 @@ export class Player {
     drawNeonShape(this.flame, points, PALETTE.playerFlame, 2, 0.85);
   }
 
+  private materialize(time: number, x: number, y: number): void {
+    this.materialisingUntil = time + PLAYER_SPAWN_CONFIG.durationMs;
+
+    this.spawnEffect.start(
+      x,
+      y,
+      PLAYER_CONFIG.hullOutline,
+      PALETTE.player,
+      time,
+      PLAYER_SPAWN_CONFIG,
+    );
+
+    audio.playSfx("playerSpawn");
+  }
+
   public respawn(time: number, x: number, y: number): void {
     this.body.reset(x, y);
     this.ship.setPosition(x, y);
     this.flame.setPosition(x, y);
 
     this.invincibleUntil = time + PLAYER_CONFIG.respawnInvincibilityMs;
+    this.materialize(time, x, y);
   }
 
   public isInvincible(time: number): boolean {
@@ -104,6 +131,13 @@ export class Player {
   }
 
   private updateInvincibilityFlash(time: number): void {
+    if (time < this.materialisingUntil) {
+      this.ship.setVisible(true);
+      this.flame.setVisible(true);
+
+      return;
+    }
+
     const flashOn = Math.floor(time / PLAYER_CONFIG.respawnFlashIntervalMs) % 2 === 0;
 
     const visible = !this.isInvincible(time) || flashOn;
