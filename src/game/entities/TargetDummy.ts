@@ -90,4 +90,8 @@ export class TargetDummy implements Enemy {
   public despawn(): void {
     this.takeHit();
   }
+
+  public getBlockingParts(): ReadonlyArray<{ x: number; y: number; radius: number; }> {
+    return [];
+  }
 }

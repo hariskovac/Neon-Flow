@@ -267,6 +267,12 @@ export class GameScene extends Phaser.Scene {
         this.spawner.spawnSplitChildren(kill.x, kill.y);
       }
 
+      if (kill.type === "winder" && kill.segments !== undefined) {
+        for (const segment of kill.segments) {
+          this.effects.burst(segment.x, segment.y, kill.color, time);
+        }
+      }
+
       if (kill.canDrop && this.drops.rollForDrop(kill.x, kill.y, time)) {
         this.performance.recordPowerUpSpawned();
       }

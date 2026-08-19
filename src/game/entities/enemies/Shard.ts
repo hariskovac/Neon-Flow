@@ -184,4 +184,8 @@ export class Shard implements Enemy {
       SHARD_CONFIG.hullLineWidth,
     );
   }
+
+  public getBlockingParts(): ReadonlyArray<{ x: number; y: number; radius: number; }> {
+    return [];
+  }
 }

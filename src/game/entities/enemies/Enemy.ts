@@ -1,5 +1,11 @@
 import type { EnemyType } from "../../../types/game";
 
+export const NO_BLOCKING_PARTS: ReadonlyArray<{
+  x: number;
+  y: number;
+  radius: number;
+}> = [];
+
 export interface Enemy {
   isAlive(): boolean;
   getX(): number;
@@ -12,4 +18,5 @@ export interface Enemy {
   despawn(): void;
   getColor(): number;
   allowsDrop(): boolean;
+  getBlockingParts(): ReadonlyArray<{ x: number; y: number; radius: number }>;
 }

@@ -4,6 +4,7 @@ import type { EnemyType, PowerUpType } from "../../types/game";
 import type { Enemy } from "../entities/enemies/Enemy";
 import type { PowerUpSystem } from "./PowerUpSystem";
 import { audio } from "../../audio/AudioSystem";
+import type { Vector2 } from "../../types/game";
 
 export function circlesOverlap(
   aX: number,
@@ -26,6 +27,7 @@ export interface EnemyKill {
   readonly y: number;
   readonly color: number;
   readonly canDrop: boolean;
+  readonly segments?: ReadonlyArray<Vector2>;
 }
 
 export interface CollisionResult {
@@ -67,6 +69,30 @@ export class CollisionSystem {
           continue;
         }
 
+        let blocked = false;
+
+        for (const part of enemy.getBlockingParts()) {
+          if (
+            circlesOverlap(
+              projectile.getX(),
+              projectile.getY(),
+              projectileRadius,
+              part.x,
+              part.y,
+              part.radius,
+            )
+          ) {
+            projectile.deactivate();
+            blocked = true;
+
+            break;
+          }
+        }
+
+        if (blocked) {
+          break;
+        }
+
         const hit = circlesOverlap(
           projectile.getX(),
           projectile.getY(),
@@ -86,8 +112,12 @@ export class CollisionSystem {
           const color = enemy.getColor();
           const allowDrop = enemy.allowsDrop();
 
+          const segments = enemy
+            .getBlockingParts()
+            .map((part) => ({ x: part.x, y: part.y }));
+
           if (enemy.takeHit()) {
-            killed.push({ type: enemy.getType(), x, y, color, canDrop: allowDrop });
+            killed.push({ type: enemy.getType(), x, y, color, canDrop: allowDrop, segments });
           }
 
           break;

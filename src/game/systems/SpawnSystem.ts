@@ -7,6 +7,7 @@ import {
   DODGER_CONFIG,
   DASHER_CONFIG,
   SPLITTER_CONFIG,
+  WINDER_CONFIG,
   SHARD_CONFIG,
   SPAWN_EFFECT_CONFIG,
 } from "../gameplayConfig";
@@ -22,6 +23,7 @@ import { audio } from "../../audio/AudioSystem";
 import { SpawnEffect } from "../render/SpawnEffect";
 import { Shard } from "../entities/enemies/Shard";
 import { Splitter } from "../entities/enemies/Splitter";
+import { Winder } from "../entities/enemies/Winder";
 
 interface PendingSpawn {
   readonly type: EnemyType;
@@ -37,6 +39,7 @@ export const SPAWN_APPEARANCE: Record < EnemyType, { outline: readonly Vector2[]
   dasher: { outline: DASHER_CONFIG.hullOutline, color: PALETTE.dasher },
   splitter: { outline: SPLITTER_CONFIG.hullOutline, color: PALETTE.splitter },
   shard: { outline: SHARD_CONFIG.hullOutline, color: PALETTE.shard },
+  winder: { outline: WINDER_CONFIG.headOutline, color: PALETTE.winderHead },
 };
 
 export class SpawnSystem {
@@ -140,8 +143,6 @@ export class SpawnSystem {
   public spawnSplitChildren(x: number, y: number): void {
     const half = SPLITTER_CONFIG.shardSeparation / 2;
 
-    // Exactly one of the pair may drop, chosen here rather than at death, so
-    // eligibility is a plain flag rather than shared mutable state.
     const dropIndex = Phaser.Math.Between(0, 1);
 
     const first = new Shard(
@@ -268,6 +269,10 @@ export class SpawnSystem {
         this.playerProjectiles,
         this.actuators.enemySpeedMultiplier,
       );
+    }
+
+    if (type === "winder") {
+      return new Winder(this.scene, x, y, this.actuators.enemySpeedMultiplier);
     }
 
     if (type === "splitter") {

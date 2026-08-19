@@ -195,4 +195,8 @@ export class Dodger implements Enemy {
     this.ship.destroy();
     this.hitbox.destroy();
   }
+
+  public getBlockingParts(): ReadonlyArray<{ x: number; y: number; radius: number; }> {
+    return [];
+  }
 }

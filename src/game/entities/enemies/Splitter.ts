@@ -149,4 +149,8 @@ export class Splitter implements Enemy {
       SPLITTER_CONFIG.hullLineWidth,
     );
   }
+
+  public getBlockingParts(): ReadonlyArray<{ x: number; y: number; radius: number; }> {
+    return [];
+  }
 }

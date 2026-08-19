@@ -140,6 +140,32 @@ export const SHARD_CONFIG = {
   spinRate: 2.2,
 };
 
+export const WINDER_CONFIG = {
+  headRadius: 24,
+  segmentRadius: 20,
+  segmentCount: 11,
+  maxHealth: 3,
+  speed: 130,
+  maxSpeed: 200,
+  weaveAmplitude: 0.75,
+  weavePeriodMs: 900,
+  segmentDelayMs: 90,
+  historyMs: 1400,
+  headOutline: [
+    { x: 14, y: 0 },
+    { x: -8, y: 9 },
+    { x: -8, y: -9 },
+  ],
+  segmentOutline: [
+    { x: 8, y: 0 },
+    { x: 0, y: 7 },
+    { x: -8, y: 0 },
+    { x: 0, y: -7 },
+  ],
+  lineWidth: 2,
+  segmentAlpha: 0.55,
+};
+
 export const SPAWN_CONFIG = {
   initialIntervalMs: 2000,
   // DDA actuator
@@ -151,10 +177,11 @@ export const SPAWN_CONFIG = {
   maxPlacementAttempts: 20,
   // spawn weights
   weights: {
-    chaser: 40,
+    chaser: 35,
     dodger: 20,
     dasher: 10,
-    splitter: 30
+    splitter: 30,
+    winder: 5,
   },
 };
 
@@ -246,6 +273,7 @@ export const KILL_POINTS: Record<EnemyType, number> = {
   dasher: 200,
   splitter: 150,
   shard: 50,
+  winder: 300,
 };
 
 export const WAVE_SURVIVAL_BONUS = 2500;
@@ -268,6 +296,8 @@ export const PALETTE = {
   shard: 0xff46a2,
   dasher: 0xd50834,
   dasherNose: 0xf4f7ff,
+  winder: 0xff7424,
+  winderHead: 0x43a8fa,
   powerUpShield: 0x6bc5ff,
   powerUpSpeed: 0x7ef7a8,
   powerUpFireRate: 0xffc857,

@@ -149,4 +149,8 @@ export class Chaser implements Enemy {
 
     this.destroyObjects();
   }
+
+  public getBlockingParts(): ReadonlyArray<{ x: number; y: number; radius: number; }> {
+    return [];
+  }
 }

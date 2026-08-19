@@ -1,6 +1,6 @@
 import type { ParameterChange } from "../dda/ParameterChanges";
 
-export type EnemyType = "chaser" | "dodger" | "dasher" | "splitter" | "shard";
+export type EnemyType = "chaser" | "dodger" | "dasher" | "splitter" | "shard" | "winder";
 export type PowerUpType = "shield" | "speed" | "fireRate";
 export type GameEndReason = "completed" | "lives_exhausted";
 export type Condition = "hidden" | "transparent";
@@ -24,6 +24,7 @@ export function createEmptyKillTally(): Record<EnemyType, number> {
     dasher: 0,
     splitter: 0,
     shard: 0,
+    winder: 0,
   };
 }
 
