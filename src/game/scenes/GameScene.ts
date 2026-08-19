@@ -8,7 +8,7 @@ import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
 import type { MovementInput } from "../systems/PlayerMovement";
 import { resolveMovementVector } from "../systems/PlayerMovement";
-import { ARENA, PALETTE, WEAPON_CONFIG, ENEMY_WEAPON_CONFIG, WAVE_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
+import { ARENA, PALETTE, WEAPON_CONFIG, WAVE_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
 import { WaveSystem } from "../systems/WaveSystem";
@@ -40,7 +40,6 @@ export class GameScene extends Phaser.Scene {
   private movementKeys!: MovementKeys;
   private weapon!: WeaponSystem;
   private projectiles!: ProjectileSystem;
-  private enemyProjectiles!: ProjectileSystem;
   private score!: ScoreSystem;
   private lives!: LivesSystem;
   private hud!: HudSystem;
@@ -109,19 +108,10 @@ export class GameScene extends Phaser.Scene {
       lineWidth: WEAPON_CONFIG.projectileLineWidth,
     });
 
-    this.enemyProjectiles = new ProjectileSystem(this, ARENA, {
-      projectileRadius: ENEMY_WEAPON_CONFIG.projectileRadius,
-      projectileLifetimeMs: ENEMY_WEAPON_CONFIG.projectileLifetimeMs,
-      maxActiveProjectiles: ENEMY_WEAPON_CONFIG.maxActiveProjectiles,
-      color: PALETTE.enemyProjectile,
-      lineWidth: ENEMY_WEAPON_CONFIG.projectileLineWidth,
-    });
-
     this.spawner = new SpawnSystem(
       this,
       ARENA,
       this.projectiles,
-      this.enemyProjectiles,
       this.difficulty.getLevel(),
     );
 
@@ -134,7 +124,6 @@ export class GameScene extends Phaser.Scene {
 
     this.collisions = new CollisionSystem(
       this.projectiles,
-      this.enemyProjectiles,
       this.spawner.getEnemies(),
       this.player,
       this.drops,
@@ -207,7 +196,6 @@ export class GameScene extends Phaser.Scene {
 
       this.score.addWaveSurvivalBonus();
       this.spawner.clearAll();
-      this.enemyProjectiles.reset();
 
       if (session.getCompletedWaveCount() >= WAVE_CONFIG.totalWaves) {
         this.endSession("completed");
@@ -266,8 +254,6 @@ export class GameScene extends Phaser.Scene {
       enemy.update(time, this.player.getX(), this.player.getY());
     }
 
-    this.enemyProjectiles.update(time);
-
     const result = this.collisions.update();
 
     this.performance.recordShotsHit(result.shotsHit);
@@ -277,7 +263,11 @@ export class GameScene extends Phaser.Scene {
       this.effects.burst(kill.x, kill.y, kill.color, time);
       this.performance.recordKill(kill.type);
 
-      if (this.drops.rollForDrop(kill.x, kill.y, time)) {
+      if (kill.type === "splitter") {
+        this.spawner.spawnSplitChildren(kill.x, kill.y);
+      }
+
+      if (kill.canDrop && this.drops.rollForDrop(kill.x, kill.y, time)) {
         this.performance.recordPowerUpSpawned();
       }
     }
@@ -310,8 +300,6 @@ export class GameScene extends Phaser.Scene {
           this.effects.burst(cleared.x, cleared.y, cleared.color, time);
         }
 
-        this.enemyProjectiles.reset();
-
         this.lives.loseLife();
         this.performance.recordLifeLost();
 
@@ -324,7 +312,6 @@ export class GameScene extends Phaser.Scene {
         if (!this.lives.isAlive()) {
           this.recordWave(time);
           this.spawner.clearAll();
-          this.enemyProjectiles.reset();
           this.endSession("lives_exhausted");
 
           return;

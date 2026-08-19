@@ -27,10 +27,10 @@ export const EVIDENCE_THRESHOLDS = {
 };
 
 export function resolveKillRatio(performance: WavePerformance): number {
-  const kills =
-    performance.killsByType.chaser +
-    performance.killsByType.ranged +
-    performance.killsByType.dasher;
+  const kills = Object.values(performance.killsByType).reduce(
+    (total, count) => total + count,
+    0,
+  );
 
   if (performance.enemiesSpawned <= 0) {
     return 0;

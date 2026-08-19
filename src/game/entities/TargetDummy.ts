@@ -29,6 +29,10 @@ export class TargetDummy implements Enemy {
     this.body.setImmovable(true);
   }
 
+  public allowsDrop(): boolean {
+    return false;
+  }
+
   public update(): void {
     return;
   }

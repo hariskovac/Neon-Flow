@@ -172,6 +172,10 @@ export class Dasher implements Enemy {
     );
   }
 
+  public allowsDrop(): boolean {
+    return true;
+  }
+
   public isAlive(): boolean {
     return this.alive;
   }

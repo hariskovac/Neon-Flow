@@ -59,17 +59,6 @@ export const WEAPON_CONFIG = {
   barrelSplayDegrees: 1,
 };
 
-export const ENEMY_WEAPON_CONFIG = {
-  attackIntervalMs: 1600,
-  projectileSpeed: 320,
-  projectileRadius: 5,
-  projectileLifetimeMs: 4000,
-  muzzleOffset: 16,
-  maxActiveProjectiles: 48,
-  maxFiringRange: 560,
-  projectileLineWidth: 2,
-};
-
 export const CHASER_CONFIG = {
   radius: 11,
   maxHealth: 2,
@@ -86,21 +75,17 @@ export const CHASER_CONFIG = {
   spinRate: 0.6,
 };
 
-export const RANGED_CONFIG = {
+export const DODGER_CONFIG = {
   radius: 11,
   maxHealth: 1,
-  preferredDistance: 360,
-  distanceTolerance: 40,
-  approachSpeed: 90,
-  retreatSpeed: 110,
   evasionRadius: 70,
   evasionSpeed: 150,
   evasionLookaheadMs: 420,
-  maxApproachSpeed: 150,
-  maxRetreatSpeed: 180,
   hullOutline: buildRegularPolygon(5, 13),
   hullLineWidth: 2,
   spinRate: 0.6,
+  pursuitSpeed: 130,
+  maxPursuitSpeed: 190,
 };
 
 export const DASHER_CONFIG = {
@@ -122,6 +107,39 @@ export const DASHER_CONFIG = {
   maxDashSpeed: 620,
 };
 
+export const SPLITTER_CONFIG = {
+  radius: 14,
+  maxHealth: 2,
+  speed: 105,
+  maxSpeed: 170,
+  shardCount: 2,
+  shardSeparation: 68,
+  hullOutline: [
+    { x: 0, y: -16 },
+    { x: 14, y: 8 },
+    { x: -14, y: 8 },
+  ],
+  hullLineWidth: 2,
+  spinRate: 0.5,
+};
+
+export const SHARD_CONFIG = {
+  radius: 8,
+  maxHealth: 1,
+  pursuitSpeed: 95,
+  maxPursuitSpeed: 150,
+  orbitRadius: 34,
+  orbitSpeed: 155,
+  orbitTightness: 2.6,
+  hullOutline: [
+    { x: 0, y: -8 },
+    { x: 7, y: 4 },
+    { x: -7, y: 4 },
+  ],
+  hullLineWidth: 2,
+  spinRate: 2.2,
+};
+
 export const SPAWN_CONFIG = {
   initialIntervalMs: 2000,
   // DDA actuator
@@ -133,16 +151,17 @@ export const SPAWN_CONFIG = {
   maxPlacementAttempts: 20,
   // spawn weights
   weights: {
-    chaser: 55,
-    ranged: 30,
-    dasher: 15,
+    chaser: 40,
+    dodger: 20,
+    dasher: 10,
+    splitter: 30
   },
 };
 
 export const PLAYER_SPAWN_CONFIG = {
-  durationMs: 620,
+  durationMs: 320,
   echoCount: 4,
-  echoStartScale: 4.2,
+  echoStartScale: 3.2,
   echoSpacing: 0.7,
   lineWidth: 3,
   minAlpha: 0.2,
@@ -216,15 +235,17 @@ export const TUTORIAL_CONFIG = {
   keyCapGap: 6,
   keyCapFontSize: "18px",
   enemyLevel: 1,
-  rangedSpawnDistance: 340,
-  rangedMinimumMs: 6000,
+  dodgerSpawnDistance: 340,
+  dodgerMinimumMs: 6000,
   hitFlashMs: 1600,
 };
 
 export const KILL_POINTS: Record<EnemyType, number> = {
   chaser: 100,
-  ranged: 150,
+  dodger: 150,
   dasher: 200,
+  splitter: 150,
+  shard: 50,
 };
 
 export const WAVE_SURVIVAL_BONUS = 2500;
@@ -241,8 +262,10 @@ export const PALETTE = {
   pipEmpty: 0x2a3550,
   hudPrimary: "#f4f7ff",
   hudMuted: "#aebbd4",
-  chaser: 0xff5f9e,
-  ranged: 0xefff10,
+  chaser: 0x1500ff,
+  dodger: 0x2ff204,
+  splitter: 0xff46a2,
+  shard: 0xff46a2,
   dasher: 0xd50834,
   dasherNose: 0xf4f7ff,
   powerUpShield: 0x6bc5ff,

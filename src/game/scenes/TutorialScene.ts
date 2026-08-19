@@ -8,7 +8,6 @@ import {
   DEPTH,
   PALETTE,
   WEAPON_CONFIG,
-  ENEMY_WEAPON_CONFIG,
   HUD_TEXT_STYLE,
 } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
@@ -22,7 +21,7 @@ import type { TutorialContext, TutorialStep } from "../tutorial/TutorialStep";
 import { KeyCapDisplay } from "../tutorial/KeyCapDisplay";
 import { Chaser } from "../entities/enemies/Chaser";
 import { Dasher } from "../entities/enemies/Dasher";
-import { Ranged } from "../entities/enemies/Ranged";
+import { Dodger } from "../entities/enemies/Dodger";
 import { HudSystem } from "../systems/HudSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
 import { resolveActuators } from "../../dda/DifficultyConfig";
@@ -63,7 +62,6 @@ export class TutorialScene extends Phaser.Scene {
   private drops!: PowerUpSystem;
   private collisions!: CollisionSystem;
   private prompt!: TutorialPrompt;
-  private enemyProjectiles!: ProjectileSystem;
   private hud!: HudSystem;
   private score!: ScoreSystem;
   private hitMessageUntil = 0;
@@ -120,14 +118,6 @@ export class TutorialScene extends Phaser.Scene {
       lineWidth: WEAPON_CONFIG.projectileLineWidth,
     });
 
-    this.enemyProjectiles = new ProjectileSystem(this, ARENA, {
-      projectileRadius: ENEMY_WEAPON_CONFIG.projectileRadius,
-      projectileLifetimeMs: ENEMY_WEAPON_CONFIG.projectileLifetimeMs,
-      maxActiveProjectiles: ENEMY_WEAPON_CONFIG.maxActiveProjectiles,
-      color: PALETTE.enemyProjectile,
-      lineWidth: ENEMY_WEAPON_CONFIG.projectileLineWidth,
-    });
-
     this.score = new ScoreSystem();
     this.hud = new HudSystem(this, 5);
 
@@ -145,7 +135,6 @@ export class TutorialScene extends Phaser.Scene {
 
     this.collisions = new CollisionSystem(
       this.projectiles,
-      this.enemyProjectiles,
       this.targets,
       this.player,
       this.drops,
@@ -212,7 +201,6 @@ export class TutorialScene extends Phaser.Scene {
     }
 
     this.projectiles.update(time);
-    this.enemyProjectiles.update(time);
     this.effects.update(time);
     this.drops.update(time);
 
@@ -342,35 +330,33 @@ export class TutorialScene extends Phaser.Scene {
         onExit: () => this.clearTargets(),
       },
       {
-        id: "ranged",
-        title: "Ranged enemies",
+        id: "dodger",
+        title: "Dodgers",
         body:
-          "Ranged enemies keep their distance and fire at you. They also " +
-          "move away from your shots. Dodge their fire and take them out.",
+          "Dodgers move towards you and dodge your attacks. " +
+          "Pinning them against walls and firing is a good strategy.",
         onEnter: (context) => {
           const actuators = resolveActuators(TUTORIAL_CONFIG.enemyLevel);
-          const spawnX = centerX + TUTORIAL_CONFIG.rangedSpawnDistance / 2;
+          const spawnX = centerX + TUTORIAL_CONFIG.dodgerSpawnDistance / 2;
           const spawnY = centerY;
 
           this.beginSpawn(
-            "ranged",
+            "dodger",
             spawnX,
             spawnY,
             context.now,
             () =>
-              new Ranged(
+              new Dodger(
                 this,
                 spawnX,
                 spawnY,
                 this.projectiles,
-                this.enemyProjectiles,
                 actuators.enemySpeedMultiplier,
-                actuators.rangedAttackIntervalMs,
               ),
           );
         },
         isComplete: () => this.allTargetsCleared(),
-        minimumMs: TUTORIAL_CONFIG.rangedMinimumMs,
+        minimumMs: TUTORIAL_CONFIG.dodgerMinimumMs,
         onExit: () => this.clearTargets(),
       },
       {
@@ -672,6 +658,5 @@ export class TutorialScene extends Phaser.Scene {
     }
 
     this.targets.length = 0;
-    this.enemyProjectiles.reset();
   }
 }

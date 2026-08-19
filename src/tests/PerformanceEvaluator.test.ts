@@ -14,7 +14,7 @@ function wave(overrides: WaveOverrides = {}): WavePerformance {
   const kills = overrides.kills ?? 0;
   const killsByType: Record<EnemyType, number> = {
     chaser: kills,
-    ranged: 0,
+    dodger: 0,
     dasher: 0,
   };
 
@@ -45,7 +45,7 @@ describe("resolveKillRatio", () => {
   it("counts all enemy types", () => {
     const performance: WavePerformance = {
       ...wave({ enemiesSpawned: 10 }),
-      killsByType: { chaser: 2, ranged: 3, dasher: 1 },
+      killsByType: { chaser: 2, dodger: 3, dasher: 1 },
     };
 
     expect(resolveKillRatio(performance)).toBeCloseTo(0.6, 10);

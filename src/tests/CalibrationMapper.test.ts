@@ -21,7 +21,7 @@ function calibration(overrides: CalibrationOverrides = {}): WavePerformance {
   const kills = overrides.kills ?? 0;
   const killsByType: Record<EnemyType, number> = {
     chaser: kills,
-    ranged: 0,
+    dodger: 0,
     dasher: 0,
   };
 

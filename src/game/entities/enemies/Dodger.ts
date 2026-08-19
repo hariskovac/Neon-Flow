@@ -1,57 +1,40 @@
 import Phaser from "phaser";
 
 import type { ProjectileSystem } from "../../systems/ProjectileSystem";
-import { DEPTH, PALETTE, RANGED_CONFIG, ENEMY_WEAPON_CONFIG } from "../../gameplayConfig";
+import { DEPTH, PALETTE, DODGER_CONFIG } from "../../gameplayConfig";
 import {
   resolveEvasion,
-  resolveStandoffVector,
-} from "../../systems/RangedMovement";
+} from "../../systems/DodgerMovement";
 import type { Vector2, EnemyType } from "../../../types/game";
 import type { Enemy } from "./Enemy";
 import { drawNeonShape } from "../../render/Neon";
+import { setPursuitVector } from "../../systems/ChaserMovement";
 
-export class Ranged implements Enemy {
+export class Dodger implements Enemy {
   private readonly hitbox: Phaser.GameObjects.Rectangle;
   private readonly ship: Phaser.GameObjects.Graphics;
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly playerProjectiles: ProjectileSystem;
-  private readonly enemyProjectiles: ProjectileSystem;
-  private readonly approachSpeed: number;
-  private readonly retreatSpeed: number;
-  private readonly attackIntervalMs: number;
+  private readonly pursuitSpeed: number;
 
   private alive = true;
-  private lastShotAt: number;
-  private health = RANGED_CONFIG.maxHealth;
+  private health = DODGER_CONFIG.maxHealth;
 
   public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
     playerProjectiles: ProjectileSystem,
-    enemyProjectiles: ProjectileSystem,
     speedMultiplier: number,
-    attackIntervalMs: number,
   ) {
     this.playerProjectiles = playerProjectiles;
-    this.enemyProjectiles = enemyProjectiles;
     
-    this.approachSpeed = Math.min(
-      RANGED_CONFIG.approachSpeed * speedMultiplier,
-      RANGED_CONFIG.maxApproachSpeed,
-    );
+    this.pursuitSpeed = Math.min(
+      DODGER_CONFIG.pursuitSpeed * speedMultiplier,
+      DODGER_CONFIG.maxPursuitSpeed,
+    );  
 
-    this.retreatSpeed = Math.min(
-      RANGED_CONFIG.retreatSpeed * speedMultiplier,
-      RANGED_CONFIG.maxRetreatSpeed,
-    );
-
-    this.attackIntervalMs = attackIntervalMs;
-
-    // prevents firing immediately upon spawn
-    this.lastShotAt = scene.time.now;
-
-    const diameter = RANGED_CONFIG.radius * 2;
+    const diameter = DODGER_CONFIG.radius * 2;
 
     this.hitbox = scene.add.rectangle(x, y, diameter, diameter, 0x000000);
 
@@ -61,13 +44,13 @@ export class Ranged implements Enemy {
 
     if (!(body instanceof Phaser.Physics.Arcade.Body)) {
       throw new Error(
-        "The ranged attacker doesn't have an Arcade Physics body.",
+        "The dodger doesn't have an Arcade Physics body.",
       );
     }
 
     this.body = body;
     this.body.setAllowGravity(false);
-    this.body.setCircle(RANGED_CONFIG.radius);
+    this.body.setCircle(DODGER_CONFIG.radius);
     this.body.setCollideWorldBounds(true);
 
     this.hitbox.setVisible(false);
@@ -85,42 +68,32 @@ export class Ranged implements Enemy {
       return;
     }
 
-    const deltaX = targetX - this.hitbox.x;
-    const deltaY = targetY - this.hitbox.y;
-
     this.ship.setPosition(this.hitbox.x, this.hitbox.y);
-    this.ship.setRotation((time / 1000) * RANGED_CONFIG.spinRate);
+    this.ship.setRotation((time / 1000) * DODGER_CONFIG.spinRate);
 
     const evasion = this.resolveEvasion();
 
     if (evasion !== null) {
       this.body.setVelocity(
-        evasion.x * RANGED_CONFIG.evasionSpeed,
-        evasion.y * RANGED_CONFIG.evasionSpeed,
+        evasion.x * DODGER_CONFIG.evasionSpeed,
+        evasion.y * DODGER_CONFIG.evasionSpeed,
       );
 
       return;
     }
 
-    const standoff = resolveStandoffVector(
+    const direction = setPursuitVector(
       this.hitbox.x,
       this.hitbox.y,
       targetX,
       targetY,
-      RANGED_CONFIG.preferredDistance,
-      RANGED_CONFIG.distanceTolerance,
     );
 
-    const closing =
-      Math.hypot(deltaX, deltaY) > RANGED_CONFIG.preferredDistance;
+    this.body.setVelocity(
+      direction.x * this.pursuitSpeed,
+      direction.y * this.pursuitSpeed,
+    );
 
-    const speed = closing
-      ? this.approachSpeed
-      : this.retreatSpeed;
-
-    this.body.setVelocity(standoff.x * speed, standoff.y * speed);
-
-    this.tryFire(time, targetX, targetY);
   }
 
   private resolveEvasion(): Vector2 | null {
@@ -134,8 +107,8 @@ export class Ranged implements Enemy {
         projectile.getY(),
         body.velocity.x,
         body.velocity.y,
-        RANGED_CONFIG.evasionRadius,
-        RANGED_CONFIG.evasionLookaheadMs,
+        DODGER_CONFIG.evasionRadius,
+        DODGER_CONFIG.evasionLookaheadMs,
       );
 
       if (evasion !== null) {
@@ -146,43 +119,19 @@ export class Ranged implements Enemy {
     return null;
   }
 
-  private tryFire(time: number, targetX: number, targetY: number): void {
-    if (time - this.lastShotAt < this.attackIntervalMs) {
-      return;
-    }
-
-    const deltaX = targetX - this.hitbox.x;
-    const deltaY = targetY - this.hitbox.y;
-    const distance = Math.hypot(deltaX, deltaY);
-
-    if (distance === 0 || distance > ENEMY_WEAPON_CONFIG.maxFiringRange) {
-      return;
-    }
-
-    const directionX = deltaX / distance;
-    const directionY = deltaY / distance;
-
-    this.lastShotAt = time;
-
-    this.enemyProjectiles.spawn({
-      originX: this.hitbox.x + directionX * ENEMY_WEAPON_CONFIG.muzzleOffset,
-      originY: this.hitbox.y + directionY * ENEMY_WEAPON_CONFIG.muzzleOffset,
-      velocityX: directionX * ENEMY_WEAPON_CONFIG.projectileSpeed,
-      velocityY: directionY * ENEMY_WEAPON_CONFIG.projectileSpeed,
-      angle: Math.atan2(deltaY, deltaX),
-      firedAt: time,
-    });
-  }
-
   private drawHull(): void {
     this.ship.clear();
 
     drawNeonShape(
       this.ship,
-      RANGED_CONFIG.hullOutline,
-      PALETTE.ranged,
-      RANGED_CONFIG.hullLineWidth,
+      DODGER_CONFIG.hullOutline,
+      PALETTE.dodger,
+      DODGER_CONFIG.hullLineWidth,
     );
+  }
+
+  public allowsDrop(): boolean {
+    return true;
   }
 
   public isAlive(): boolean {
@@ -198,7 +147,7 @@ export class Ranged implements Enemy {
   }
 
   public getColor(): number {
-    return PALETTE.ranged;
+    return PALETTE.dodger;
   }
 
   public setPosition(x: number, y: number): void {
@@ -214,7 +163,7 @@ export class Ranged implements Enemy {
     this.health -= 1;
 
     if (this.health > 0) {
-      this.ship.setAlpha(0.4 + 0.6 * (this.health / RANGED_CONFIG.maxHealth));
+      this.ship.setAlpha(0.4 + 0.6 * (this.health / DODGER_CONFIG.maxHealth));
 
       return false;
     }
@@ -225,11 +174,11 @@ export class Ranged implements Enemy {
   }
 
   public getRadius(): number {
-    return RANGED_CONFIG.radius;
+    return DODGER_CONFIG.radius;
   }
 
   public getType(): EnemyType {
-    return "ranged";
+    return "dodger";
   }
 
   public despawn(): void {

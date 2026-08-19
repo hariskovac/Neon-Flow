@@ -4,20 +4,24 @@ import {
   SPAWN_CONFIG,
   PALETTE,
   CHASER_CONFIG,
-  RANGED_CONFIG,
+  DODGER_CONFIG,
   DASHER_CONFIG,
+  SPLITTER_CONFIG,
+  SHARD_CONFIG,
   SPAWN_EFFECT_CONFIG,
 } from "../gameplayConfig";
 import type { ArenaBounds, EnemyType, Vector2 } from "../../types/game";
 import type { Enemy } from "../entities/enemies/Enemy";
 import { Chaser } from "../entities/enemies/Chaser";
-import { Ranged } from "../entities/enemies/Ranged";
+import { Dodger } from "../entities/enemies/Dodger";
 import { Dasher } from "../entities/enemies/Dasher";
 import type { ProjectileSystem } from "./ProjectileSystem";
 import type { ActuatorValues } from "../../dda/DifficultyConfig";
 import { resolveActuators } from "../../dda/DifficultyConfig";
 import { audio } from "../../audio/AudioSystem";
 import { SpawnEffect } from "../render/SpawnEffect";
+import { Shard } from "../entities/enemies/Shard";
+import { Splitter } from "../entities/enemies/Splitter";
 
 interface PendingSpawn {
   readonly type: EnemyType;
@@ -29,8 +33,10 @@ interface PendingSpawn {
 
 export const SPAWN_APPEARANCE: Record < EnemyType, { outline: readonly Vector2[]; color: number } > = {
   chaser: { outline: CHASER_CONFIG.hullOutline, color: PALETTE.chaser },
-  ranged: { outline: RANGED_CONFIG.hullOutline, color: PALETTE.ranged },
+  dodger: { outline: DODGER_CONFIG.hullOutline, color: PALETTE.dodger },
   dasher: { outline: DASHER_CONFIG.hullOutline, color: PALETTE.dasher },
+  splitter: { outline: SPLITTER_CONFIG.hullOutline, color: PALETTE.splitter },
+  shard: { outline: SHARD_CONFIG.hullOutline, color: PALETTE.shard },
 };
 
 export class SpawnSystem {
@@ -40,7 +46,6 @@ export class SpawnSystem {
   private readonly pending: PendingSpawn[] = [];
   private readonly effectPool: SpawnEffect[] = [];
   private readonly playerProjectiles: ProjectileSystem;
-  private readonly enemyProjectiles: ProjectileSystem;
 
   private actuators: ActuatorValues = resolveActuators(1);
   private nextSpawnAt: number;
@@ -51,13 +56,11 @@ export class SpawnSystem {
     scene: Phaser.Scene,
     bounds: ArenaBounds,
     playerProjectiles: ProjectileSystem,
-    enemyProjectiles: ProjectileSystem,
     startingLevel: number,
   ) {
     this.scene = scene;
     this.bounds = bounds;
     this.playerProjectiles = playerProjectiles;
-    this.enemyProjectiles = enemyProjectiles;
     this.actuators = resolveActuators(startingLevel);
 
     for (let index = 0; index < 12; index += 1) {
@@ -134,6 +137,36 @@ export class SpawnSystem {
     }
   }
 
+  public spawnSplitChildren(x: number, y: number): void {
+    const half = SPLITTER_CONFIG.shardSeparation / 2;
+
+    // Exactly one of the pair may drop, chosen here rather than at death, so
+    // eligibility is a plain flag rather than shared mutable state.
+    const dropIndex = Phaser.Math.Between(0, 1);
+
+    const first = new Shard(
+      this.scene,
+      x - half,
+      y,
+      this.actuators.enemySpeedMultiplier,
+      dropIndex === 0,
+    );
+
+    const second = new Shard(
+      this.scene,
+      x + half,
+      y,
+      this.actuators.enemySpeedMultiplier,
+      dropIndex === 1,
+    );
+
+    first.setPartner(second);
+    second.setPartner(first);
+
+    this.enemies.push(first, second);
+    this.spawnedThisWave += 2;
+  }
+
   private claimEffect(): SpawnEffect {
     for (const effect of this.effectPool) {
       if (!effect.isActive()) {
@@ -199,19 +232,27 @@ export class SpawnSystem {
   }
 
   private chooseEnemyType(): EnemyType {
-    const weights = SPAWN_CONFIG.weights;
-    const total = weights.chaser + weights.ranged + weights.dasher;
-    const roll = Phaser.Math.Between(1, total);
+    const entries = Object.entries(SPAWN_CONFIG.weights) as Array <
+      [EnemyType, number]
+    >;
 
-    if (roll <= weights.chaser) {
-      return "chaser";
+    let total = 0;
+
+    for (const [, weight] of entries) {
+      total += weight;
     }
 
-    if (roll <= weights.chaser + weights.ranged) {
-      return "ranged";
+    let roll = Phaser.Math.Between(1, total);
+
+    for (const [type, weight] of entries) {
+      roll -= weight;
+
+      if (roll <= 0) {
+        return type;
+      }
     }
 
-    return "dasher";
+    return "chaser";
   }
 
   private createEnemy(type: EnemyType, x: number, y: number): Enemy {
@@ -219,16 +260,18 @@ export class SpawnSystem {
       return new Chaser(this.scene, x, y, this.actuators.enemySpeedMultiplier);
     }
 
-    if (type === "ranged") {
-      return new Ranged(
+    if (type === "dodger") {
+      return new Dodger(
         this.scene,
         x,
         y,
         this.playerProjectiles,
-        this.enemyProjectiles,
         this.actuators.enemySpeedMultiplier,
-        this.actuators.rangedAttackIntervalMs,
       );
+    }
+
+    if (type === "splitter") {
+      return new Splitter(this.scene, x, y, this.actuators.enemySpeedMultiplier);
     }
 
     return new Dasher(this.scene, x, y, this.actuators.enemySpeedMultiplier);

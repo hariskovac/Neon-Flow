@@ -11,4 +11,5 @@ export interface Enemy {
   update(time: number, targetX: number, targetY: number): void;
   despawn(): void;
   getColor(): number;
+  allowsDrop(): boolean;
 }

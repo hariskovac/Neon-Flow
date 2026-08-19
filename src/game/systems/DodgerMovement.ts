@@ -1,37 +1,5 @@
 import type { Vector2 } from "../../types/game";
 
-const STATIONARY: Vector2 = { x: 0, y: 0 };
-
-export function resolveStandoffVector(
-  selfX: number,
-  selfY: number,
-  targetX: number,
-  targetY: number,
-  preferredDistance: number,
-  tolerance: number,
-): Vector2 {
-  const deltaX = targetX - selfX;
-  const deltaY = targetY - selfY;
-  const distance = Math.hypot(deltaX, deltaY);
-
-  if (distance === 0) {
-    return STATIONARY;
-  }
-
-  const towardX = deltaX / distance;
-  const towardY = deltaY / distance;
-
-  if (distance > preferredDistance + tolerance) {
-    return { x: towardX, y: towardY };
-  }
-
-  if (distance < preferredDistance - tolerance) {
-    return { x: -towardX, y: -towardY };
-  }
-
-  return STATIONARY;
-}
-
 export function resolveEvasion(
   selfX: number,
   selfY: number,

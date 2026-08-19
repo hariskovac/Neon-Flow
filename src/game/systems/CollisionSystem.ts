@@ -25,6 +25,7 @@ export interface EnemyKill {
   readonly x: number;
   readonly y: number;
   readonly color: number;
+  readonly canDrop: boolean;
 }
 
 export interface CollisionResult {
@@ -36,20 +37,17 @@ export interface CollisionResult {
 
 export class CollisionSystem {
   private readonly playerProjectiles: ProjectileSystem;
-  private readonly enemyProjectiles: ProjectileSystem;
   private readonly enemies: Enemy[];
   private readonly player: Player;
   private readonly powerUps: PowerUpSystem;
 
   public constructor(
     playerProjectiles: ProjectileSystem, 
-    enemyProjectiles: ProjectileSystem, 
     enemies: Enemy[],
     player: Player,
     powerUps: PowerUpSystem, 
   ) {
     this.playerProjectiles = playerProjectiles;
-    this.enemyProjectiles = enemyProjectiles;
     this.enemies = enemies;
     this.player = player;
     this.powerUps = powerUps; 
@@ -86,9 +84,10 @@ export class CollisionSystem {
           const x = enemy.getX();
           const y = enemy.getY();
           const color = enemy.getColor();
+          const allowDrop = enemy.allowsDrop();
 
           if (enemy.takeHit()) {
-            killed.push({ type: enemy.getType(), x, y, color });
+            killed.push({ type: enemy.getType(), x, y, color, canDrop: allowDrop });
           }
 
           break;
@@ -113,24 +112,6 @@ export class CollisionSystem {
       );
 
       if (contact) {
-        playerHit = true;
-
-        break;
-      }
-    }
-
-    for (const projectile of this.enemyProjectiles.getActiveProjectiles()) {
-      const contact = circlesOverlap(
-        this.player.getX(),
-        this.player.getY(),
-        playerRadius,
-        projectile.getX(),
-        projectile.getY(),
-        this.enemyProjectiles.getProjectileRadius(),
-      );
-
-      if (contact) {
-        projectile.deactivate();
         playerHit = true;
 
         break;
@@ -185,9 +166,5 @@ export class CollisionSystem {
         y + Math.sin(angle) * radius,
       );
     });
-
-    for (const projectile of this.enemyProjectiles.getActiveProjectiles()) {
-      projectile.deactivate();
-    }
   }
 }

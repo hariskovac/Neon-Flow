@@ -5,7 +5,6 @@ import { Player } from "../entities/Player";
 import {
   ARENA,
   CALIBRATION_CONFIG,
-  ENEMY_WEAPON_CONFIG,
   PALETTE,
   WEAPON_CONFIG,
 } from "../gameplayConfig";
@@ -99,19 +98,10 @@ export class CalibrationScene extends Phaser.Scene {
       lineWidth: WEAPON_CONFIG.projectileLineWidth,
     });
 
-    this.enemyProjectiles = new ProjectileSystem(this, ARENA, {
-      projectileRadius: ENEMY_WEAPON_CONFIG.projectileRadius,
-      projectileLifetimeMs: ENEMY_WEAPON_CONFIG.projectileLifetimeMs,
-      maxActiveProjectiles: ENEMY_WEAPON_CONFIG.maxActiveProjectiles,
-      color: PALETTE.enemyProjectile,
-      lineWidth: ENEMY_WEAPON_CONFIG.projectileLineWidth,
-    });
-
     this.spawner = new SpawnSystem(
       this,
       ARENA,
       this.projectiles,
-      this.enemyProjectiles,
       CALIBRATION_CONFIG.fixedLevel,
     );
 
@@ -124,7 +114,6 @@ export class CalibrationScene extends Phaser.Scene {
 
     this.collisions = new CollisionSystem(
       this.projectiles,
-      this.enemyProjectiles,
       this.spawner.getEnemies(),
       this.player,
       this.drops,
@@ -201,8 +190,6 @@ export class CalibrationScene extends Phaser.Scene {
       enemy.update(time, this.player.getX(), this.player.getY());
     }
 
-    this.enemyProjectiles.update(time);
-
     const result = this.collisions.update();
 
     this.performance.recordShotsHit(result.shotsHit);
@@ -215,7 +202,11 @@ export class CalibrationScene extends Phaser.Scene {
       this.score.addKill(kill.type);
       this.performance.recordKill(kill.type);
 
-      if (this.drops.rollForDrop(kill.x, kill.y, time)) {
+      if (kill.type === "splitter") {
+        this.spawner.spawnSplitChildren(kill.x, kill.y);
+      }
+
+      if (kill.canDrop && this.drops.rollForDrop(kill.x, kill.y, time)) {
         this.performance.recordPowerUpSpawned();
       }
     }

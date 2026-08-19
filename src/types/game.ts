@@ -1,6 +1,6 @@
 import type { ParameterChange } from "../dda/ParameterChanges";
 
-export type EnemyType = "chaser" | "ranged" | "dasher";
+export type EnemyType = "chaser" | "dodger" | "dasher" | "splitter" | "shard";
 export type PowerUpType = "shield" | "speed" | "fireRate";
 export type GameEndReason = "completed" | "lives_exhausted";
 export type Condition = "hidden" | "transparent";
@@ -20,8 +20,10 @@ export interface ArenaBounds {
 export function createEmptyKillTally(): Record<EnemyType, number> {
   return {
     chaser: 0,
-    ranged: 0,
+    dodger: 0,
     dasher: 0,
+    splitter: 0,
+    shard: 0,
   };
 }
 
