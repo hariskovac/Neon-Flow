@@ -46,12 +46,12 @@ export const PLAYER_CONFIG = {
 };
 
 export const WEAPON_CONFIG = {
-  fireIntervalMs: 160,
+  fireIntervalMs: 120,
   projectileSpeed: 760,
   projectileRadius: 4,
   projectileLifetimeMs: 2600,
   muzzleOffset: 20,
-  maxActiveProjectiles: 64,
+  maxActiveProjectiles: 96,
   minFireRateMultiplier: 1,
   maxFireRateMultiplier: 2.5,
   projectileLineWidth: 2,
@@ -61,7 +61,7 @@ export const WEAPON_CONFIG = {
 
 export const CHASER_CONFIG = {
   radius: 11,
-  maxHealth: 2,
+  maxHealth: 1,
   baseSpeed: 140,
   accelerationPerSecond: 14,
   maxSpeed: 300,
@@ -90,7 +90,7 @@ export const DODGER_CONFIG = {
 
 export const DASHER_CONFIG = {
   collisionRadius: 9,
-  maxHealth: 3,
+  maxHealth: 2,
   lockDurationMs: 600,
   dashSpeed: 560,
   overshootDistance: 130,
@@ -109,7 +109,7 @@ export const DASHER_CONFIG = {
 
 export const SPLITTER_CONFIG = {
   radius: 14,
-  maxHealth: 2,
+  maxHealth: 1,
   speed: 160,
   maxSpeed: 280,
   shardCount: 2,
@@ -168,22 +168,40 @@ export const WINDER_CONFIG = {
 };
 
 export const SPAWN_CONFIG = {
-  initialIntervalMs: 2000,
-  // DDA actuator
-  minIntervalMs: 450,
-  maxIntervalMs: 3500,
   maxActiveEnemies: 100,
   spawnInset: 40,
   minDistanceFromPlayer: 260,
   maxPlacementAttempts: 20,
+  groupCooldownMs: { low: 12000, high: 7000 },
   // spawn weights
   weights: {
     chaser: 35,
     dodger: 20,
     dasher: 10,
     splitter: 30,
-    winder: 5,
+    winder: 15,
   },
+  intensity: {
+    // chance a spawn is a swarm instead of a single enemy
+    swarmChance: { low: 0, high: 0.35 },
+    // enemies in one swarm
+    swarmSize: { low: 5, high: 10 },
+    // count of possible simultaneous swarms
+    swarmCount: { low: 1, high: 4 },
+    // chance a spawn event surrounds the player
+    surroundChance: { low: 0.1, high: 0.5 },
+    surroundSize: { low: 5, high: 10 },
+  },
+  // delay between each enemy spawn in a swarm
+  swarmStaggerMs: 280,
+  // delay between spawning of multiple swarms
+  swarmGroupDelayMs: 600,
+  swarmScatter: 15,
+  surroundRadius: 500,
+  surroundMinEdgeDistance: 160,
+  sameTypeChance: 0.75,
+  cornerInset: 120,
+  cornerChance: 1,
 };
 
 export const PLAYER_SPAWN_CONFIG = {
@@ -231,7 +249,7 @@ export const WAVE_CONFIG = {
   // wave duration
   durationMs: 40000,
   // when enemies stop spawning
-  spawnStopMs: 35000,
+  spawnStopMs: 37000,
   // gap between waves
   intermissionMs: 8000,
   totalWaves: 7,
@@ -361,6 +379,7 @@ export const AUDIO_CONFIG = {
     enemySpawn: "sfx-enemy-spawn",
     enemyHit: "sfx-enemy-hit",
     enemyDeath: "sfx-enemy-death",
+    swarmSpawn: "sfx-swarm-spawn",
     playerHit: "sfx-player-hit",
     playerDeath: "sfx-player-death",
     powerUp: "sfx-power-up",
@@ -375,18 +394,20 @@ export const AUDIO_CONFIG = {
     enemySpawn: 0.35,
     enemyHit: 0.15,
     enemyDeath: 0.7,
+    swarmSpawn: 1,
     playerHit: 0.8,
     playerDeath: 1,
     powerUp: 0.8,
     shieldAbsorb: 0.8,
   },
   minRepeatMs: {
-    playerFire: 90,
+    playerFire: 45,
     playerSpawn: 200,
     enemyFire: 60,
     enemySpawn: 120,
     enemyHit: 60,
     enemyDeath: 45,
+    swarmSpawn: 80,
     playerHit: 200,
     playerDeath: 200,
     powerUp: 100,

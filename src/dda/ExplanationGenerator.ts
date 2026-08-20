@@ -31,10 +31,10 @@ const PARAMETER_WORDING: Record<
     falling: "Enemies move slower",
     labelRisesWithValue: true,
   },
-  rangedAttackIntervalMs: {
-    rising: "Ranged enemies fire more often",
-    falling: "Ranged enemies fire less often",
-    labelRisesWithValue: false,
+  spawnIntensity: {
+    rising: "Enemies arrive in larger groups",
+    falling: "Enemies arrive in smaller groups",
+    labelRisesWithValue: true,
   },
   powerUpDropChance: {
     rising: "Power-ups appear more often",

@@ -13,14 +13,14 @@ export interface ParameterChange {
 const HIGHER_VALUE_INCREASES_PRESSURE: Record<ActuatorKey, boolean> = {
   spawnIntervalMs: false,
   enemySpeedMultiplier: true,
-  rangedAttackIntervalMs: false,
+  spawnIntensity: true,
   powerUpDropChance: false,
 };
 
 const ACTUATOR_KEYS: ActuatorKey[] = [
   "spawnIntervalMs",
   "enemySpeedMultiplier",
-  "rangedAttackIntervalMs",
+  "spawnIntensity",
   "powerUpDropChance",
 ];
 

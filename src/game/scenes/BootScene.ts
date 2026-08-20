@@ -17,6 +17,7 @@ export class BootScene extends Phaser.Scene {
     this.load.audio(AUDIO_CONFIG.keys.enemySpawn, "audio/sfx-enemy-spawn.wav");
     this.load.audio(AUDIO_CONFIG.keys.enemyHit, "audio/sfx-enemy-hit.wav");
     this.load.audio(AUDIO_CONFIG.keys.enemyDeath, "audio/sfx-enemy-death.wav");
+    this.load.audio(AUDIO_CONFIG.keys.swarmSpawn, "audio/sfx-swarm-spawn.wav");
     // this.load.audio(AUDIO_CONFIG.keys.playerHit, "audio/sfx-player-hit.wav");
     this.load.audio(AUDIO_CONFIG.keys.playerDeath, "audio/sfx-player-death.wav");
     this.load.audio(AUDIO_CONFIG.keys.powerUp, "audio/sfx-power-up.wav");

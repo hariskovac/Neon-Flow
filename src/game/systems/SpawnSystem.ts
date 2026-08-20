@@ -24,13 +24,22 @@ import { SpawnEffect } from "../render/SpawnEffect";
 import { Shard } from "../entities/enemies/Shard";
 import { Splitter } from "../entities/enemies/Splitter";
 import { Winder } from "../entities/enemies/Winder";
+import {
+  canSurround,
+  clampToArena,
+  resolveCornerAnchors,
+  resolveIntensityValue,
+  resolveSurroundPoints,
+} from "./SpawnPatterns";
 
-interface PendingSpawn {
+interface QueuedSpawn {
   readonly type: EnemyType;
   readonly x: number;
   readonly y: number;
-  readonly readyAt: number;
-  readonly effect: SpawnEffect;
+  readonly startAt: number;
+  readonly isGroupMember: boolean;
+  effect: SpawnEffect | null;
+  readyAt: number | null;
 }
 
 export const SPAWN_APPEARANCE: Record < EnemyType, { outline: readonly Vector2[]; color: number } > = {
@@ -46,7 +55,7 @@ export class SpawnSystem {
   private readonly scene: Phaser.Scene;
   private readonly bounds: ArenaBounds;
   private readonly enemies: Enemy[] = [];
-  private readonly pending: PendingSpawn[] = [];
+  private readonly queue: QueuedSpawn[] = [];
   private readonly effectPool: SpawnEffect[] = [];
   private readonly playerProjectiles: ProjectileSystem;
 
@@ -54,6 +63,7 @@ export class SpawnSystem {
   private nextSpawnAt: number;
   private spawningEnabled = true;
   private spawnedThisWave = 0;
+  private groupAvailableAt = 0;
 
   public constructor(
     scene: Phaser.Scene,
@@ -75,7 +85,7 @@ export class SpawnSystem {
 
   public update(time: number, playerX: number, playerY: number): void {
     this.removeDeadEnemies();
-    this.updatePending(time, playerX, playerY);
+    this.processQueue(time, playerX, playerY);
 
     if (!this.spawningEnabled) {
       return;
@@ -87,47 +97,207 @@ export class SpawnSystem {
 
     this.nextSpawnAt = time + this.actuators.spawnIntervalMs;
 
-    if (this.enemies.length + this.pending.length >= SPAWN_CONFIG.maxActiveEnemies) {
+    this.planSpawnEvent(time, playerX, playerY);
+  }
+
+  private planSpawnEvent(
+    time: number,
+    playerX: number,
+    playerY: number,
+  ): void {
+    const intensity = this.actuators.spawnIntensity;
+
+    const groupsAllowed = time >= this.groupAvailableAt;
+
+    const surroundChance = groupsAllowed
+      ? resolveIntensityValue(
+          SPAWN_CONFIG.intensity.surroundChance,
+          intensity,
+        )
+      : 0;
+
+    const swarmChance = groupsAllowed
+      ? resolveIntensityValue(SPAWN_CONFIG.intensity.swarmChance, intensity)
+      : 0;
+
+    const roll = Phaser.Math.FloatBetween(0, 1);
+
+    if (roll < surroundChance && canSurround(this.bounds, playerX, playerY)) {
+      this.planSurround(time, playerX, playerY, intensity);
+      this.startGroupCooldown(time, intensity);
+
+      return;
+    }
+
+    if (roll < surroundChance + swarmChance) {
+      this.planSwarms(time, playerX, playerY, intensity);
+      this.startGroupCooldown(time, intensity);
+
       return;
     }
 
     const point = this.resolveSpawnPoint(playerX, playerY);
-    const type = this.chooseEnemyType();
 
-    this.beginSpawn(type, point.x, point.y, time);
+    this.enqueue(this.chooseEnemyType(), point.x, point.y, time, false);
   }
 
-  private beginSpawn(
-    type: EnemyType,
-    x: number,
-    y: number,
+  private startGroupCooldown(time: number, intensity: number): void {
+    this.groupAvailableAt = time + resolveIntensityValue(SPAWN_CONFIG.groupCooldownMs, intensity);
+  }
+
+    private planSwarms(
     time: number,
+    playerX: number,
+    playerY: number,
+    intensity: number,
   ): void {
-    const effect = this.claimEffect();
-    const appearance = SPAWN_APPEARANCE[type];
+    const swarmCount = Math.round(
+      resolveIntensityValue(SPAWN_CONFIG.intensity.swarmCount, intensity),
+    );
 
-    effect.start(x, y, appearance.outline, appearance.color, time);
+    const swarmSize = Math.round(
+      resolveIntensityValue(SPAWN_CONFIG.intensity.swarmSize, intensity),
+    );
 
-    audio.playSfx("enemySpawn");
+    const sharedType = this.chooseEnemyType();
+    const useSharedType =
+      Phaser.Math.FloatBetween(0, 1) < SPAWN_CONFIG.sameTypeChance;
 
-    this.pending.push({
-      type,
-      x,
-      y,
-      readyAt: time + SPAWN_EFFECT_CONFIG.durationMs,
-      effect,
+    const anchors = this.resolveSwarmAnchors(swarmCount, playerX, playerY);
+
+    for (let swarm = 0; swarm < swarmCount; swarm += 1) {
+      const type = useSharedType ? sharedType : this.chooseEnemyType();
+      const anchor = anchors[swarm];
+
+      for (let member = 0; member < swarmSize; member += 1) {
+        const scattered = clampToArena(this.bounds, {
+          x: anchor.x + Phaser.Math.FloatBetween(-1, 1) * SPAWN_CONFIG.swarmScatter,
+          y: anchor.y + Phaser.Math.FloatBetween(-1, 1) * SPAWN_CONFIG.swarmScatter,
+        });
+
+        this.enqueue(
+          type,
+          scattered.x,
+          scattered.y,
+          time + swarm * SPAWN_CONFIG.swarmGroupDelayMs + member * SPAWN_CONFIG.swarmStaggerMs,
+          true,
+        );
+      }
+    }
+  }
+
+  private planSurround(
+    time: number,
+    playerX: number,
+    playerY: number,
+    intensity: number,
+  ): void {
+    const count = Math.round(
+      resolveIntensityValue(SPAWN_CONFIG.intensity.surroundSize, intensity),
+    );
+
+    const type = this.chooseEnemyType();
+
+    const points = resolveSurroundPoints(
+      playerX,
+      playerY,
+      SPAWN_CONFIG.surroundRadius,
+      count,
+      Phaser.Math.FloatBetween(0, Math.PI * 2),
+    );
+
+    points.forEach((point, index) => {
+      const clamped = clampToArena(this.bounds, point);
+
+      this.enqueue(
+        type,
+        clamped.x,
+        clamped.y,
+        time + index * SPAWN_CONFIG.swarmStaggerMs,
+        true,
+      );
     });
   }
 
-  private updatePending(time: number, playerX: number, playerY: number ): void {
+  private resolveSwarmAnchors(
+    count: number,
+    playerX: number,
+    playerY: number,
+  ): Vector2[] {
+    const ranked = resolveCornerAnchors(this.bounds).sort((a, b) => {
+      const distanceA = Math.hypot(a.x - playerX, a.y - playerY);
+      const distanceB = Math.hypot(b.x - playerX, b.y - playerY);
+
+      return distanceB - distanceA;
+    });
+
+    const anchors: Vector2[] = [];
+
+    for (let index = 0; index < count; index += 1) {
+      const useCorner =
+        index < ranked.length &&
+        Phaser.Math.FloatBetween(0, 1) < SPAWN_CONFIG.cornerChance;
+
+      anchors.push(
+        useCorner ? ranked[index] : this.resolveSpawnPoint(playerX, playerY),
+      );
+    }
+
+    return anchors;
+  }
+
+  private enqueue(
+    type: EnemyType,
+    x: number,
+    y: number,
+    startAt: number,
+    isGroupMember: boolean,
+  ): void {
+    this.queue.push({ type, x, y, startAt, isGroupMember, effect: null, readyAt: null });
+  }
+
+  private processQueue(
+    time: number,
+    playerX: number,
+    playerY: number,
+  ): void {
     for (const effect of this.effectPool) {
       effect.update(time);
     }
 
-    for (let index = this.pending.length - 1; index >= 0; index -= 1) {
-      const spawn = this.pending[index];
+    for (let index = this.queue.length - 1; index >= 0; index -= 1) {
+      const spawn = this.queue[index];
 
-      if (time < spawn.readyAt) {
+      if (time < spawn.startAt) {
+        continue;
+      }
+
+      if (spawn.effect === null) {
+        if (this.enemies.length >= SPAWN_CONFIG.maxActiveEnemies) {
+          this.queue.splice(index, 1);
+
+          continue;
+        }
+
+        const appearance = SPAWN_APPEARANCE[spawn.type];
+
+        spawn.effect = this.claimEffect();
+        spawn.effect.start(
+          spawn.x,
+          spawn.y,
+          appearance.outline,
+          appearance.color,
+          time,
+        );
+
+        spawn.readyAt = time + SPAWN_EFFECT_CONFIG.durationMs;
+
+        audio.playSfx(spawn.isGroupMember ? "swarmSpawn" : "enemySpawn");
+
+        continue;
+      }
+
+      if (spawn.readyAt === null || time < spawn.readyAt) {
         continue;
       }
 
@@ -136,9 +306,10 @@ export class SpawnSystem {
       this.enemies.push(
         this.createEnemy(spawn.type, spawn.x, spawn.y, playerX, playerY),
       );
+
       this.spawnedThisWave += 1;
 
-      this.pending.splice(index, 1);
+      this.queue.splice(index, 1);
     }
   }
 
@@ -307,11 +478,11 @@ export class SpawnSystem {
 
     this.enemies.length = 0;
 
-    for (const spawn of this.pending) {
-      spawn.effect.stop();
+    for (const spawn of this.queue) {
+      spawn.effect?.stop();
     }
 
-    this.pending.length = 0;
+    this.queue.length = 0;
   }
 
   public clearAllWithEffects(): Array<{ x: number; y: number; color: number }> {
@@ -342,6 +513,7 @@ export class SpawnSystem {
 
   public resetWaveCounters(): void {
     this.spawnedThisWave = 0;
+    this.groupAvailableAt = 0;
   }
 
   // sets actuator values for new difficulty
