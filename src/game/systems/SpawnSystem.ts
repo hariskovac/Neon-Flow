@@ -75,7 +75,7 @@ export class SpawnSystem {
 
   public update(time: number, playerX: number, playerY: number): void {
     this.removeDeadEnemies();
-    this.updatePending(time);
+    this.updatePending(time, playerX, playerY);
 
     if (!this.spawningEnabled) {
       return;
@@ -119,7 +119,7 @@ export class SpawnSystem {
     });
   }
 
-  private updatePending(time: number): void {
+  private updatePending(time: number, playerX: number, playerY: number ): void {
     for (const effect of this.effectPool) {
       effect.update(time);
     }
@@ -133,7 +133,9 @@ export class SpawnSystem {
 
       spawn.effect.stop();
 
-      this.enemies.push(this.createEnemy(spawn.type, spawn.x, spawn.y));
+      this.enemies.push(
+        this.createEnemy(spawn.type, spawn.x, spawn.y, playerX, playerY),
+      );
       this.spawnedThisWave += 1;
 
       this.pending.splice(index, 1);
@@ -256,7 +258,13 @@ export class SpawnSystem {
     return "chaser";
   }
 
-  private createEnemy(type: EnemyType, x: number, y: number): Enemy {
+  private createEnemy(
+    type: EnemyType, 
+    x: number, 
+    y: number,
+    playerX: number,
+    playerY: number,
+  ): Enemy {
     if (type === "chaser") {
       return new Chaser(this.scene, x, y, this.actuators.enemySpeedMultiplier);
     }
@@ -272,7 +280,13 @@ export class SpawnSystem {
     }
 
     if (type === "winder") {
-      return new Winder(this.scene, x, y, this.actuators.enemySpeedMultiplier);
+      return new Winder(
+        this.scene,
+        x,
+        y,
+        this.actuators.enemySpeedMultiplier,
+        Math.atan2(playerY - y, playerX - x),
+      );
     }
 
     if (type === "splitter") {

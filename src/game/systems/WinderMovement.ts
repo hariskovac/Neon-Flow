@@ -11,29 +11,25 @@ export function resolveWinderHeading(
   selfY: number,
   targetX: number,
   targetY: number,
+  currentFacing: number,
   time: number,
+  deltaMs: number,
   amplitude: number,
   periodMs: number,
-): Vector2 {
+  phase: number,
+  turnRate: number,
+): number {
   const deltaX = targetX - selfX;
   const deltaY = targetY - selfY;
-  const distance = Math.hypot(deltaX, deltaY);
 
-  if (distance === 0) {
-    return { x: 0, y: 0 };
+  if (deltaX === 0 && deltaY === 0) {
+    return currentFacing;
   }
 
-  const forwardX = deltaX / distance;
-  const forwardY = deltaY / distance;
+  const weave = Math.sin((time / periodMs) * Math.PI * 2 + phase) * amplitude;
+  const desired = Math.atan2(deltaY, deltaX) + weave;
 
-  const weave = Math.sin((time / periodMs) * Math.PI * 2) * amplitude;
-
-  const x = forwardX - forwardY * weave;
-  const y = forwardY + forwardX * weave;
-
-  const magnitude = Math.hypot(x, y);
-
-  return { x: x / magnitude, y: y / magnitude };
+  return turnToward(currentFacing, desired, turnRate * (deltaMs / 1000));
 }
 
 export function samplePathAt(
@@ -73,4 +69,24 @@ export function samplePathAt(
   const newest = history[history.length - 1];
 
   return { x: newest.x, y: newest.y };
+}
+
+function turnToward(
+  current: number,
+  desired: number,
+  maxTurn: number,
+): number {
+  let difference = desired - current;
+
+  while (difference > Math.PI) {
+    difference -= Math.PI * 2;
+  }
+
+  while (difference < -Math.PI) {
+    difference += Math.PI * 2;
+  }
+
+  const turn = Math.max(-maxTurn, Math.min(maxTurn, difference));
+
+  return current + turn;
 }

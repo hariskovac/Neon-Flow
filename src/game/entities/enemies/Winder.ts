@@ -16,8 +16,12 @@ export class Winder implements Enemy {
   private readonly segmentViews: Phaser.GameObjects.Graphics[] = [];
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly speed: number;
+  private readonly weavePhase: number;
+  private readonly weavePeriodMs: number;
+  private readonly segmentDelayMs: number;
 
   private readonly history: PathSample[] = [];
+  private readonly historyMs: number;
 
   private readonly blockingParts: Array<{
     x: number;
@@ -27,18 +31,34 @@ export class Winder implements Enemy {
 
   private alive = true;
   private health = WINDER_CONFIG.maxHealth;
-  private facing = 0;
+  private facing: number;
+  private lastUpdatedAt: number | null = null;
 
   public constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
     speedMultiplier: number,
+    initialFacing: number,
   ) {
     this.speed = Math.min(
       WINDER_CONFIG.speed * speedMultiplier,
       WINDER_CONFIG.maxSpeed,
     );
+
+    this.facing = initialFacing;
+
+    this.segmentDelayMs = (WINDER_CONFIG.segmentSpacing / this.speed) * 1000;
+    this.historyMs = this.segmentDelayMs * (WINDER_CONFIG.segmentCount + 2);
+
+    this.weavePhase = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+    this.weavePeriodMs =
+      WINDER_CONFIG.weavePeriodMs *
+      Phaser.Math.FloatBetween(
+        1 - WINDER_CONFIG.weavePeriodVariance,
+        1 + WINDER_CONFIG.weavePeriodVariance,
+      );
 
     const diameter = WINDER_CONFIG.headRadius * 2;
 
@@ -95,21 +115,29 @@ export class Winder implements Enemy {
       return;
     }
 
-    const heading = resolveWinderHeading(
+    const deltaMs =
+      this.lastUpdatedAt === null ? 16 : time - this.lastUpdatedAt;
+
+    this.lastUpdatedAt = time;
+
+    this.facing = resolveWinderHeading(
       this.hitbox.x,
       this.hitbox.y,
       targetX,
       targetY,
+      this.facing,
       time,
+      deltaMs,
       WINDER_CONFIG.weaveAmplitude,
-      WINDER_CONFIG.weavePeriodMs,
+      this.weavePeriodMs,
+      this.weavePhase,
+      WINDER_CONFIG.turnRateRadians,
     );
 
-    this.body.setVelocity(heading.x * this.speed, heading.y * this.speed);
-
-    if (heading.x !== 0 || heading.y !== 0) {
-      this.facing = Math.atan2(heading.y, heading.x);
-    }
+    this.body.setVelocity(
+      Math.cos(this.facing) * this.speed,
+      Math.sin(this.facing) * this.speed,
+    );
 
     this.headView.setPosition(this.hitbox.x, this.hitbox.y);
     this.headView.setRotation(this.facing);
@@ -210,7 +238,7 @@ export class Winder implements Enemy {
   private recordPosition(time: number): void {
     this.history.push({ x: this.hitbox.x, y: this.hitbox.y, time });
 
-    const cutoff = time - WINDER_CONFIG.historyMs;
+    const cutoff = time - this.historyMs;
 
     while (this.history.length > 0 && this.history[0].time < cutoff) {
       this.history.shift();
@@ -219,7 +247,7 @@ export class Winder implements Enemy {
 
   private updateSegments(time: number): void {
     this.segmentViews.forEach((view, index) => {
-      const delay = (index + 1) * WINDER_CONFIG.segmentDelayMs;
+      const delay = (index + 1) * this.segmentDelayMs;
       const position = samplePathAt(this.history, time - delay);
 
       if (position === null) {

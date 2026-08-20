@@ -62,9 +62,9 @@ export const WEAPON_CONFIG = {
 export const CHASER_CONFIG = {
   radius: 11,
   maxHealth: 2,
-  baseSpeed: 70,
+  baseSpeed: 140,
   accelerationPerSecond: 14,
-  maxSpeed: 220,
+  maxSpeed: 300,
   hullOutline: [
     { x: 0, y: -12 },
     { x: 11, y: 0 },
@@ -84,15 +84,15 @@ export const DODGER_CONFIG = {
   hullOutline: buildRegularPolygon(5, 13),
   hullLineWidth: 2,
   spinRate: 0.6,
-  pursuitSpeed: 130,
-  maxPursuitSpeed: 190,
+  pursuitSpeed: 160,
+  maxPursuitSpeed: 290,
 };
 
 export const DASHER_CONFIG = {
   collisionRadius: 9,
   maxHealth: 3,
   lockDurationMs: 600,
-  dashSpeed: 520,
+  dashSpeed: 560,
   overshootDistance: 130,
   pauseDurationMs: 700,
   hullOutline: [
@@ -104,14 +104,14 @@ export const DASHER_CONFIG = {
   hullLineWidth: 2,
   lockPulseMinAlpha: 0.45,
   lockPulseMs: 140,
-  maxDashSpeed: 620,
+  maxDashSpeed: 660,
 };
 
 export const SPLITTER_CONFIG = {
   radius: 14,
   maxHealth: 2,
-  speed: 105,
-  maxSpeed: 170,
+  speed: 160,
+  maxSpeed: 280,
   shardCount: 2,
   shardSeparation: 68,
   hullOutline: [
@@ -124,43 +124,44 @@ export const SPLITTER_CONFIG = {
 };
 
 export const SHARD_CONFIG = {
-  radius: 8,
+  radius: 12,
   maxHealth: 1,
-  pursuitSpeed: 95,
-  maxPursuitSpeed: 150,
-  orbitRadius: 34,
+  pursuitSpeed: 170,
+  maxPursuitSpeed: 250,
+  orbitRadius: 64,
   orbitSpeed: 155,
   orbitTightness: 2.6,
   hullOutline: [
-    { x: 0, y: -8 },
-    { x: 7, y: 4 },
-    { x: -7, y: 4 },
+    { x: 0, y: -12 },
+    { x: 10, y: 6 },
+    { x: -10, y: 6 },
   ],
   hullLineWidth: 2,
   spinRate: 2.2,
 };
 
 export const WINDER_CONFIG = {
-  headRadius: 24,
-  segmentRadius: 20,
+  headRadius: 21,
+  segmentRadius: 15,
   segmentCount: 11,
   maxHealth: 3,
-  speed: 130,
-  maxSpeed: 200,
-  weaveAmplitude: 0.75,
-  weavePeriodMs: 900,
-  segmentDelayMs: 90,
-  historyMs: 1400,
+  speed: 200,
+  maxSpeed: 400,
+  weaveAmplitude: 2,
+  weavePeriodMs: 2000,
+  weavePeriodVariance: 0.25,
+  turnRateRadians: 3.8,
+  segmentSpacing: 22,
   headOutline: [
-    { x: 14, y: 0 },
-    { x: -8, y: 9 },
-    { x: -8, y: -9 },
+    { x: 21, y: 0 },
+    { x: -12, y: 13 },
+    { x: -12, y: -13 },
   ],
   segmentOutline: [
-    { x: 8, y: 0 },
-    { x: 0, y: 7 },
-    { x: -8, y: 0 },
-    { x: 0, y: -7 },
+    { x: 12, y: 0 },
+    { x: 0, y: 10 },
+    { x: -12, y: 0 },
+    { x: 0, y: -10 },
   ],
   lineWidth: 2,
   segmentAlpha: 0.55,

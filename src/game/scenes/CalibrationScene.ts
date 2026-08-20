@@ -39,7 +39,6 @@ export class CalibrationScene extends Phaser.Scene {
   private movementKeys!: MovementKeys;
   private weapon!: WeaponSystem;
   private projectiles!: ProjectileSystem;
-  private enemyProjectiles!: ProjectileSystem;
   private spawner!: SpawnSystem;
   private collisions!: CollisionSystem;
   private score!: ScoreSystem;
@@ -206,6 +205,12 @@ export class CalibrationScene extends Phaser.Scene {
         this.spawner.spawnSplitChildren(kill.x, kill.y);
       }
 
+      if (kill.segments !== undefined) {
+        for (const segment of kill.segments) {
+          this.effects.burst(segment.x, segment.y, kill.color, time);
+        }
+      }
+
       if (kill.canDrop && this.drops.rollForDrop(kill.x, kill.y, time)) {
         this.performance.recordPowerUpSpawned();
       }
@@ -237,8 +242,6 @@ export class CalibrationScene extends Phaser.Scene {
         for (const cleared of this.spawner.clearAllWithEffects()) {
           this.effects.burst(cleared.x, cleared.y, cleared.color, time);
         }
-
-        this.enemyProjectiles.reset();
 
         this.lives.loseLife();
         this.performance.recordLifeLost();
