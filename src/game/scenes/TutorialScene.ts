@@ -524,6 +524,8 @@ export class TutorialScene extends Phaser.Scene {
       this.player.clearSpeedMultiplier();
     }
 
+    this.player.setShieldActive(this.powerUps.hasShield());
+
     if (this.powerUps.isFireRateActive(time)) {
       this.weapon.setFireRateMultiplier(POWERUP_CONFIG.fireRateMultiplier);
     } else {

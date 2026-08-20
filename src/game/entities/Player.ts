@@ -2,7 +2,7 @@ import Phaser from "phaser";
 
 import type { Vector2 } from "../../types/game";
 import { DEPTH, PALETTE, PLAYER_CONFIG, PLAYER_SPAWN_CONFIG } from "../gameplayConfig";
-import { drawNeonShape } from "../render/Neon";
+import { drawNeonShape, drawNeonCircle } from "../render/Neon";
 import { audio } from "../../audio/AudioSystem";
 import { SpawnEffect } from "../render/SpawnEffect";
 
@@ -12,11 +12,13 @@ export class Player {
   private readonly body: Phaser.Physics.Arcade.Body;
   private readonly flame: Phaser.GameObjects.Graphics;
   private readonly spawnEffect: SpawnEffect;
+  private readonly shieldView: Phaser.GameObjects.Graphics;
 
   private isMoving = false;
   private invincibleUntil = 0;
   private speed: number = PLAYER_CONFIG.speed;
   private materialisingUntil = 0;
+  private shieldActive = false;
 
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     const diameter = PLAYER_CONFIG.collisionRadius * 2;
@@ -45,6 +47,18 @@ export class Player {
     this.ship.setDepth(DEPTH.player);
     this.ship.setPosition(x, y);
 
+    this.shieldView = scene.add.graphics();
+    this.shieldView.setDepth(DEPTH.player + 1);
+    this.shieldView.setPosition(x, y);
+    this.shieldView.setVisible(false);
+
+    drawNeonCircle(
+      this.shieldView,
+      PLAYER_CONFIG.shieldRadius,
+      PALETTE.playerShield,
+      PLAYER_CONFIG.shieldLineWidth,
+    );
+
     this.drawShip();
 
     this.spawnEffect = new SpawnEffect(scene);
@@ -61,6 +75,9 @@ export class Player {
 
     this.flame.setPosition(this.hitbox.x, this.hitbox.y);
     this.flame.setRotation(aimAngle);
+
+    this.shieldView.setPosition(this.hitbox.x, this.hitbox.y);
+    this.updateShield(time);
 
     this.spawnEffect.setPosition(this.hitbox.x, this.hitbox.y);
     this.spawnEffect.setRotation(aimAngle);
@@ -142,8 +159,23 @@ export class Player {
 
     const visible = !this.isInvincible(time) || flashOn;
 
+    this.shieldView.setVisible(visible && this.shieldActive);
     this.ship.setVisible(visible);
     this.flame.setVisible(visible);
+  }
+
+  private updateShield(time: number): void {
+    if (!this.shieldActive) {
+      this.shieldView.setVisible(false);
+
+      return;
+    }
+
+    const pulse =
+      (Math.sin((time / PLAYER_CONFIG.shieldPulseMs) * Math.PI * 2) + 1) / 2;
+
+    this.shieldView.setVisible(true);
+    this.shieldView.setAlpha(PLAYER_CONFIG.shieldMinAlpha + (1 - PLAYER_CONFIG.shieldMinAlpha) * pulse);
   }
 
   public setSpeedMultiplier(multiplier: number): void {
@@ -152,6 +184,10 @@ export class Player {
 
   public clearSpeedMultiplier(): void {
     this.speed = PLAYER_CONFIG.speed;
+  }
+
+  public setShieldActive(active: boolean): void {
+    this.shieldActive = active;
   }
 
   public getX(): number {

@@ -43,6 +43,10 @@ export const PLAYER_CONFIG = {
   respawnInvincibilityMs: 1500,
   respawnFlashIntervalMs: 100,
   respawnPushbackRadius: 320,
+  shieldRadius: 26,
+  shieldLineWidth: 2,
+  shieldPulseMs: 700,
+  shieldMinAlpha: 0.45,
 };
 
 export const WEAPON_CONFIG = {
@@ -80,7 +84,7 @@ export const DODGER_CONFIG = {
   maxHealth: 1,
   evasionRadius: 70,
   evasionSpeed: 150,
-  evasionLookaheadMs: 420,
+  evasionLookaheadMs: 350,
   hullOutline: buildRegularPolygon(5, 13),
   hullLineWidth: 2,
   spinRate: 0.6,
@@ -303,6 +307,7 @@ export const PALETTE = {
   arenaBorder: 0x263653,
   player: 0x62e6c8,
   playerFlame: 0x5ce1ff,
+  playerShield: 0x6bc5ff,
   projectile: 0xffe066,
   enemyProjectile: 0xff6b6b,
   pipFilled: 0x62e6c8,
