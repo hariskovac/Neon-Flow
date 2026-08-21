@@ -24,20 +24,33 @@ export class PowerUpSystem {
 
   // rolls for a drop and returns true when one is dropped
   public rollForDrop(x: number, y: number, now: number): boolean {
-    if (this.drops.length >= POWERUP_CONFIG.maxActive) {
-      return false;
-    }
-
     if (Phaser.Math.FloatBetween(0, 1) >= this.dropChance) {
       return false;
     }
 
-    const type = POWERUP_TYPES[Phaser.Math.Between(0, POWERUP_TYPES.length - 1)];
+    const available = POWERUP_TYPES.filter(
+      (type) => !this.hasActiveType(type),
+    );
 
-    this.drops.push(new PowerUp(this.scene, x, y, type, now + POWERUP_CONFIG.lifetimeMs));
+    if (available.length === 0) {
+      return false;
+    }
+
+    const type = available[Phaser.Math.Between(0, available.length - 1)];
+
+    this.drops.push(
+      new PowerUp(this.scene, x, y, type, now + POWERUP_CONFIG.lifetimeMs),
+    );
+
     this.spawnedThisWave += 1;
 
     return true;
+  }
+
+  private hasActiveType(type: PowerUpType): boolean {
+    return this.drops.some(
+      (drop) => drop.isActive() && drop.getType() === type,
+    );
   }
 
   public place(x: number, y: number, type: PowerUpType, now: number): void {
