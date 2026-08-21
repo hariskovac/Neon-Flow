@@ -50,6 +50,8 @@ export class GameScene extends Phaser.Scene {
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
+  private windowPointerX = 0;
+  private windowPointerY = 0;
   private spawner!: SpawnSystem;
 
   private collisions!: CollisionSystem;
@@ -57,6 +59,8 @@ export class GameScene extends Phaser.Scene {
 
   private powerUps!: PowerUpEffects;
   private drops!: PowerUpSystem;
+
+  private lastCountdownSecond = 0;
 
   public constructor() {
     super({ key: "GameScene" });
@@ -147,19 +151,31 @@ export class GameScene extends Phaser.Scene {
     this.input.mouse?.disableContextMenu();
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
+
+    this.game.canvas.ownerDocument.addEventListener(
+      "mousemove",
+      this.handleWindowPointer,
+    );
+
+    this.events.once("shutdown", () => {
+      this.game.canvas.ownerDocument.removeEventListener(
+        "mousemove",
+        this.handleWindowPointer,
+      );
+    });
   }
 
   private markPointerInput(): void {
     this.hasPointerInput = true;
   }
 
-  private updateAimAngle(pointer: Phaser.Input.Pointer): void {
+  private updateAimAngle(): void {
     if (!this.hasPointerInput) {
       return;
     }
 
-    const deltaX = pointer.worldX - this.player.getX();
-    const deltaY = pointer.worldY - this.player.getY();
+    const deltaX = this.windowPointerX - this.player.getX();
+    const deltaY = this.windowPointerY - this.player.getY();
 
     if (deltaX === 0 && deltaY === 0) {
       return;
@@ -177,6 +193,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (transition === "waveEnded") {
+      audio.playSfx("waveEnd");
       this.recordWave(time);
 
       const summary = session.getCompletedWaves().at(-1);
@@ -214,7 +231,7 @@ export class GameScene extends Phaser.Scene {
 
     const pointer = this.input.activePointer;
 
-    this.updateAimAngle(pointer);
+    this.updateAimAngle();
 
     const movement = resolveMovementVector(this.readMovementInput());
     this.player.update(time, movement, this.aimAngle);
@@ -241,6 +258,8 @@ export class GameScene extends Phaser.Scene {
     this.drops.update(time);
     this.effects.update(time);
     this.applyPowerUpEffects(time);
+
+    this.updateCountdown(time);
 
     if (this.waves.isIntermission()) {
       this.updateHud(time);
@@ -338,6 +357,18 @@ export class GameScene extends Phaser.Scene {
     };
   }
 
+    private readonly handleWindowPointer = (event: MouseEvent): void => {
+    const canvas = this.game.canvas;
+    const rect = canvas.getBoundingClientRect();
+
+    const scaleX = this.game.scale.width / rect.width;
+    const scaleY = this.game.scale.height / rect.height;
+
+    this.windowPointerX = (event.clientX - rect.left) * scaleX;
+    this.windowPointerY = (event.clientY - rect.top) * scaleY;
+    this.hasPointerInput = true;
+  };
+
   private updateHud(time: number): void {
     this.hud.update({
       score: this.score.getScore(),
@@ -362,6 +393,29 @@ export class GameScene extends Phaser.Scene {
     this.performance.reset();
 
     console.log("Wave complete", summary);
+  }
+
+  private updateCountdown(time: number): void {
+    if (this.waves.isIntermission()) {
+      this.lastCountdownSecond = 0;
+
+      return;
+    }
+
+    const remaining = this.waves.getPhaseRemainingMs(time);
+    const second = Math.ceil(remaining / 1000);
+
+    if (second > WAVE_CONFIG.countdownSeconds || second < 1) {
+      return;
+    }
+
+    if (second === this.lastCountdownSecond) {
+      return;
+    }
+
+    this.lastCountdownSecond = second;
+
+    audio.playSfx("beep");
   }
 
   private applyPowerUpEffects(time: number): void {

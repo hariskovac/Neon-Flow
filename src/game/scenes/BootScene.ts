@@ -22,6 +22,8 @@ export class BootScene extends Phaser.Scene {
     this.load.audio(AUDIO_CONFIG.keys.playerDeath, "audio/sfx-player-death.wav");
     this.load.audio(AUDIO_CONFIG.keys.powerUp, "audio/sfx-power-up.wav");
     this.load.audio(AUDIO_CONFIG.keys.shieldAbsorb, "audio/sfx-shield-absorb.wav");
+    this.load.audio(AUDIO_CONFIG.keys.beep, "audio/sfx-beep.wav");
+    this.load.audio(AUDIO_CONFIG.keys.waveEnd, "audio/sfx-wave-end.wav");
   }
 
   public create(): void {

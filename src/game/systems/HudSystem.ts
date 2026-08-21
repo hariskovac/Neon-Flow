@@ -78,7 +78,7 @@ export class HudSystem {
       CANVAS.width - HudSystem.EDGE_PADDING,
       centerY,
       "Unlimited",
-      { ...HUD_TEXT_STYLE, fontSize: "16px", color: PALETTE.textAccent },
+      { ...HUD_TEXT_STYLE, fontSize: "24px", color: PALETTE.textAccent },
     );
 
     this.unlimitedLabel.setOrigin(1, 0.5);

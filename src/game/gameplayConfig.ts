@@ -64,28 +64,28 @@ export const WEAPON_CONFIG = {
 };
 
 export const CHASER_CONFIG = {
-  radius: 11,
+  radius: 15,
   maxHealth: 1,
   baseSpeed: 140,
   accelerationPerSecond: 14,
   maxSpeed: 300,
   hullOutline: [
-    { x: 0, y: -12 },
-    { x: 11, y: 0 },
-    { x: 0, y: 12 },
-    { x: -11, y: 0 },
+    { x: 0, y: -16 },
+    { x: 15, y: 0 },
+    { x: 0, y: 16 },
+    { x: -15, y: 0 },
   ],
   hullLineWidth: 2,
   spinRate: 0.6,
 };
 
 export const DODGER_CONFIG = {
-  radius: 11,
+  radius: 15,
   maxHealth: 1,
   evasionRadius: 70,
   evasionSpeed: 150,
   evasionLookaheadMs: 350,
-  hullOutline: buildRegularPolygon(5, 13),
+  hullOutline: buildRegularPolygon(5, 17),
   hullLineWidth: 2,
   spinRate: 0.6,
   pursuitSpeed: 160,
@@ -93,17 +93,17 @@ export const DODGER_CONFIG = {
 };
 
 export const DASHER_CONFIG = {
-  collisionRadius: 9,
+  collisionRadius: 14,
   maxHealth: 2,
   lockDurationMs: 600,
   dashSpeed: 560,
   overshootDistance: 130,
   pauseDurationMs: 700,
   hullOutline: [
-    { x: 24, y: 0 },
-    { x: -10, y: 14 },
-    { x: -4, y: 0 },
-    { x: -10, y: -14 },
+    { x: 30, y: 0 },
+    { x: -13, y: 18 },
+    { x: -5, y: 0 },
+    { x: -13, y: -18 },
   ],
   hullLineWidth: 2,
   lockPulseMinAlpha: 0.45,
@@ -112,23 +112,23 @@ export const DASHER_CONFIG = {
 };
 
 export const SPLITTER_CONFIG = {
-  radius: 14,
+  radius: 16,
   maxHealth: 1,
   speed: 160,
   maxSpeed: 280,
   shardCount: 2,
   shardSeparation: 68,
   hullOutline: [
-    { x: 0, y: -16 },
-    { x: 14, y: 8 },
-    { x: -14, y: 8 },
+    { x: 0, y: -21 },
+    { x: 18, y: 12 },
+    { x: -18, y: 12 },
   ],
   hullLineWidth: 2,
   spinRate: 0.5,
 };
 
 export const SHARD_CONFIG = {
-  radius: 12,
+  radius: 13,
   maxHealth: 1,
   pursuitSpeed: 170,
   maxPursuitSpeed: 250,
@@ -136,9 +136,9 @@ export const SHARD_CONFIG = {
   orbitSpeed: 155,
   orbitTightness: 2.6,
   hullOutline: [
-    { x: 0, y: -12 },
-    { x: 10, y: 6 },
-    { x: -10, y: 6 },
+    { x: 0, y: -16 },
+    { x: 13, y: 8 },
+    { x: -13, y: 8 },
   ],
   hullLineWidth: 2,
   spinRate: 2.2,
@@ -146,7 +146,7 @@ export const SHARD_CONFIG = {
 
 export const WINDER_CONFIG = {
   headRadius: 21,
-  segmentRadius: 15,
+  segmentRadius: 11,
   segmentCount: 11,
   maxHealth: 3,
   speed: 200,
@@ -208,6 +208,151 @@ export const SPAWN_CONFIG = {
   cornerChance: 1,
 };
 
+// export const CHASER_CONFIG = {
+//   radius: 11,
+//   maxHealth: 1,
+//   baseSpeed: 140,
+//   accelerationPerSecond: 14,
+//   maxSpeed: 300,
+//   hullOutline: [
+//     { x: 0, y: -12 },
+//     { x: 11, y: 0 },
+//     { x: 0, y: 12 },
+//     { x: -11, y: 0 },
+//   ],
+//   hullLineWidth: 2,
+//   spinRate: 0.6,
+// };
+
+// export const DODGER_CONFIG = {
+//   radius: 11,
+//   maxHealth: 1,
+//   evasionRadius: 70,
+//   evasionSpeed: 150,
+//   evasionLookaheadMs: 350,
+//   hullOutline: buildRegularPolygon(5, 13),
+//   hullLineWidth: 2,
+//   spinRate: 0.6,
+//   pursuitSpeed: 160,
+//   maxPursuitSpeed: 290,
+// };
+
+// export const DASHER_CONFIG = {
+//   collisionRadius: 9,
+//   maxHealth: 2,
+//   lockDurationMs: 600,
+//   dashSpeed: 560,
+//   overshootDistance: 130,
+//   pauseDurationMs: 700,
+//   hullOutline: [
+//     { x: 24, y: 0 },
+//     { x: -10, y: 14 },
+//     { x: -4, y: 0 },
+//     { x: -10, y: -14 },
+//   ],
+//   hullLineWidth: 2,
+//   lockPulseMinAlpha: 0.45,
+//   lockPulseMs: 140,
+//   maxDashSpeed: 660,
+// };
+
+// export const SPLITTER_CONFIG = {
+//   radius: 14,
+//   maxHealth: 1,
+//   speed: 160,
+//   maxSpeed: 280,
+//   shardCount: 2,
+//   shardSeparation: 68,
+//   hullOutline: [
+//     { x: 0, y: -16 },
+//     { x: 14, y: 8 },
+//     { x: -14, y: 8 },
+//   ],
+//   hullLineWidth: 2,
+//   spinRate: 0.5,
+// };
+
+// export const SHARD_CONFIG = {
+//   radius: 12,
+//   maxHealth: 1,
+//   pursuitSpeed: 170,
+//   maxPursuitSpeed: 250,
+//   orbitRadius: 64,
+//   orbitSpeed: 155,
+//   orbitTightness: 2.6,
+//   hullOutline: [
+//     { x: 0, y: -12 },
+//     { x: 10, y: 6 },
+//     { x: -10, y: 6 },
+//   ],
+//   hullLineWidth: 2,
+//   spinRate: 2.2,
+// };
+
+// export const WINDER_CONFIG = {
+//   headRadius: 21,
+//   segmentRadius: 15,
+//   segmentCount: 11,
+//   maxHealth: 3,
+//   speed: 200,
+//   maxSpeed: 400,
+//   weaveAmplitude: 2,
+//   weavePeriodMs: 2000,
+//   weavePeriodVariance: 0.25,
+//   turnRateRadians: 3.8,
+//   segmentSpacing: 22,
+//   headOutline: [
+//     { x: 21, y: 0 },
+//     { x: -12, y: 13 },
+//     { x: -12, y: -13 },
+//   ],
+//   segmentOutline: [
+//     { x: 12, y: 0 },
+//     { x: 0, y: 10 },
+//     { x: -12, y: 0 },
+//     { x: 0, y: -10 },
+//   ],
+//   lineWidth: 2,
+//   segmentAlpha: 0.55,
+// };
+
+// export const SPAWN_CONFIG = {
+//   maxActiveEnemies: 100,
+//   spawnInset: 40,
+//   minDistanceFromPlayer: 260,
+//   maxPlacementAttempts: 20,
+//   groupCooldownMs: { low: 12000, high: 7000 },
+//   // spawn weights
+//   weights: {
+//     chaser: 35,
+//     dodger: 20,
+//     dasher: 10,
+//     splitter: 30,
+//     winder: 15,
+//   },
+//   intensity: {
+//     // chance a spawn is a swarm instead of a single enemy
+//     swarmChance: { low: 0, high: 0.35 },
+//     // enemies in one swarm
+//     swarmSize: { low: 5, high: 10 },
+//     // count of possible simultaneous swarms
+//     swarmCount: { low: 1, high: 4 },
+//     // chance a spawn event surrounds the player
+//     surroundChance: { low: 0.1, high: 0.5 },
+//     surroundSize: { low: 5, high: 10 },
+//   },
+//   // delay between each enemy spawn in a swarm
+//   swarmStaggerMs: 280,
+//   // delay between spawning of multiple swarms
+//   swarmGroupDelayMs: 600,
+//   swarmScatter: 15,
+//   surroundRadius: 500,
+//   surroundMinEdgeDistance: 160,
+//   sameTypeChance: 0.75,
+//   cornerInset: 120,
+//   cornerChance: 1,
+// };
+
 export const PLAYER_SPAWN_CONFIG = {
   durationMs: 320,
   echoCount: 4,
@@ -256,7 +401,8 @@ export const WAVE_CONFIG = {
   spawnStopMs: 37000,
   // gap between waves
   intermissionMs: 8000,
-  totalWaves: 7,
+  totalWaves: 6,
+  countdownSeconds: 3,
 };
 
 export const CALIBRATION_CONFIG = {
@@ -283,7 +429,7 @@ export const TUTORIAL_CONFIG = {
   dummyHealth: 10,
   keyCapSize: 40,
   keyCapGap: 6,
-  keyCapFontSize: "18px",
+  keyCapFontSize: "24px",
   enemyLevel: 1,
   dodgerSpawnDistance: 340,
   dodgerMinimumMs: 6000,
@@ -355,7 +501,7 @@ export const DEPTH = {
 
 export const HUD_TEXT_STYLE = {
   fontFamily: "Arial, sans-serif",
-  fontSize: "18px",
+  fontSize: "24px",
   color: PALETTE.hudPrimary,
   resolution: 2,
 };
@@ -389,6 +535,8 @@ export const AUDIO_CONFIG = {
     playerDeath: "sfx-player-death",
     powerUp: "sfx-power-up",
     shieldAbsorb: "sfx-shield-absorb",
+    beep: "sfx-beep",
+    waveEnd: "sfx-wave-end",
   },
   musicVolume: 0.35,
   sfxVolume: 0.6,
@@ -404,6 +552,8 @@ export const AUDIO_CONFIG = {
     playerDeath: 1,
     powerUp: 0.8,
     shieldAbsorb: 0.8,
+    beep: 0.5,
+    waveEnd: 1,
   },
   minRepeatMs: {
     playerFire: 45,
@@ -417,5 +567,7 @@ export const AUDIO_CONFIG = {
     playerDeath: 200,
     powerUp: 100,
     shieldAbsorb: 70,
+    beep: 400,
+    waveEnd: 500,
   },
 };

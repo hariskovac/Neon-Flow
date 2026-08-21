@@ -7,6 +7,7 @@ import {
   CALIBRATION_CONFIG,
   PALETTE,
   WEAPON_CONFIG,
+  WAVE_CONFIG
 } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { PerformanceMonitor } from "../systems/PerformanceMonitor";
@@ -52,7 +53,10 @@ export class CalibrationScene extends Phaser.Scene {
   private startedAt: number | null = null;
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
+  private windowPointerX = 0;
+  private windowPointerY = 0;
   private finished = false;
+  private lastCountdownSecond = 0;
 
   public constructor() {
     super({ key: "CalibrationScene" });
@@ -134,8 +138,21 @@ export class CalibrationScene extends Phaser.Scene {
     this.cursors = keyboard.createCursorKeys();
 
     this.input.mouse?.disableContextMenu();
+
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
+
+    this.game.canvas.ownerDocument.addEventListener(
+      "mousemove",
+      this.handleWindowPointer,
+    );
+
+    this.events.once("shutdown", () => {
+      this.game.canvas.ownerDocument.removeEventListener(
+        "mousemove",
+        this.handleWindowPointer,
+      );
+    });
   }
 
   public update(time: number): void {
@@ -151,6 +168,8 @@ export class CalibrationScene extends Phaser.Scene {
 
     const elapsed = time - this.startedAt;
 
+    this.updateCountdown(elapsed);
+
     if (elapsed >= CALIBRATION_CONFIG.durationMs) {
       this.finish(elapsed);
 
@@ -159,7 +178,7 @@ export class CalibrationScene extends Phaser.Scene {
 
     const pointer = this.input.activePointer;
 
-    this.updateAimAngle(pointer);
+    this.updateAimAngle();
 
     const movement = resolveMovementVector(this.readMovementInput());
     this.player.update(time, movement, this.aimAngle);
@@ -294,13 +313,25 @@ export class CalibrationScene extends Phaser.Scene {
     this.hasPointerInput = true;
   }
 
-  private updateAimAngle(pointer: Phaser.Input.Pointer): void {
+  private readonly handleWindowPointer = (event: MouseEvent): void => {
+    const canvas = this.game.canvas;
+    const rect = canvas.getBoundingClientRect();
+
+    const scaleX = this.game.scale.width / rect.width;
+    const scaleY = this.game.scale.height / rect.height;
+
+    this.windowPointerX = (event.clientX - rect.left) * scaleX;
+    this.windowPointerY = (event.clientY - rect.top) * scaleY;
+    this.hasPointerInput = true;
+  };
+
+  private updateAimAngle(): void {
     if (!this.hasPointerInput) {
       return;
     }
 
-    const deltaX = pointer.worldX - this.player.getX();
-    const deltaY = pointer.worldY - this.player.getY();
+    const deltaX = this.windowPointerX - this.player.getX();
+    const deltaY = this.windowPointerY - this.player.getY();
 
     if (deltaX === 0 && deltaY === 0) {
       return;
@@ -316,6 +347,23 @@ export class CalibrationScene extends Phaser.Scene {
       left: this.movementKeys.A.isDown || this.cursors.left.isDown,
       right: this.movementKeys.D.isDown || this.cursors.right.isDown,
     };
+  }
+
+  private updateCountdown(elapsed: number): void {
+    const remaining = CALIBRATION_CONFIG.durationMs - elapsed;
+    const second = Math.ceil(remaining / 1000);
+
+    if (second > WAVE_CONFIG.countdownSeconds || second < 1) {
+      return;
+    }
+
+    if (second === this.lastCountdownSecond) {
+      return;
+    }
+
+    this.lastCountdownSecond = second;
+
+    audio.playSfx("beep");
   }
 
   private applyPowerUpEffects(time: number): void {

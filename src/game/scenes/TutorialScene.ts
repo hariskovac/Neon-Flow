@@ -79,6 +79,8 @@ export class TutorialScene extends Phaser.Scene {
   private targets: Enemy[] = [];
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
+  private windowPointerX = 0;
+  private windowPointerY = 0;
 
   private readonly keysUsed = new Set<string>();
 
@@ -151,6 +153,13 @@ export class TutorialScene extends Phaser.Scene {
 
     this.steps = this.buildSteps();
     this.enterStep(this.time.now);
+
+    this.events.once("shutdown", () => {
+      this.game.canvas.ownerDocument.removeEventListener(
+        "mousemove",
+        this.handleWindowPointer,
+      );
+    });
   }
 
   public update(time: number): void {
@@ -162,7 +171,7 @@ export class TutorialScene extends Phaser.Scene {
 
     const pointer = this.input.activePointer;
 
-    this.updateAimAngle(pointer);
+    this.updateAimAngle();
     this.recordKeysUsed();
 
     const movement = resolveMovementVector(this.readMovementInput());
@@ -292,7 +301,7 @@ export class TutorialScene extends Phaser.Scene {
         title: "Aim with the mouse",
         body: "Hold left click to fire. Destroy the target to continue.",
         onEnter: () => {
-          this.targets.push(new TargetDummy(this, centerX, ARENA.y + 150));
+          this.targets.push(new TargetDummy(this, centerX, ARENA.y + 220));
         },
         isComplete: () => this.allTargetsCleared(),
         onExit: () => this.clearTargets(),
@@ -396,7 +405,7 @@ export class TutorialScene extends Phaser.Scene {
         "Blocks the next hit you take.",
         centerX - 180,
         centerY + 60,
-    ),
+      ),
       this.buildPowerUpStep(
         "speed",
         "Speed Boost",
@@ -416,8 +425,7 @@ export class TutorialScene extends Phaser.Scene {
         title: "Adaptive difficulty",
         body:
           "During the game, the difficulty may increase or decrease based " +
-          "on how you are performing. Please play naturally rather than " +
-          "trying to influence how the game responds.",
+          "on how you are performing.",
         isComplete: (context) => context.now - context.stepStartedAt > 6000,
         minimumMs: 6000,
       },
@@ -609,22 +617,39 @@ export class TutorialScene extends Phaser.Scene {
     this.input.on("pointermove", this.markPointerInput, this);
     this.input.on("pointerdown", this.markPointerInput, this);
 
+    this.game.canvas.ownerDocument.addEventListener(
+      "mousemove",
+      this.handleWindowPointer,
+    );
+
     keyboard.on("keydown-SPACE", () => {
       this.readyToStart = true;
     });
   }
 
+  private readonly handleWindowPointer = (event: MouseEvent): void => {
+    const canvas = this.game.canvas;
+    const rect = canvas.getBoundingClientRect();
+
+    const scaleX = this.game.scale.width / rect.width;
+    const scaleY = this.game.scale.height / rect.height;
+
+    this.windowPointerX = (event.clientX - rect.left) * scaleX;
+    this.windowPointerY = (event.clientY - rect.top) * scaleY;
+    this.hasPointerInput = true;
+  };
+
   private markPointerInput(): void {
     this.hasPointerInput = true;
   }
 
-  private updateAimAngle(pointer: Phaser.Input.Pointer): void {
+  private updateAimAngle(): void {
     if (!this.hasPointerInput) {
       return;
     }
 
-    const deltaX = pointer.worldX - this.player.getX();
-    const deltaY = pointer.worldY - this.player.getY();
+    const deltaX = this.windowPointerX - this.player.getX();
+    const deltaY = this.windowPointerY - this.player.getY();
 
     if (deltaX === 0 && deltaY === 0) {
       return;

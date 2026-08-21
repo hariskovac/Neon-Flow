@@ -48,14 +48,14 @@ export class TransparencyOverlay {
 
     this.panel.setStrokeStyle(2, PALETTE.arenaBorder);
 
-    this.headlineLabel = this.addLabel(scene, "20px", PALETTE.textPrimary, 0.5);
-    this.levelNameLabel = this.addLabel(scene, "15px", PALETTE.textMuted, 0.5);
+    this.headlineLabel = this.addLabel(scene, "24px", PALETTE.textPrimary, 0.5);
+    this.levelNameLabel = this.addLabel(scene, "22px", PALETTE.textMuted, 0.5);
     this.levelValueLabel = this.addLabel(scene, "30px", PALETTE.textAccent, 0.5);
-    this.noteLabel = this.addLabel(scene, "14px", PALETTE.textMuted, 0.5);
-    this.changesHeading = this.addLabel(scene, "13px", PALETTE.textMuted, 0);
-    this.reasonHeading = this.addLabel(scene, "13px", PALETTE.textMuted, 0);
-    this.reasonLabel = this.addLabel(scene, "15px", PALETTE.textAccent, 0);
-    this.footerLabel = this.addLabel(scene, "14px", PALETTE.textMuted, 0.5);
+    this.noteLabel = this.addLabel(scene, "18px", PALETTE.textMuted, 0.5);
+    this.changesHeading = this.addLabel(scene, "18px", PALETTE.textMuted, 0);
+    this.reasonHeading = this.addLabel(scene, "18px", PALETTE.textMuted, 0);
+    this.reasonLabel = this.addLabel(scene, "18px", PALETTE.textAccent, 0);
+    this.footerLabel = this.addLabel(scene, "18px", PALETTE.textMuted, 0.5);
 
     this.container = scene.add.container(
       ARENA.x + ARENA.width / 2,
@@ -100,22 +100,22 @@ export class TransparencyOverlay {
 
     this.hideAll();
 
-    blocks.push(this.block(this.headlineLabel, explanation.headline, 0, 34));
+    blocks.push(this.block(this.headlineLabel, explanation.headline, 0, 40));
 
     if (explanation.levelLabel !== null) {
       blocks.push(
-        this.block(this.levelNameLabel, explanation.levelLabel, 0, 24),
+        this.block(this.levelNameLabel, explanation.levelLabel, 0, 30),
       );
     }
 
     if (explanation.levelValue !== "") {
       blocks.push(
-        this.block(this.levelValueLabel, explanation.levelValue, 0, 40),
+        this.block(this.levelValueLabel, explanation.levelValue, 0, 46),
       );
     }
 
     if (explanation.note !== null) {
-      blocks.push(this.block(this.noteLabel, explanation.note, 0, 26));
+      blocks.push(this.block(this.noteLabel, explanation.note, 0, 32));
     }
 
     if (explanation.changeLines.length > 0) {
@@ -129,7 +129,7 @@ export class TransparencyOverlay {
       );
 
       while (this.changeRows.length < explanation.changeLines.length) {
-        const row = this.addLabel(this.scene, "15px", PALETTE.textPrimary, 0);
+        const row = this.addLabel(this.scene, "24px", PALETTE.textPrimary, 0);
 
         this.changeRows.push(row);
         this.container.add(row);

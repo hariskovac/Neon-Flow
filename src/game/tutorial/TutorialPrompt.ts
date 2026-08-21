@@ -8,8 +8,8 @@ import {
 } from "../gameplayConfig";
 
 export class TutorialPrompt {
-  private static readonly PANEL_WIDTH = 560;
-  private static readonly PANEL_HEIGHT = 92;
+  private static readonly PANEL_WIDTH = 640;
+  private static readonly PANEL_HEIGHT = 140;
 
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleLabel: Phaser.GameObjects.Text;
@@ -29,7 +29,7 @@ export class TutorialPrompt {
 
     this.titleLabel = scene.add.text(0, -24, "", {
       ...HUD_TEXT_STYLE,
-      fontSize: "19px",
+      fontSize: "24px",
       color: PALETTE.textAccent,
       align: "center",
     });
@@ -38,7 +38,7 @@ export class TutorialPrompt {
 
     this.bodyLabel = scene.add.text(0, 12, "", {
       ...HUD_TEXT_STYLE,
-      fontSize: "15px",
+      fontSize: "22px",
       color: PALETTE.textPrimary,
       align: "center",
       wordWrap: { width: TutorialPrompt.PANEL_WIDTH - 48 },
@@ -48,7 +48,7 @@ export class TutorialPrompt {
 
     this.container = scene.add.container(
       ARENA.x + ARENA.width / 2,
-      ARENA.y + 70,
+      ARENA.y + 90,
       [panel, this.titleLabel, this.bodyLabel],
     );
 
