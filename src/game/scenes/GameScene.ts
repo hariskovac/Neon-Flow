@@ -262,6 +262,13 @@ export class GameScene extends Phaser.Scene {
     this.updateCountdown(time);
 
     if (this.waves.isIntermission()) {
+      for (const type of this.collisions.updatePickupsOnly()) {
+        audio.playSfx("powerUp");
+        this.powerUps.collect(type, time);
+        this.performance.recordPowerUpCollected();
+        session.recordPowerUpCollected(type);
+      }
+
       this.updateHud(time);
 
       return;

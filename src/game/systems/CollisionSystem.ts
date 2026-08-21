@@ -57,7 +57,6 @@ export class CollisionSystem {
 
   public update(): CollisionResult {
     const killed: EnemyKill[] = [];
-    const collected: PowerUpType[] = [];
     let playerHit = false;
     let shotsHit = 0;
 
@@ -148,6 +147,15 @@ export class CollisionSystem {
       }
     }
 
+    const collected = this.updatePickupsOnly();
+
+    return { killed, shotsHit, playerHit, collected };
+  }
+
+  public updatePickupsOnly(): PowerUpType[] {
+    const collected: PowerUpType[] = [];
+    const playerRadius = this.player.getRadius();
+
     for (const drop of this.powerUps.getDrops()) {
       if (!drop.isActive()) {
         continue;
@@ -168,9 +176,8 @@ export class CollisionSystem {
       }
     }
 
-    return { killed, shotsHit, playerHit, collected };
+    return collected;
   }
-
 
   public clearRespawnArea(x: number, y: number, radius: number): void {
     const liveEnemies = this.enemies.filter((enemy) => enemy.isAlive());

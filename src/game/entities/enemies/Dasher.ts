@@ -2,7 +2,7 @@ import Phaser from "phaser";
 
 import type { EnemyType } from "../../../types/game";
 import { DASHER_CONFIG, DEPTH, PALETTE } from "../../gameplayConfig";
-import { resolveDash } from "../../systems/DasherMovement";
+import { resolveDash } from "../../systems/SplitterMovement";
 import type { Enemy } from "./Enemy";
 import { drawNeonShape } from "../../render/Neon";
 
