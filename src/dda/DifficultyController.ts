@@ -20,6 +20,10 @@ export interface DifficultyDecision {
   readonly suppressedByHysteresis: boolean;
   readonly parameterChanges: ParameterChange[];
   readonly explanation: Explanation;
+  readonly performanceScore: number;
+  readonly killRatio: number;
+  readonly enemyPersistence: number;
+  readonly usedAcceleratedStep: boolean;
 }
 
 function resolveDirection(evidence: EvidenceClass): DifficultyDirection {
@@ -42,6 +46,7 @@ export class DifficultyController {
   private level: number;
   private lastDirection: DifficultyDirection = "unchanged";
   private wavesEvaluated = 0;
+  private acceleratedStepUsed = false;
 
   public constructor(startingLevel: number) {
     this.level = clampLevel(startingLevel);
@@ -55,6 +60,10 @@ export class DifficultyController {
     return this.wavesEvaluated;
   }
 
+  public hasUsedAcceleratedStep(): boolean {
+    return this.acceleratedStepUsed;
+  }
+
   public evaluate(performance: WavePerformance): DifficultyDecision {
     const previousLevel = this.level;
     const result = classifyPerformance(performance);
@@ -62,6 +71,7 @@ export class DifficultyController {
     const strong = isStrongEvidence(result.evidence);
 
     let suppressedByHysteresis = false;
+    let usedAcceleratedStep = false;
     let nextLevel = previousLevel;
 
     if (desired !== "unchanged") {
@@ -71,7 +81,10 @@ export class DifficultyController {
       if (reverses && !strong) {
         suppressedByHysteresis = true;
       } else {
-        const step = this.resolveStep(strong);
+        usedAcceleratedStep = this.qualifiesForAcceleratedStep(desired, result.performanceScore, performance.livesLost, );
+
+        const step = usedAcceleratedStep ? STABILITY_CONFIG.acceleratedStep : STABILITY_CONFIG.normalStep;
+
         const delta = desired === "increase" ? step : -step;
 
         nextLevel = clampLevel(previousLevel + delta);
@@ -84,6 +97,12 @@ export class DifficultyController {
       direction = "increase";
     } else if (nextLevel < previousLevel) {
       direction = "decrease";
+    }
+
+    if (usedAcceleratedStep && direction !== "unchanged") {
+      this.acceleratedStepUsed = true;
+    } else {
+      usedAcceleratedStep = false;
     }
 
     this.level = nextLevel;
@@ -108,14 +127,33 @@ export class DifficultyController {
         parameterChanges,
         result.reasons,
       ),
+      performanceScore: result.performanceScore,
+      killRatio: result.killRatio,
+      enemyPersistence: result.enemyPersistence,
+      usedAcceleratedStep,
     };
   }
 
-  private resolveStep(strong: boolean): number {
-    if (strong && this.wavesEvaluated < STABILITY_CONFIG.earlyCorrectionWaves) {
-      return STABILITY_CONFIG.earlyMaxStep;
+  private qualifiesForAcceleratedStep(
+    desired: DifficultyDirection,
+    performanceScore: number,
+    livesLost: number,
+  ): boolean {
+    if (this.acceleratedStepUsed) {
+      return false;
     }
 
-    return STABILITY_CONFIG.normalMaxStep;
+    if (this.wavesEvaluated >= STABILITY_CONFIG.earlyCorrectionWaves) {
+      return false;
+    }
+
+    if (desired === "increase") {
+      return (
+        livesLost === 0 &&
+        performanceScore >= STABILITY_CONFIG.acceleratedIncreaseScore
+      );
+    }
+
+    return performanceScore <= STABILITY_CONFIG.acceleratedDecreaseScore;
   }
 }

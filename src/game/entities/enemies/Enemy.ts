@@ -19,4 +19,6 @@ export interface Enemy {
   getColor(): number;
   allowsDrop(): boolean;
   getBlockingParts(): ReadonlyArray<{ x: number; y: number; radius: number }>;
+  getPersistenceHandle(): number;
+  setPersistenceHandle(handle: number): void;
 }

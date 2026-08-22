@@ -33,6 +33,7 @@ export class Winder implements Enemy {
   private health = WINDER_CONFIG.maxHealth;
   private facing: number;
   private lastUpdatedAt: number | null = null;
+  private persistenceHandle = -1;
 
   public constructor(
     scene: Phaser.Scene,
@@ -168,6 +169,14 @@ export class Winder implements Enemy {
 
   public getColor(): number {
     return PALETTE.winderHead;
+  }
+
+  public getPersistenceHandle(): number {
+      return this.persistenceHandle;
+  }
+
+  public setPersistenceHandle(handle: number): void {
+      this.persistenceHandle = handle;
   }
 
   public allowsDrop(): boolean {

@@ -13,15 +13,15 @@ export interface ActuatorValues {
 }
 
 const DIFFICULTY_TABLE: ActuatorValues[] = [
-  { spawnIntervalMs: 3000, enemySpeedMultiplier: 0.80, spawnIntensity: 0, powerUpDropChance: 0.45 },
-  { spawnIntervalMs: 2600, enemySpeedMultiplier: 0.86, spawnIntensity: 0.08, powerUpDropChance: 0.40 },
-  { spawnIntervalMs: 2200, enemySpeedMultiplier: 0.92, spawnIntensity: 0.18, powerUpDropChance: 0.35 },
-  { spawnIntervalMs: 1900, enemySpeedMultiplier: 0.98, spawnIntensity: 0.30, powerUpDropChance: 0.30 },
-  { spawnIntervalMs: 1650, enemySpeedMultiplier: 1.04, spawnIntensity: 0.42, powerUpDropChance: 0.26 },
-  { spawnIntervalMs: 1400, enemySpeedMultiplier: 1.12, spawnIntensity: 0.55, powerUpDropChance: 0.22 },
-  { spawnIntervalMs: 1200, enemySpeedMultiplier: 1.20, spawnIntensity: 0.66, powerUpDropChance: 0.19 },
-  { spawnIntervalMs: 1000, enemySpeedMultiplier: 1.28, spawnIntensity: 0.76, powerUpDropChance: 0.16 },
-  { spawnIntervalMs: 800, enemySpeedMultiplier: 1.38, spawnIntensity: 0.88, powerUpDropChance: 0.13 },
+  { spawnIntervalMs: 3000, enemySpeedMultiplier: 0.90, spawnIntensity: 0.05, powerUpDropChance: 0.45 },
+  { spawnIntervalMs: 2600, enemySpeedMultiplier: 0.90, spawnIntensity: 0.15, powerUpDropChance: 0.40 },
+  { spawnIntervalMs: 2200, enemySpeedMultiplier: 1.00, spawnIntensity: 0.25, powerUpDropChance: 0.40 },
+  { spawnIntervalMs: 1900, enemySpeedMultiplier: 1.10, spawnIntensity: 0.25, powerUpDropChance: 0.33 },
+  { spawnIntervalMs: 1600, enemySpeedMultiplier: 1.10, spawnIntensity: 0.42, powerUpDropChance: 0.27 },
+  { spawnIntervalMs: 1300, enemySpeedMultiplier: 1.21, spawnIntensity: 0.55, powerUpDropChance: 0.27 },
+  { spawnIntervalMs: 1050, enemySpeedMultiplier: 1.30, spawnIntensity: 0.55, powerUpDropChance: 0.21 },
+  { spawnIntervalMs: 850, enemySpeedMultiplier: 1.30, spawnIntensity: 0.78, powerUpDropChance: 0.16 },
+  { spawnIntervalMs: 735, enemySpeedMultiplier: 1.40, spawnIntensity: 0.88, powerUpDropChance: 0.16 },
   { spawnIntervalMs: 600, enemySpeedMultiplier: 1.50, spawnIntensity: 1.0, powerUpDropChance: 0.10 },
 ];
 
@@ -35,8 +35,10 @@ export const ACTUATOR_BOUNDS = {
 
 export const STABILITY_CONFIG = {
   earlyCorrectionWaves: 2,
-  earlyMaxStep: 2,
-  normalMaxStep: 1,
+  acceleratedStep: 2,
+  normalStep: 1,
+  acceleratedIncreaseScore: 0.94,
+  acceleratedDecreaseScore: 0.3,
 };
 
 function clamp(value: number, min: number, max: number): number {

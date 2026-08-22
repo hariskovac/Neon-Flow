@@ -171,7 +171,7 @@ export class CalibrationScene extends Phaser.Scene {
     this.updateCountdown(elapsed);
 
     if (elapsed >= CALIBRATION_CONFIG.durationMs) {
-      this.finish(elapsed);
+      this.finish(time, elapsed);
 
       return;
     }
@@ -220,8 +220,12 @@ export class CalibrationScene extends Phaser.Scene {
       this.score.addKill(kill.type);
       this.performance.recordKill(kill.type);
 
+      this.spawner
+        .getPersistence()
+        .recordDeath(kill.persistenceHandle, time);
+
       if (kill.type === "splitter") {
-        this.spawner.spawnSplitChildren(kill.x, kill.y);
+        this.spawner.spawnSplitChildren(kill.x, kill.y, time);
       }
 
       if (kill.segments !== undefined) {
@@ -258,7 +262,7 @@ export class CalibrationScene extends Phaser.Scene {
 
         this.cameras.main.shake(180, 0.006)
 
-        for (const cleared of this.spawner.clearAllWithEffects()) {
+        for (const cleared of this.spawner.clearAllWithEffects(time)) {
           this.effects.burst(cleared.x, cleared.y, cleared.color, time);
         }
 
@@ -272,7 +276,7 @@ export class CalibrationScene extends Phaser.Scene {
         );
 
         if (!this.lives.isAlive()) {
-          this.finish(elapsed);
+          this.finish(time, elapsed);
 
           return;
         }
@@ -291,14 +295,14 @@ export class CalibrationScene extends Phaser.Scene {
   }
 
   // hands calibration summary off to session manager
-  private finish(elapsed: number): void {
+  private finish(time: number, elapsed: number): void {
     this.finished = true;
 
     const summary = this.performance.summarise(
       0,
-      this.spawner.getActiveCount(),
       elapsed,
-      this.spawner.getSpawnedThisWave()
+      this.spawner.getSpawnedThisWave(),
+      this.spawner.getPersistence().summarise(time),
     );
 
     session.setCalibration(summary);

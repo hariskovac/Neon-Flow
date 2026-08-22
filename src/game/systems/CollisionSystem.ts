@@ -28,6 +28,7 @@ export interface EnemyKill {
   readonly color: number;
   readonly canDrop: boolean;
   readonly segments?: ReadonlyArray<Vector2>;
+  readonly persistenceHandle: number;
 }
 
 export interface CollisionResult {
@@ -110,13 +111,14 @@ export class CollisionSystem {
           const y = enemy.getY();
           const color = enemy.getColor();
           const allowDrop = enemy.allowsDrop();
+          const persistenceHandle = enemy.getPersistenceHandle();
 
           const segments = enemy
             .getBlockingParts()
             .map((part) => ({ x: part.x, y: part.y }));
 
           if (enemy.takeHit()) {
-            killed.push({ type: enemy.getType(), x, y, color, canDrop: allowDrop, segments });
+            killed.push({ type: enemy.getType(), x, y, color, canDrop: allowDrop, segments, persistenceHandle, });
           }
 
           break;
@@ -141,6 +143,7 @@ export class CollisionSystem {
       );
 
       if (contact) {
+        audio.playSfx("shieldAbsorb");
         playerHit = true;
 
         break;

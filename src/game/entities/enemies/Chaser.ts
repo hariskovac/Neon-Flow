@@ -18,6 +18,7 @@ export class Chaser implements Enemy {
 
   private alive = true;
   private health = CHASER_CONFIG.maxHealth;
+  private persistenceHandle = -1;
 
   public constructor(scene: Phaser.Scene, x: number, y: number, speedMultiplier: number) {
     this.spawnedAt = scene.time.now;
@@ -133,6 +134,14 @@ export class Chaser implements Enemy {
 
   public getType(): EnemyType {
     return "chaser";
+  }
+
+  public getPersistenceHandle(): number {
+      return this.persistenceHandle;
+  }
+
+  public setPersistenceHandle(handle: number): void {
+      this.persistenceHandle = handle;
   }
 
   private destroyObjects(): void {

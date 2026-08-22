@@ -49,8 +49,9 @@ const REASON_PHRASES: Record<string, string> = {
   lowKillRate: "Low kill rate",
   livesLost: "Lives lost",
   noLivesLost: "No lives lost",
-  highEnemiesRemaining: "Many enemies left",
-  lowEnemiesRemaining: "Few enemies left",
+  fastClearing: "Enemies cleared quickly",
+  steadyClearing: "Enemies cleared steadily",
+  slowClearing: "Enemies cleared slowly",
 };
 
 function buildReasonText(reasons: string[]): string {
@@ -162,7 +163,7 @@ export function generateExampleExplanation(): Explanation {
     changeLines: [
       { label: "Enemies spawn more often", direction: "up" },
       { label: "Enemies move faster", direction: "up" },
-      { label: "Ranged enemies fire more often", direction: "up" },
+      { label: "Enemies arrive in larger groups", direction: "up" },
       { label: "Power-ups appear less often", direction: "down" },
     ],
     reasonText: "Example only",

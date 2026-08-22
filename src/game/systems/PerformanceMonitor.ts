@@ -1,5 +1,6 @@
 import type { EnemyType, WavePerformance } from "../../types/game";
 import { createEmptyKillTally } from "../../types/game";
+import type { PersistenceSummary } from "./PersistenceTracker";
 
 export class PerformanceMonitor {
   private shotsFired = 0;
@@ -40,9 +41,9 @@ export class PerformanceMonitor {
 
   public summarise(
     waveNumber: number,
-    enemiesRemaining: number,
     durationMs: number,
     enemiesSpawned: number,
+    persistence: PersistenceSummary,
   ): WavePerformance {
     return {
       waveNumber,
@@ -50,12 +51,14 @@ export class PerformanceMonitor {
       killsByType: { ...this.killsByType },
       livesLost: this.livesLost,
       shieldHitsAbsorbed: this.shieldHitsAbsorbed,
-      enemiesRemaining,
       shotsFired: this.shotsFired,
       shotsHit: this.shotsHit,
       enemiesSpawned,
       powerUpsSpawned: this.powerUpsSpawned,
       powerUpsCollected: this.powerUpsCollected,
+      enemyPersistence: persistence.persistence,
+      enemiesTracked: persistence.tracked,
+      enemiesClearedByDeath: persistence.clearedByDeath,
     };
   }
 

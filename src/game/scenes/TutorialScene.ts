@@ -275,6 +275,8 @@ export class TutorialScene extends Phaser.Scene {
     const centerX = ARENA.x + ARENA.width / 2;
     const centerY = ARENA.y + ARENA.height / 2;
 
+    console.log(session.isTransparent());
+
     const steps: TutorialStep[] = [
       {
         id: "movement",

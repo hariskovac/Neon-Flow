@@ -10,6 +10,7 @@ export class TargetDummy implements Enemy {
 
   private alive = true;
   private health = TUTORIAL_CONFIG.dummyHealth;
+  private persistenceHandle = -1;
 
   public constructor(scene: Phaser.Scene, x: number, y: number) {
     this.view = scene.add.circle(x, y, CHASER_CONFIG.radius, PALETTE.targetDummy);
@@ -59,6 +60,14 @@ export class TargetDummy implements Enemy {
 
   public getType(): EnemyType {
     return "chaser";
+  }
+
+  public getPersistenceHandle(): number {
+      return this.persistenceHandle;
+  }
+
+  public setPersistenceHandle(handle: number): void {
+      this.persistenceHandle = handle;
   }
 
   public setPosition(x: number, y: number): void {

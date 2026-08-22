@@ -31,6 +31,7 @@ import {
   resolveIntensityValue,
   resolveSurroundPoints,
 } from "./SpawnPatterns";
+import { PersistenceTracker } from "./PersistenceTracker";
 
 interface QueuedSpawn {
   readonly type: EnemyType;
@@ -58,6 +59,7 @@ export class SpawnSystem {
   private readonly queue: QueuedSpawn[] = [];
   private readonly effectPool: SpawnEffect[] = [];
   private readonly playerProjectiles: ProjectileSystem;
+  private readonly persistence = new PersistenceTracker();
 
   private actuators: ActuatorValues = resolveActuators(1);
   private nextSpawnAt: number;
@@ -145,7 +147,7 @@ export class SpawnSystem {
     this.groupAvailableAt = time + resolveIntensityValue(SPAWN_CONFIG.groupCooldownMs, intensity);
   }
 
-    private planSwarms(
+  private planSwarms(
     time: number,
     playerX: number,
     playerY: number,
@@ -303,19 +305,29 @@ export class SpawnSystem {
 
       spawn.effect.stop();
 
-      this.enemies.push(
-        this.createEnemy(spawn.type, spawn.x, spawn.y, playerX, playerY),
+      const enemy = this.createEnemy(
+        spawn.type,
+        spawn.x,
+        spawn.y,
+        playerX,
+        playerY,
       );
 
+      enemy.setPersistenceHandle(this.persistence.recordSpawn(time));
+
+      this.enemies.push(enemy);
       this.spawnedThisWave += 1;
 
       this.queue.splice(index, 1);
     }
   }
 
-  public spawnSplitChildren(x: number, y: number): void {
-    const half = SPLITTER_CONFIG.shardSeparation / 2;
+  public spawnSplitChildren(x: number, y: number, time: number): void {
+    if (this.enemies.length + 2 > SPAWN_CONFIG.maxActiveEnemies) {
+      return;
+    }
 
+    const half = SPLITTER_CONFIG.shardSeparation / 2;
     const dropIndex = Phaser.Math.Between(0, 1);
 
     const first = new Shard(
@@ -337,6 +349,9 @@ export class SpawnSystem {
     first.setPartner(second);
     second.setPartner(first);
 
+    first.setPersistenceHandle(this.persistence.recordSpawn(time));
+    second.setPersistenceHandle(this.persistence.recordSpawn(time));
+
     this.enemies.push(first, second);
     this.spawnedThisWave += 2;
   }
@@ -357,6 +372,10 @@ export class SpawnSystem {
 
   public getEnemies(): Enemy[] {
     return this.enemies;
+  }
+
+  public getPersistence(): PersistenceTracker {
+    return this.persistence;
   }
 
   private removeDeadEnemies(): void {
@@ -485,14 +504,21 @@ export class SpawnSystem {
     this.queue.length = 0;
   }
 
-  public clearAllWithEffects(): Array<{ x: number; y: number; color: number }> {
+  public clearAllWithEffects(time: number): Array<{ x: number; y: number; color: number }> {
     const cleared = this.enemies
       .filter((enemy) => enemy.isAlive())
-      .map((enemy) => ({
-        x: enemy.getX(),
-        y: enemy.getY(),
-        color: enemy.getColor(),
-      }));
+      .map((enemy) => {
+        this.persistence.recordClearedByDeath(
+          enemy.getPersistenceHandle(),
+          time,
+        );
+
+        return {
+          x: enemy.getX(),
+          y: enemy.getY(),
+          color: enemy.getColor(),
+        };
+      });
 
     this.clearAll();
 
@@ -514,6 +540,7 @@ export class SpawnSystem {
   public resetWaveCounters(): void {
     this.spawnedThisWave = 0;
     this.groupAvailableAt = 0;
+    this.persistence.reset()
   }
 
   // sets actuator values for new difficulty

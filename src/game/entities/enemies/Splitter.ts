@@ -14,6 +14,7 @@ export class Splitter implements Enemy {
 
   private alive = true;
   private health = SPLITTER_CONFIG.maxHealth;
+  private persistenceHandle = -1;
 
   public constructor(
     scene: Phaser.Scene,
@@ -102,6 +103,14 @@ export class Splitter implements Enemy {
   public setPosition(x: number, y: number): void {
     this.body.reset(x, y);
     this.ship.setPosition(x, y);
+  }
+
+  public getPersistenceHandle(): number {
+      return this.persistenceHandle;
+  }
+
+  public setPersistenceHandle(handle: number): void {
+      this.persistenceHandle = handle;
   }
 
   public takeHit(): boolean {

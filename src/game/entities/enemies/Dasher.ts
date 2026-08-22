@@ -21,6 +21,7 @@ export class Dasher implements Enemy {
   private healthAlpha = 1;
   private state: DasherState = "locking";
   private stateUntil: number;
+  private persistenceHandle = -1;
 
   public constructor(scene: Phaser.Scene, x: number, y: number, speedMultiplier: number) {
     this.dashSpeed = Math.min(
@@ -202,6 +203,14 @@ export class Dasher implements Enemy {
 
   public setPosition(x: number, y: number): void {
     this.body.reset(x, y);
+  }
+
+  public getPersistenceHandle(): number {
+      return this.persistenceHandle;
+  }
+
+  public setPersistenceHandle(handle: number): void {
+      this.persistenceHandle = handle;
   }
 
   public despawn(): void {

@@ -26,6 +26,7 @@ import type { Explanation } from "../../dda/ExplanationGenerator";
 import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
+import { classifyPerformance, resolveKillRatio } from "../../dda/PerformanceEvaluator";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -201,6 +202,17 @@ export class GameScene extends Phaser.Scene {
       if (summary !== undefined) {
         const decision = this.difficulty.evaluate(summary);
 
+        console.log("DDA", {
+          wave: summary.waveNumber,
+          level: `${decision.previousLevel} -> ${decision.nextLevel}`,
+          score: classifyPerformance(summary).performanceScore.toFixed(3),
+          killRatio: resolveKillRatio(summary).toFixed(3),
+          livesLost: summary.livesLost,
+          persistence: summary.enemyPersistence.toFixed(3),
+          tracked: summary.enemiesTracked,
+          evidence: decision.evidence,
+        });
+
         this.spawner.setActuators(resolveActuators(decision.nextLevel));
 
         this.drops.setDropChance(
@@ -289,8 +301,12 @@ export class GameScene extends Phaser.Scene {
       this.effects.burst(kill.x, kill.y, kill.color, time);
       this.performance.recordKill(kill.type);
 
+      this.spawner
+        .getPersistence()
+        .recordDeath(kill.persistenceHandle, time);
+
       if (kill.type === "splitter") {
-        this.spawner.spawnSplitChildren(kill.x, kill.y);
+        this.spawner.spawnSplitChildren(kill.x, kill.y, time);
       }
 
       if (kill.type === "winder" && kill.segments !== undefined) {
@@ -328,7 +344,7 @@ export class GameScene extends Phaser.Scene {
 
         this.cameras.main.shake(180, 0.006)
 
-        for (const cleared of this.spawner.clearAllWithEffects()) {
+        for (const cleared of this.spawner.clearAllWithEffects(time)) {
           this.effects.burst(cleared.x, cleared.y, cleared.color, time);
         }
 
@@ -391,9 +407,9 @@ export class GameScene extends Phaser.Scene {
   private recordWave(time: number): void {
     const summary = this.performance.summarise(
       this.waves.getWaveNumber(),
-      this.spawner.getActiveCount(),
       this.waves.getPhaseElapsedMs(time),
-      this.spawner.getSpawnedThisWave()
+      this.spawner.getSpawnedThisWave(),
+      this.spawner.getPersistence().summarise(time),
     );
 
     session.addCompletedWave(summary);

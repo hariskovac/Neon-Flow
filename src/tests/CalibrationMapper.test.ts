@@ -1,145 +1,149 @@
-// import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-// import type { EnemyType, WavePerformance } from "../types/game";
-// import {
-//   DEFAULT_STARTING_LEVEL,
-//   mapCalibration,
-// } from "../dda/CalibrationMapper";
-// import {
-//   MAX_DIFFICULTY_LEVEL,
-//   MIN_DIFFICULTY_LEVEL,
-// } from "../dda/DifficultyConfig";
+import type { EnemyType, WavePerformance } from "../types/game";
+import {
+  DEFAULT_STARTING_LEVEL,
+  CALIBRATION_THRESHOLDS,
+  mapCalibration,
+} from "../dda/CalibrationMapper";
+import {
+  MAX_DIFFICULTY_LEVEL,
+  MIN_DIFFICULTY_LEVEL,
+} from "../dda/DifficultyConfig";
+import { createEmptyKillTally } from "../types/game";
 
-// interface CalibrationOverrides {
-//   kills?: number;
-//   livesLost?: number;
-//   enemiesSpawned?: number;
-//   durationMs?: number;
-// }
+interface CalibrationOverrides {
+  kills?: number;
+  killsByType?: Partial<Record<EnemyType, number>>;
+  livesLost?: number;
+  enemiesSpawned?: number;
+  durationMs?: number;
+}
 
-// function calibration(overrides: CalibrationOverrides = {}): WavePerformance {
-//   const kills = overrides.kills ?? 0;
-//   const killsByType: Record<EnemyType, number> = {
-//     chaser: kills,
-//     dodger: 0,
-//     dasher: 0,
-//   };
+function calibration(overrides: CalibrationOverrides = {}): WavePerformance {
+  const killsByType = createEmptyKillTally();
 
-//   return {
-//     waveNumber: 0,
-//     killsByType,
-//     livesLost: overrides.livesLost ?? 0,
-//     shieldHitsAbsorbed: 0,
-//     enemiesRemaining: 4,
-//     enemiesSpawned: overrides.enemiesSpawned ?? 20,
-//     shotsFired: 120,
-//     shotsHit: 50,
-//     durationMs: overrides.durationMs ?? 45000,
-//     powerUpsSpawned: 0,
-//     powerUpsCollected: 0,
-//   };
-// }
+  killsByType.chaser = overrides.kills ?? 0;
 
-// describe("mapCalibration bands", () => {
-//   it("places near-total clear at highest starting level", () => {
-//     const result = mapCalibration(calibration({ kills: 18 }));
+  if (overrides.killsByType !== undefined) {
+    for (const [type, count] of Object.entries(overrides.killsByType)) {
+      killsByType[type as EnemyType] = count ?? 0;
+    }
+  }
 
-//     expect(result.band).toBe("veryStrong");
-//     expect(result.startingLevel).toBe(5);
-//   });
+  return {
+    waveNumber: 0,
+    killsByType,
+    livesLost: overrides.livesLost ?? 0,
+    shieldHitsAbsorbed: 0,
+    enemyPersistence: 0.3,
+    enemiesTracked: 20,
+    enemiesClearedByDeath: 0,
+    enemiesSpawned: overrides.enemiesSpawned ?? 20,
+    shotsFired: 120,
+    shotsHit: 50,
+    durationMs: overrides.durationMs ?? 45000,
+    powerUpsSpawned: 0,
+    powerUpsCollected: 0,
+  };
+}
 
-//   it("places strong clear one level below the top", () => {
-//     const result = mapCalibration(calibration({ kills: 15 }));
+describe("mapCalibration bands", () => {
+  it("places near-total clear at highest starting level", () => {
+    const result = mapCalibration(calibration({ kills: 18 }));
 
-//     expect(result.band).toBe("strong");
-//     expect(result.startingLevel).toBe(4);
-//   });
+    expect(result.band).toBe("veryStrong");
+    expect(result.startingLevel).toBe(5);
+  });
 
-//   it("places middling performance in target band", () => {
-//     const result = mapCalibration(calibration({ kills: 10 }));
+  it("places strong clear one level below the top", () => {
+    const result = mapCalibration(calibration({ kills: 15 }));
 
-//     expect(result.band).toBe("target");
-//     expect(result.startingLevel).toBe(3);
-//   });
+    expect(result.band).toBe("strong");
+    expect(result.startingLevel).toBe(4);
+  });
 
-//   it("places weak performance below target", () => {
-//     const result = mapCalibration(calibration({ kills: 6 }));
+  it("places middling performance in target band", () => {
+    const result = mapCalibration(calibration({ kills: 10 }));
 
-//     expect(result.band).toBe("belowTarget");
-//     expect(result.startingLevel).toBe(2);
-//   });
+    expect(result.band).toBe("target");
+    expect(result.startingLevel).toBe(3);
+  });
 
-//   it("places very low performance at lowest starting level", () => {
-//     const result = mapCalibration(calibration({ kills: 2 }));
+  it("places weak performance below target", () => {
+    const result = mapCalibration(calibration({ kills: 6 }));
 
-//     expect(result.band).toBe("veryLow");
-//     expect(result.startingLevel).toBe(1);
-//   });
-// });
+    expect(result.band).toBe("belowTarget");
+    expect(result.startingLevel).toBe(2);
+  });
 
-// describe("mapCalibration life loss capping", () => {
-//   it("caps a great round below target after heavy losses", () => {
-//     const result = mapCalibration(calibration({ kills: 18, livesLost: 3 }));
+  it("places very low performance at lowest starting level", () => {
+    const result = mapCalibration(calibration({ kills: 2 }));
 
-//     expect(result.band).toBe("belowTarget");
-//     expect(result.reasons).toContain("livesLost");
-//   });
+    expect(result.band).toBe("veryLow");
+    expect(result.startingLevel).toBe(1);
+  });
+});
 
-//   it("caps a great round at target after moderate losses", () => {
-//     const result = mapCalibration(calibration({ kills: 18, livesLost: 2 }));
+describe("mapCalibration life loss capping", () => {
+  it("caps a great round below target after heavy losses", () => {
+    const result = mapCalibration(
+      calibration({ kills: 18, livesLost: CALIBRATION_THRESHOLDS.heavyLifeLoss }),
+    );
 
-//     expect(result.band).toBe("target");
-//   });
+    expect(result.band).toBe("belowTarget");
+    expect(result.reasons).toContain("livesLost");
+  });
 
-//   it("doesn't raise weak round just because no lives were lost", () => {
-//     const result = mapCalibration(calibration({ kills: 2, livesLost: 0 }));
+  it("caps a great round at target after moderate losses", () => {
+    const result = mapCalibration(
+      calibration({ kills: 18, livesLost: CALIBRATION_THRESHOLDS.moderateLifeLoss, }),
+    );
 
-//     expect(result.band).toBe("veryLow");
-//   });
+    expect(result.band).toBe("target");
+  });
 
-//   it("never raises a band above what the kill ratio earned", () => {
-//     const result = mapCalibration(calibration({ kills: 6, livesLost: 3 }));
+  it("doesn't raise weak round just because no lives were lost", () => {
+    const result = mapCalibration(calibration({ kills: 2, livesLost: 0 }));
 
-//     expect(result.band).toBe("belowTarget");
-//   });
+    expect(result.band).toBe("veryLow");
+  });
 
-//   it("leaves a single life lost without effect", () => {
-//     const result = mapCalibration(calibration({ kills: 18, livesLost: 1 }));
+  it("never raises a band above what the kill ratio earned", () => {
+    const result = mapCalibration(calibration({ kills: 2, livesLost: 4 }));
 
-//     expect(result.band).toBe("veryStrong");
-//     expect(result.reasons).toEqual(["killRate"]);
-//   });
-// });
+    expect(result.band).toBe("veryLow");
+  });
+});
 
-// describe("mapCalibration edge cases", () => {
-//   it("falls back to the target level when there is no calibration data", () => {
-//     const result = mapCalibration(null);
+describe("mapCalibration edge cases", () => {
+  it("falls back to the target level when there is no calibration data", () => {
+    const result = mapCalibration(null);
 
-//     expect(result.startingLevel).toBe(DEFAULT_STARTING_LEVEL);
-//     expect(result.reasons).toContain("noCalibrationData");
-//   });
+    expect(result.startingLevel).toBe(DEFAULT_STARTING_LEVEL);
+    expect(result.reasons).toContain("noCalibrationData");
+  });
 
-//   it("uses the ratio, so a round cut short is judged fairly", () => {
-//     const full = mapCalibration(
-//       calibration({ kills: 9, enemiesSpawned: 12, durationMs: 45000 }),
-//     );
+  it("uses the ratio, so a round cut short is judged fairly", () => {
+    const full = mapCalibration(
+      calibration({ kills: 9, enemiesSpawned: 12, durationMs: 45000 }),
+    );
 
-//     const short = mapCalibration(
-//       calibration({ kills: 3, enemiesSpawned: 4, durationMs: 15000 }),
-//     );
+    const short = mapCalibration(
+      calibration({ kills: 3, enemiesSpawned: 4, durationMs: 15000 }),
+    );
 
-//     expect(short.band).toBe(full.band);
-//   });
+    expect(short.band).toBe(full.band);
+  });
 
-//   it("always produces a level within the permitted range", () => {
-//     const cases = [0, 2, 6, 10, 15, 18, 20];
+  it("always produces a level within the permitted range", () => {
+    const cases = [0, 2, 6, 10, 15, 18, 20, 30];
 
-//     for (const kills of cases) {
-//       const level = mapCalibration(calibration({ kills })).startingLevel;
+    for (const kills of cases) {
+      const level = mapCalibration(calibration({ kills })).startingLevel;
 
-//       expect(level).toBeGreaterThanOrEqual(MIN_DIFFICULTY_LEVEL);
-//       expect(level).toBeLessThanOrEqual(MAX_DIFFICULTY_LEVEL);
-//       expect(level).toBeLessThanOrEqual(5);
-//     }
-//   });
-// });
+      expect(level).toBeGreaterThanOrEqual(MIN_DIFFICULTY_LEVEL);
+      expect(level).toBeLessThanOrEqual(MAX_DIFFICULTY_LEVEL);
+    }
+  });
+});

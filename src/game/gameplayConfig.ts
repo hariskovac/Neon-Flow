@@ -50,7 +50,7 @@ export const PLAYER_CONFIG = {
 };
 
 export const WEAPON_CONFIG = {
-  fireIntervalMs: 120,
+  fireIntervalMs: 140,
   projectileSpeed: 760,
   projectileRadius: 4,
   projectileLifetimeMs: 2600,
@@ -531,7 +531,7 @@ export const AUDIO_CONFIG = {
     enemyHit: "sfx-enemy-hit",
     enemyDeath: "sfx-enemy-death",
     swarmSpawn: "sfx-swarm-spawn",
-    playerHit: "sfx-player-hit",
+    // playerHit: "sfx-player-hit",
     playerDeath: "sfx-player-death",
     powerUp: "sfx-power-up",
     shieldAbsorb: "sfx-shield-absorb",
@@ -548,11 +548,11 @@ export const AUDIO_CONFIG = {
     enemyHit: 0.15,
     enemyDeath: 0.7,
     swarmSpawn: 1,
-    playerHit: 0.8,
+    // playerHit: 0.8,
     playerDeath: 1,
-    powerUp: 0.8,
-    shieldAbsorb: 0.8,
-    beep: 0.5,
+    powerUp: 0.85,
+    shieldAbsorb: 0.9,
+    beep: 0.35,
     waveEnd: 1,
   },
   minRepeatMs: {
@@ -563,7 +563,7 @@ export const AUDIO_CONFIG = {
     enemyHit: 60,
     enemyDeath: 45,
     swarmSpawn: 80,
-    playerHit: 200,
+    // playerHit: 200,
     playerDeath: 200,
     powerUp: 100,
     shieldAbsorb: 70,

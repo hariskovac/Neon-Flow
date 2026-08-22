@@ -17,6 +17,7 @@ export class Shard implements Enemy {
 
   private alive = true;
   private health = SHARD_CONFIG.maxHealth;
+  private persistenceHandle = -1;
 
   public constructor(
     scene: Phaser.Scene,
@@ -75,11 +76,11 @@ export class Shard implements Enemy {
     let velocityY = forward.y * this.pursuitSpeed;
 
     if (this.partner !== null && this.partner.isAlive()) {
-      const centreX = (this.hitbox.x + this.partner.getX()) / 2;
-      const centreY = (this.hitbox.y + this.partner.getY()) / 2;
+      const centerX = (this.hitbox.x + this.partner.getX()) / 2;
+      const centerY = (this.hitbox.y + this.partner.getY()) / 2;
 
-      const offsetX = this.hitbox.x - centreX;
-      const offsetY = this.hitbox.y - centreY;
+      const offsetX = this.hitbox.x - centerX;
+      const offsetY = this.hitbox.y - centerY;
       const distance = Math.hypot(offsetX, offsetY);
 
       if (distance > 0) {
@@ -137,6 +138,14 @@ export class Shard implements Enemy {
   public setPosition(x: number, y: number): void {
     this.body.reset(x, y);
     this.ship.setPosition(x, y);
+  }
+
+  public getPersistenceHandle(): number {
+      return this.persistenceHandle;
+  }
+
+  public setPersistenceHandle(handle: number): void {
+      this.persistenceHandle = handle;
   }
 
   public takeHit(): boolean {

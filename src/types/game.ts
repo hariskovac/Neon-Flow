@@ -34,10 +34,12 @@ export interface WavePerformance {
   readonly killsByType: Record<EnemyType, number>;
   readonly livesLost: number;
   readonly shieldHitsAbsorbed: number;
-  readonly enemiesRemaining: number;
+  readonly enemyPersistence: number;
+  readonly enemiesTracked: number;
+  readonly enemiesClearedByDeath: number;
+  readonly enemiesSpawned: number;
   readonly shotsFired: number;
   readonly shotsHit: number;
-  readonly enemiesSpawned: number;
   readonly powerUpsSpawned: number;
   readonly powerUpsCollected: number;
 }
