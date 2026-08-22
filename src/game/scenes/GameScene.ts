@@ -29,6 +29,7 @@ import { EffectSystem } from "../systems/EffectSystem";
 import { classifyPerformance, resolveKillRatio } from "../../dda/PerformanceEvaluator";
 import { GameClock } from "../systems/GameClock";
 import { PauseOverlay } from "../../ui/PauseOverlay";
+import { AudioControls } from "../../ui/AudioControls";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -75,6 +76,7 @@ export class GameScene extends Phaser.Scene {
     this.performance = new PerformanceMonitor();
     const calibration = mapCalibration(session.getCalibration());
     audio.attach(this);
+    new AudioControls(this);
 
     this.clock.reset();
     this.pauseOverlay = new PauseOverlay(this);
@@ -514,10 +516,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   private endSession(reason: GameEndReason): void {
-    session.setOutcome(
-      this.score.getScore(),
-      this.lives.getLivesRemaining(),
-      reason,
+    session.setOutcome({
+      finalScore: this.score.getScore(),
+      livesRemaining: this.lives.getLivesRemaining(),
+      terminationReason: reason,
+    });
+
+    session.setAudioState(audio.isMusicEnabled(), audio.isSfxEnabled());
+
+    session.setPauseTelemetry(
+      this.clock.getPauseCount(),
+      this.clock.getTotalPausedMs(),
     );
 
     this.scene.start("ResultsScene");

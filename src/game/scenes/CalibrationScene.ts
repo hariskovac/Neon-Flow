@@ -28,6 +28,7 @@ import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
 import { GameClock } from "../systems/GameClock";
 import { PauseOverlay } from "../../ui/PauseOverlay";
+import { AudioControls } from "../../ui/AudioControls";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -74,6 +75,7 @@ export class CalibrationScene extends Phaser.Scene {
     this.pauseOverlay = new PauseOverlay(this);
 
     audio.attach(this);
+    new AudioControls(this);
 
     this.effects = new EffectSystem(this);
 

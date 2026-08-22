@@ -2,16 +2,17 @@ import type { ArenaBounds, EnemyType, Vector2 } from "../types/game";
 
 export const CANVAS = {
   width: 1600,
-  height: 900,
+  height: 960,
 };
 
 export const HUD_BAND_HEIGHT = 64;
+export const CONTROL_BAND_HEIGHT = 60;
 
 export const ARENA: ArenaBounds = {
   x: 12,
   y: HUD_BAND_HEIGHT,
   width: CANVAS.width - 24,
-  height: CANVAS.height - HUD_BAND_HEIGHT - 12,
+  height: CANVAS.height - HUD_BAND_HEIGHT - CONTROL_BAND_HEIGHT - 12,
 };
 
 export const GRID_CONFIG = {

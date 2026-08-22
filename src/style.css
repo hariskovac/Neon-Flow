@@ -46,7 +46,7 @@ main {
 
 #game-container {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 5 / 3;
   overflow: hidden;
   border: 1px solid #263653;
   border-radius: 0.75rem;

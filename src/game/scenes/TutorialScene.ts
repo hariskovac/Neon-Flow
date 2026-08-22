@@ -38,6 +38,7 @@ import { SpawnEffect } from "../render/SpawnEffect";
 import { SPAWN_APPEARANCE } from "../systems/SpawnSystem";
 import { GameClock } from "../systems/GameClock";
 import { PauseOverlay } from "../../ui/PauseOverlay";
+import { AudioControls } from "../../ui/AudioControls";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -105,6 +106,7 @@ export class TutorialScene extends Phaser.Scene {
     this.pendingSpawns.length = 0;
 
     audio.attach(this);
+    new AudioControls(this);
 
     this.effects = new EffectSystem(this);
 

@@ -3,6 +3,7 @@ import Phaser from "phaser";
 import type { GameEndReason, WavePerformance } from "../../types/game";
 import { CANVAS, HUD_TEXT_STYLE, PALETTE } from "../gameplayConfig";
 import { session } from "../../experiment/SessionManager";
+import { AudioControls } from "../../ui/AudioControls";
 
 export interface ResultsData {
   readonly finalScore: number;
@@ -18,6 +19,7 @@ export class ResultsScene extends Phaser.Scene {
   }
 
   public create(): void {
+    new AudioControls(this);
     const centerX = CANVAS.width / 2;
 
     const heading =

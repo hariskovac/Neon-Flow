@@ -7,6 +7,10 @@ export class SessionManager {
   private finalScore = 0;
   private terminationReason: GameEndReason = "completed";
   private condition: Condition = Math.random() < 0.5 ? "hidden" : "transparent";
+  private musicEnabled = true;
+  private sfxEnabled = true;
+  private pauseCount = 0;
+  private totalPausedMs = 0;
 
   // calibration run summary
   public setCalibration(summary: WavePerformance): void {
@@ -29,14 +33,40 @@ export class SessionManager {
     return this.completedWaves.length;
   }
 
-  public setOutcome(
-    finalScore: number,
-    livesRemaining: number,
-    terminationReason: GameEndReason,
-  ): void {
-    this.livesRemaining = livesRemaining;
-    this.finalScore = finalScore;
-    this.terminationReason = terminationReason;
+  public setAudioState(musicEnabled: boolean, sfxEnabled: boolean): void {
+    this.musicEnabled = musicEnabled;
+    this.sfxEnabled = sfxEnabled;
+  }
+
+  public setPauseTelemetry(pauseCount: number, totalPausedMs: number): void {
+    this.pauseCount = pauseCount;
+    this.totalPausedMs = totalPausedMs;
+  }
+
+  public getMusicEnabled(): boolean {
+    return this.musicEnabled;
+  }
+
+  public getSfxEnabled(): boolean {
+    return this.sfxEnabled;
+  }
+
+  public getPauseCount(): number {
+    return this.pauseCount;
+  }
+
+  public getTotalPausedMs(): number {
+    return this.totalPausedMs;
+  }
+
+  public setOutcome(outcome: {
+    finalScore: number;
+    livesRemaining: number;
+    terminationReason: GameEndReason;
+  }): void {
+    this.finalScore = outcome.finalScore;
+    this.livesRemaining = outcome.livesRemaining;
+    this.terminationReason = outcome.terminationReason;
   }
 
   public getFinalScore(): number {
@@ -86,6 +116,10 @@ export class SessionManager {
     this.powerUpsCollectedByType = { shield: 0, speed: 0, fireRate: 0 };
     // TODO: replace by server-assigned value
     this.condition = Math.random() < 0.5 ? "hidden" : "transparent";
+    this.musicEnabled = true;
+    this.sfxEnabled = true;
+    this.pauseCount = 0;
+    this.totalPausedMs = 0;
   }
 }
 
