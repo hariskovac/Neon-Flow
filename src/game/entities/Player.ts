@@ -178,6 +178,10 @@ export class Player {
     this.shieldView.setAlpha(PLAYER_CONFIG.shieldMinAlpha + (1 - PLAYER_CONFIG.shieldMinAlpha) * pulse);
   }
 
+  public grantInvincibility(time: number): void {
+    this.invincibleUntil = time + PLAYER_CONFIG.respawnInvincibilityMs;
+  }
+
   public setSpeedMultiplier(multiplier: number): void {
     this.speed = PLAYER_CONFIG.speed * multiplier;
   }

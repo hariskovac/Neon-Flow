@@ -232,7 +232,14 @@ export class TutorialScene extends Phaser.Scene {
         this.hitLabel.setText("Shield absorbed the hit.");
         this.hitMessageUntil = time + TUTORIAL_CONFIG.hitFlashMs;
 
-        this.player.respawn(time, this.player.getX(), this.player.getY());
+        if (result.playerHitBy !== null) {
+          this.effects.burst(
+            result.playerHitBy.x,
+            result.playerHitBy.y,
+            result.playerHitBy.color,
+            time,
+          );
+        }
       } else {
         audio.playSfx("playerDeath");
         this.effects.playerBurst(

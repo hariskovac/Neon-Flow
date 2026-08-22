@@ -35,6 +35,7 @@ export interface CollisionResult {
   readonly killed: EnemyKill[];
   readonly shotsHit: number;
   readonly playerHit: boolean;
+  readonly playerHitBy: EnemyKill | null;
   readonly collected: PowerUpType[]; 
 }
 
@@ -128,6 +129,8 @@ export class CollisionSystem {
 
     const playerRadius = this.player.getRadius();
 
+    let playerHitBy: EnemyKill | null = null;
+
     for (const enemy of this.enemies) {
       if (!enemy.isAlive()) {
         continue;
@@ -146,13 +149,25 @@ export class CollisionSystem {
         audio.playSfx("shieldAbsorb");
         playerHit = true;
 
+        playerHitBy = {
+          type: enemy.getType(),
+          x: enemy.getX(),
+          y: enemy.getY(),
+          color: enemy.getColor(),
+          canDrop: false,
+          segments: enemy.getBlockingParts().map((part) => ({ x: part.x, y: part.y })),
+          persistenceHandle: enemy.getPersistenceHandle(),
+        }
+
+        enemy.despawn();
+
         break;
       }
     }
 
     const collected = this.updatePickupsOnly();
 
-    return { killed, shotsHit, playerHit, collected };
+    return { killed, shotsHit, playerHit, playerHitBy, collected };
   }
 
   public updatePickupsOnly(): PowerUpType[] {

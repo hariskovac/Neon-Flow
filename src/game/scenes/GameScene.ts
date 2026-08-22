@@ -332,7 +332,18 @@ export class GameScene extends Phaser.Scene {
         audio.playSfx("shieldAbsorb");
         this.performance.recordShieldHit();
 
-        this.player.respawn(time, this.player.getX(), this.player.getY());
+        if (result.playerHitBy !== null) {
+          this.effects.burst(
+            result.playerHitBy.x,
+            result.playerHitBy.y,
+            result.playerHitBy.color,
+            time,
+          );
+
+          this.spawner
+            .getPersistence()
+            .recordClearedByDeath(result.playerHitBy.persistenceHandle, time);
+        }
       } else {
         audio.playSfx("playerDeath");
         this.effects.playerBurst(
