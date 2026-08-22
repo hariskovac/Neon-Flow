@@ -86,6 +86,8 @@ export class TutorialScene extends Phaser.Scene {
   private hasPointerInput = false;
   private windowPointerX = 0;
   private windowPointerY = 0;
+  private stepEntered = false;
+  private spacePressed = false;
 
   private readonly keysUsed = new Set<string>();
 
@@ -337,9 +339,13 @@ export class TutorialScene extends Phaser.Scene {
         title: "Taking damage",
         body:
           "Enemy attacks and collisions each cost one life during the game. " +
-          "You will have five. Lives are unlimited in this tutorial.",
-        isComplete: (context) => context.now - context.stepStartedAt > 4500,
-        minimumMs: 4500,
+          "You will have five. Lives are unlimited in this tutorial.\n\n" +
+          "Press SPACE to continue.",
+        onEnter: () => {
+          this.spacePressed = false;
+        },
+        isComplete: () => this.spacePressed,
+        minimumMs: 2000,
       },
       {
         id: "chaser",
@@ -361,6 +367,7 @@ export class TutorialScene extends Phaser.Scene {
             ),
           );
         },
+        enterDelayMs: 4000,
         isComplete: () => this.allTargetsCleared(),
         onExit: () => this.clearTargets(),
       },
@@ -390,6 +397,7 @@ export class TutorialScene extends Phaser.Scene {
               ),
           );
         },
+        enterDelayMs: 4000,
         isComplete: () => this.allTargetsCleared(),
         minimumMs: TUTORIAL_CONFIG.dodgerMinimumMs,
         onExit: () => this.clearTargets(),
@@ -413,6 +421,7 @@ export class TutorialScene extends Phaser.Scene {
               new Dasher(this, spawnX, spawnY, this.enemySpeedMultiplier(), context.now),
           );
         },
+        enterDelayMs: 4000,
         isComplete: () => this.allTargetsCleared(),
         onExit: () => this.clearTargets(),
       },
@@ -460,12 +469,13 @@ export class TutorialScene extends Phaser.Scene {
         title: "Between waves",
         body:
           "You will be shown whether the difficulty changed, what changed, " +
-          "and why. It will look like this.",
+          "and why. It will look like this.\n\nPress SPACE to continue.",
         onEnter: () => {
+          this.spacePressed = false;
           this.overlay.show(generateExampleExplanation());
         },
-        isComplete: (context) => context.now - context.stepStartedAt > 7000,
-        minimumMs: 7000,
+        isComplete: () => this.spacePressed,
+        minimumMs: 2000,
         onExit: () => {
           this.overlay.hide();
         },
@@ -496,9 +506,18 @@ export class TutorialScene extends Phaser.Scene {
     }
 
     this.stepStartedAt = time;
+    this.stepEntered = false;
     this.prompt.show(step.title, step.body);
 
-    step.onEnter?.({ scene: this, stepStartedAt: time, now: time });
+    if ((step.enterDelayMs ?? 0) <= 0) {
+      this.runStepEnter(step, time);
+    }
+  }
+
+  private runStepEnter(step: TutorialStep, time: number): void {
+    this.stepEntered = true;
+
+    step.onEnter?.({ scene: this, stepStartedAt: this.stepStartedAt, now: time });
   }
 
   private advanceStep(context: TutorialContext, time: number): void {
@@ -506,6 +525,14 @@ export class TutorialScene extends Phaser.Scene {
 
     if (step === undefined) {
       return;
+    }
+
+    if (!this.stepEntered) {
+      if (time - this.stepStartedAt < (step.enterDelayMs ?? 0)) {
+        return;
+      }
+
+      this.runStepEnter(step, time);
     }
 
     step.onUpdate?.(context);
@@ -636,6 +663,10 @@ export class TutorialScene extends Phaser.Scene {
       S: Phaser.Input.Keyboard.KeyCodes.S,
       D: Phaser.Input.Keyboard.KeyCodes.D,
     }) as MovementKeys;
+
+    keyboard.on("keydown-SPACE", () => {
+      this.spacePressed = true;
+    });
 
     this.cursors = keyboard.createCursorKeys();
 

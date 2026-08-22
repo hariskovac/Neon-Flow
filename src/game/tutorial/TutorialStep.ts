@@ -15,4 +15,5 @@ export interface TutorialStep {
   readonly isComplete: (context: TutorialContext) => boolean;
   readonly onExit?: (context: TutorialContext) => void;
   readonly minimumMs?: number;
+  readonly enterDelayMs?: number;
 }

@@ -435,6 +435,7 @@ export const TUTORIAL_CONFIG = {
   dodgerSpawnDistance: 340,
   dodgerMinimumMs: 6000,
   hitFlashMs: 1600,
+  enemyIntroDelayMs: 4000,
 };
 
 export const KILL_POINTS: Record<EnemyType, number> = {
