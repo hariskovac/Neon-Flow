@@ -36,6 +36,8 @@ import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
 import { SpawnEffect } from "../render/SpawnEffect";
 import { SPAWN_APPEARANCE } from "../systems/SpawnSystem";
+import { GameClock } from "../systems/GameClock";
+import { PauseOverlay } from "../../ui/PauseOverlay";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -69,6 +71,8 @@ export class TutorialScene extends Phaser.Scene {
   private overlay!: TransparencyOverlay;
   private powerUps!: PowerUpEffects;
   private effects!: EffectSystem;
+  private readonly clock = new GameClock();
+  private pauseOverlay!: PauseOverlay;
 
   private steps: TutorialStep[] = [];
   private stepIndex = 0;
@@ -95,6 +99,10 @@ export class TutorialScene extends Phaser.Scene {
     this.hasPointerInput = false;
     this.keysUsed.clear();
     this.targets = [];
+
+    this.clock.reset();
+    this.spawnEffects.length = 0;
+    this.pendingSpawns.length = 0;
 
     audio.attach(this);
 
@@ -143,6 +151,7 @@ export class TutorialScene extends Phaser.Scene {
     );
 
     this.prompt = new TutorialPrompt(this);
+    this.pauseOverlay = new PauseOverlay(this);
     this.registerInput();
 
     this.overlay = new TransparencyOverlay(this);
@@ -152,7 +161,7 @@ export class TutorialScene extends Phaser.Scene {
     }
 
     this.steps = this.buildSteps();
-    this.enterStep(this.time.now);
+    this.enterStep(this.clock.now(this.time.now))
 
     this.events.once("shutdown", () => {
       this.game.canvas.ownerDocument.removeEventListener(
@@ -162,7 +171,13 @@ export class TutorialScene extends Phaser.Scene {
     });
   }
 
-  public update(time: number): void {
+  public update(rawTime: number): void {
+    if (this.clock.isPaused()) {
+      return;
+    }
+
+    const time = this.clock.now(rawTime);
+
     const context: TutorialContext = {
       scene: this,
       stepStartedAt: this.stepStartedAt,
@@ -393,7 +408,7 @@ export class TutorialScene extends Phaser.Scene {
             spawnY,
             context.now,
             () =>
-              new Dasher(this, spawnX, spawnY, this.enemySpeedMultiplier()),
+              new Dasher(this, spawnX, spawnY, this.enemySpeedMultiplier(), context.now),
           );
         },
         isComplete: () => this.allTargetsCleared(),
@@ -631,9 +646,29 @@ export class TutorialScene extends Phaser.Scene {
       this.handleWindowPointer,
     );
 
+    this.cursors = keyboard.createCursorKeys();
+
+    keyboard.on("keydown-ESC", this.togglePause, this);
+
     keyboard.on("keydown-SPACE", () => {
       this.readyToStart = true;
     });
+  }
+
+  private togglePause(): void {
+    const rawTime = this.time.now;
+
+    if (this.clock.isPaused()) {
+      this.clock.resume(rawTime);
+      this.physics.resume();
+      this.pauseOverlay.setVisible(false);
+      audio.setPaused(false);
+    } else {
+      this.clock.pause(rawTime);
+      this.physics.pause();
+      this.pauseOverlay.setVisible(true);
+      audio.setPaused(true);
+    }
   }
 
   private readonly handleWindowPointer = (event: MouseEvent): void => {

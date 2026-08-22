@@ -26,6 +26,8 @@ import { POWERUP_CONFIG } from "../gameplayConfig";
 import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
+import { GameClock } from "../systems/GameClock";
+import { PauseOverlay } from "../../ui/PauseOverlay";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -49,6 +51,8 @@ export class CalibrationScene extends Phaser.Scene {
   private powerUps!: PowerUpEffects;
   private drops!: PowerUpSystem;
   private effects!: EffectSystem;
+  private readonly clock = new GameClock();
+  private pauseOverlay!: PauseOverlay;
 
   private startedAt: number | null = null;
   private aimAngle = -Math.PI / 2;
@@ -66,6 +70,8 @@ export class CalibrationScene extends Phaser.Scene {
     this.finished = false;
     this.aimAngle = -Math.PI / 2;
     this.hasPointerInput = false;
+    this.clock.reset();
+    this.pauseOverlay = new PauseOverlay(this);
 
     audio.attach(this);
 
@@ -135,6 +141,8 @@ export class CalibrationScene extends Phaser.Scene {
       D: Phaser.Input.Keyboard.KeyCodes.D,
     }) as MovementKeys;
 
+    keyboard.on("keydown-ESC", this.togglePause, this);
+
     this.cursors = keyboard.createCursorKeys();
 
     this.input.mouse?.disableContextMenu();
@@ -155,7 +163,13 @@ export class CalibrationScene extends Phaser.Scene {
     });
   }
 
-  public update(time: number): void {
+  public update(rawTime: number): void {
+    if (this.clock.isPaused()) {
+      return;
+    }
+
+    const time = this.clock.now(rawTime);
+
     if (this.finished) {
       return;
     }
@@ -362,6 +376,22 @@ export class CalibrationScene extends Phaser.Scene {
       left: this.movementKeys.A.isDown || this.cursors.left.isDown,
       right: this.movementKeys.D.isDown || this.cursors.right.isDown,
     };
+  }
+
+  private togglePause(): void {
+    const rawTime = this.time.now;
+
+    if (this.clock.isPaused()) {
+      this.clock.resume(rawTime);
+      this.physics.resume();
+      this.pauseOverlay.setVisible(false);
+      audio.setPaused(false);
+    } else {
+      this.clock.pause(rawTime);
+      this.physics.pause();
+      this.pauseOverlay.setVisible(true);
+      audio.setPaused(true);
+    }
   }
 
   private updateCountdown(elapsed: number): void {

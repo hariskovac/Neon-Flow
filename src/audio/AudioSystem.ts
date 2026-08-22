@@ -91,6 +91,18 @@ export class AudioSystem {
     }
   }
 
+  public setPaused(paused: boolean): void {
+    if (this.scene === null) {
+      return;
+    }
+
+    if (paused) {
+      this.scene.sound.pauseAll();
+    } else {
+      this.scene.sound.resumeAll();
+    }
+  }
+
   public setSfxEnabled(enabled: boolean): void {
     this.sfxEnabled = enabled;
   }

@@ -311,6 +311,7 @@ export class SpawnSystem {
         spawn.y,
         playerX,
         playerY,
+        time,
       );
 
       enemy.setPersistenceHandle(this.persistence.recordSpawn(time));
@@ -454,6 +455,7 @@ export class SpawnSystem {
     y: number,
     playerX: number,
     playerY: number,
+    now: number,
   ): Enemy {
     if (type === "chaser") {
       return new Chaser(this.scene, x, y, this.actuators.enemySpeedMultiplier);
@@ -483,7 +485,7 @@ export class SpawnSystem {
       return new Splitter(this.scene, x, y, this.actuators.enemySpeedMultiplier);
     }
 
-    return new Dasher(this.scene, x, y, this.actuators.enemySpeedMultiplier);
+    return new Dasher(this.scene, x, y, this.actuators.enemySpeedMultiplier, now);
   }
 
   public setSpawningEnabled(enabled: boolean): void {

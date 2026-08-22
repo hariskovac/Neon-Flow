@@ -23,7 +23,7 @@ export class Dasher implements Enemy {
   private stateUntil: number;
   private persistenceHandle = -1;
 
-  public constructor(scene: Phaser.Scene, x: number, y: number, speedMultiplier: number) {
+  public constructor(scene: Phaser.Scene, x: number, y: number, speedMultiplier: number, now: number ) {
     this.dashSpeed = Math.min(
       DASHER_CONFIG.dashSpeed * speedMultiplier,
       DASHER_CONFIG.maxDashSpeed,
@@ -54,7 +54,7 @@ export class Dasher implements Enemy {
 
     this.drawHull();
 
-    this.stateUntil = scene.time.now + DASHER_CONFIG.lockDurationMs;
+    this.stateUntil = now + DASHER_CONFIG.lockDurationMs;
   }
 
   public update(time: number, targetX: number, targetY: number): void {

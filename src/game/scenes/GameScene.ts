@@ -27,6 +27,8 @@ import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
 import { classifyPerformance, resolveKillRatio } from "../../dda/PerformanceEvaluator";
+import { GameClock } from "../systems/GameClock";
+import { PauseOverlay } from "../../ui/PauseOverlay";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -48,6 +50,8 @@ export class GameScene extends Phaser.Scene {
   private difficulty!: DifficultyController;
   private overlay!: TransparencyOverlay;
   private effects!: EffectSystem;
+  private readonly clock = new GameClock();
+  private pauseOverlay!: PauseOverlay;
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
@@ -71,6 +75,9 @@ export class GameScene extends Phaser.Scene {
     this.performance = new PerformanceMonitor();
     const calibration = mapCalibration(session.getCalibration());
     audio.attach(this);
+
+    this.clock.reset();
+    this.pauseOverlay = new PauseOverlay(this);
 
     this.effects = new EffectSystem(this);
 
@@ -147,6 +154,8 @@ export class GameScene extends Phaser.Scene {
       D: Phaser.Input.Keyboard.KeyCodes.D,
     }) as MovementKeys;
 
+    keyboard.on("keydown-ESC", this.togglePause, this);
+
     this.cursors = keyboard.createCursorKeys();
 
     this.input.mouse?.disableContextMenu();
@@ -186,7 +195,13 @@ export class GameScene extends Phaser.Scene {
   }
 
 
-  public update(time: number): void {
+  public update(rawTime: number): void {
+    if (this.clock.isPaused()) {
+      return;
+    }
+
+    const time = this.clock.now(rawTime);
+
     const transition = this.waves.update(time);
 
     if (transition === "spawningStopped") {
@@ -413,6 +428,26 @@ export class GameScene extends Phaser.Scene {
       isCalibration: false,
       isTutorial: false,
     });
+  }
+
+  private togglePause(): void {
+    if (this.waves.isIntermission()) {
+      return;
+    }
+
+    const rawTime = this.time.now;
+
+    if (this.clock.isPaused()) {
+      this.clock.resume(rawTime);
+      this.physics.resume();
+      this.pauseOverlay.setVisible(false);
+      audio.setPaused(false);
+    } else {
+      this.clock.pause(rawTime);
+      this.physics.pause();
+      this.pauseOverlay.setVisible(true);
+      audio.setPaused(true);
+    }
   }
 
   private recordWave(time: number): void {
