@@ -1,8 +1,26 @@
 import Phaser from "phaser";
 
 import { gameConfig } from "./game/config";
+import { ConsentFlow } from "./consent/ConsentFlow.ts";
+import { session } from "./experiment/SessionManager";
 import "./style.css";
 
-const game = new Phaser.Game(gameConfig);
-
-void game;
+async function start(): Promise<void> {
+  const consentRoot = document.querySelector<HTMLElement>("#consent-root");
+  const gameRoot = document.querySelector<HTMLElement>("#game-root");
+ 
+  if (consentRoot === null || gameRoot === null) {
+    throw new Error("The consent or game container is missing from the page.");
+  }
+ 
+  const flow = new ConsentFlow(consentRoot);
+  const record = await flow.start();
+ 
+  session.setConsent(record);
+ 
+  gameRoot.hidden = false;
+ 
+  new Phaser.Game(gameConfig);
+}
+ 
+void start();

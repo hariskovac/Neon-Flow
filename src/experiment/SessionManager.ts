@@ -1,4 +1,11 @@
-import type { GameEndReason, WavePerformance, PowerUpType, Condition, DDAEvent } from "../types/game";
+import type {
+  GameEndReason,
+  WavePerformance,
+  PowerUpType,
+  Condition,
+  DDAEvent,
+  ConsentRecord
+} from "../types/game";
 
 export class SessionManager {
   private calibration: WavePerformance | null = null;
@@ -12,6 +19,7 @@ export class SessionManager {
   private pauseCount = 0;
   private totalPausedMs = 0;
   private ddaEvents: DDAEvent[] = [];
+  private consent: ConsentRecord | null = null;
 
   // calibration run summary
   public setCalibration(summary: WavePerformance): void {
@@ -114,6 +122,14 @@ export class SessionManager {
 
   public isTransparent(): boolean {
     return this.condition === "transparent";
+  }
+
+  public setConsent(record: ConsentRecord): void {
+    this.consent = record;
+  }
+
+  public getConsent(): ConsentRecord | null {
+    return this.consent;
   }
 
   public reset(): void {

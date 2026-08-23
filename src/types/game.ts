@@ -59,3 +59,10 @@ export interface DDAEvent {
   readonly performanceScore: number;
   readonly usedAcceleratedStep: boolean;
 }
+
+export interface ConsentRecord {
+  readonly answers: Record<string, boolean>;
+  readonly signature: string;
+  readonly printedName: string;
+  readonly signedAt: string;
+}

@@ -23,7 +23,6 @@ body {
 
 body {
   min-height: 100vh;
-  overflow: hidden;
 }
 
 button,
@@ -38,6 +37,12 @@ select {
   min-height: 100vh;
   place-items: center;
   padding: 1rem;
+}
+
+#app:has(#consent-root:not([hidden])) {
+  display: block;
+  place-items: initial;
+  padding: 0;
 }
 
 main {
@@ -56,4 +61,192 @@ main {
 
 #game-container canvas {
   display: block;
+}
+
+#consent-root {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  padding: 3rem 1.5rem 5rem;
+  overflow-y: auto;
+}
+
+#consent-root[hidden] {
+  display: none;
+}
+
+.consent-page {
+  max-width: 46rem;
+  margin: 0 auto;
+  color: #dbe4f5;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.consent-page h1 {
+  margin: 0 0 0.4rem;
+  color: #f4f7ff;
+  font-size: 1.9rem;
+  line-height: 1.25;
+}
+
+.consent-page h2 {
+  margin: 2rem 0 0.6rem;
+  color: #3ddbff;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.consent-subheading {
+  margin: 0 0 1.5rem;
+  color: #8fa3c4;
+}
+
+.consent-contacts {
+  margin: 0 0 2rem;
+  padding: 0.9rem 1.1rem;
+  border-left: 3px solid #263653;
+  background: #0e1526;
+  font-size: 0.95rem;
+}
+
+.consent-contacts p {
+  margin: 0.2rem 0;
+}
+
+.consent-page p {
+  margin: 0 0 1rem;
+}
+
+.consent-page ul {
+  margin: 0 0 1rem;
+  padding-left: 1.4rem;
+}
+
+.consent-page li {
+  margin-bottom: 0.6rem;
+}
+
+.consent-questions {
+  margin: 1rem 0 2rem;
+}
+
+.consent-question {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid #1b2740;
+}
+
+.consent-question-text {
+  flex: 1;
+}
+
+.consent-options {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 1.1rem;
+}
+
+.consent-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.consent-option input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: #3ddbff;
+  cursor: pointer;
+}
+
+.consent-declarations li {
+  margin-bottom: 0.85rem;
+}
+
+.consent-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 1.4rem 0;
+}
+
+.consent-field label {
+  color: #8fa3c4;
+  font-size: 0.95rem;
+}
+
+.consent-field input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #263653;
+  border-radius: 0.35rem;
+  background: #0b1020;
+  color: #f4f7ff;
+  font-size: 1rem;
+}
+
+.consent-field input:focus {
+  border-color: #3ddbff;
+  outline: 2px solid rgb(61 219 255 / 35%);
+  outline-offset: 1px;
+}
+
+.consent-error {
+  min-height: 1.4rem;
+  margin: 0.5rem 0 0;
+  color: #ff8f8f;
+  font-size: 0.95rem;
+}
+
+.consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2rem;
+}
+
+.consent-button,
+.consent-button-secondary {
+  padding: 0.75rem 1.4rem;
+  border: 1px solid #3ddbff;
+  border-radius: 0.4rem;
+  background: #3ddbff;
+  color: #0b1020;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.consent-button:hover {
+  background: #67e5ff;
+}
+
+.consent-button-secondary {
+  border-color: #263653;
+  background: transparent;
+  color: #8fa3c4;
+  font-weight: 400;
+}
+
+.consent-button-secondary:hover {
+  border-color: #3a4d70;
+  color: #dbe4f5;
+}
+
+.consent-button:focus-visible,
+.consent-button-secondary:focus-visible {
+  outline: 2px solid #3ddbff;
+  outline-offset: 2px;
+}
+
+@media (width <= 40rem) {
+  .consent-question {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
