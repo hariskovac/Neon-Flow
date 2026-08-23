@@ -9,6 +9,10 @@ import {
   PALETTE,
   WEAPON_CONFIG,
   HUD_TEXT_STYLE,
+  TUTORIAL_CONFIG,
+  POWERUP_CONFIG,
+  SPAWN_EFFECT_CONFIG,
+  SPLITTER_CONFIG,
 } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import type { MovementInput } from "../systems/PlayerMovement";
@@ -22,10 +26,12 @@ import { KeyCapDisplay } from "../tutorial/KeyCapDisplay";
 import { Chaser } from "../entities/enemies/Chaser";
 import { Dasher } from "../entities/enemies/Dasher";
 import { Dodger } from "../entities/enemies/Dodger";
+import { Splitter } from "../entities/enemies/Splitter";
+import { Shard } from "../entities/enemies/Shard";
+import { Winder } from "../entities/enemies/Winder";
 import { HudSystem } from "../systems/HudSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
 import { resolveActuators } from "../../dda/DifficultyConfig";
-import { TUTORIAL_CONFIG, POWERUP_CONFIG, SPAWN_EFFECT_CONFIG } from "../gameplayConfig";
 import { session } from "../../experiment/SessionManager";
 import { generateExampleExplanation } from "../../dda/ExplanationGenerator";
 import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
@@ -243,6 +249,20 @@ export class TutorialScene extends Phaser.Scene {
 
     for (const kill of result.killed) {
       this.effects.burst(kill.x, kill.y, kill.color, time);
+
+      if (kill.type === "splitter") {
+        this.spawnShards(kill.x, kill.y);
+      }
+
+      if (kill.segments !== undefined) {
+        for (const segment of kill.segments) {
+          this.effects.burst(segment.x, segment.y, kill.color, time);
+        }
+      }
+    }
+
+    if (result.killed.length > 0) {
+      audio.playSfx("enemyDeath");
     }
 
     if (result.playerHit && !this.player.isInvincible(time)) {
@@ -422,6 +442,61 @@ export class TutorialScene extends Phaser.Scene {
           );
         },
         enterDelayMs: 4000,
+        isComplete: () => this.allTargetsCleared(),
+        onExit: () => this.clearTargets(),
+      },
+      {
+        id: "splitter",
+        title: "Splitters",
+        body:
+          "Splitters move steadily, but break into two smaller shards when " +
+          "destroyed. Clear all three to continue. ",
+        enterDelayMs: TUTORIAL_CONFIG.enemyIntroDelayMs,
+        onEnter: (context) => {
+          const spawnX = ARENA.x + 160;
+          const spawnY = ARENA.y + ARENA.height - 160;
+
+          this.beginSpawn(
+            "splitter",
+            spawnX,
+            spawnY,
+            context.now,
+            () =>
+              new Splitter(this, spawnX, spawnY, this.enemySpeedMultiplier()),
+          );
+        },
+        isComplete: () => this.allTargetsCleared(),
+        onExit: () => this.clearTargets(),
+      },
+      {
+        id: "winder",
+        title: "Winders",
+        body:
+          "Winders weave toward you in a chain. Shoot the head to destroy " +
+          "it. ",
+        enterDelayMs: TUTORIAL_CONFIG.enemyIntroDelayMs,
+        onEnter: (context) => {
+          const spawnX = ARENA.x + ARENA.width - 200;
+          const spawnY = ARENA.y + ARENA.height / 2;
+
+          this.beginSpawn(
+            "winder",
+            spawnX,
+            spawnY,
+            context.now,
+            () =>
+              new Winder(
+                this,
+                spawnX,
+                spawnY,
+                this.enemySpeedMultiplier(),
+                Math.atan2(
+                  ARENA.y + ARENA.height / 2 - spawnY,
+                  ARENA.x + ARENA.width / 2 - spawnX,
+                ),
+              ),
+          );
+        },
         isComplete: () => this.allTargetsCleared(),
         onExit: () => this.clearTargets(),
       },
@@ -619,6 +694,19 @@ export class TutorialScene extends Phaser.Scene {
       readyAt: time + SPAWN_EFFECT_CONFIG.durationMs,
       effect,
     });
+  }
+
+  private spawnShards(x: number, y: number): void {
+    const half = SPLITTER_CONFIG.shardSeparation / 2;
+    const multiplier = this.enemySpeedMultiplier();
+
+    const first = new Shard(this, x - half, y, multiplier, false);
+    const second = new Shard(this, x + half, y, multiplier, false);
+
+    first.setPartner(second);
+    second.setPartner(first);
+
+    this.targets.push(first, second);
   }
 
   private finish(): void {
