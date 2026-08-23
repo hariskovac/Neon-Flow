@@ -69,7 +69,7 @@ export class ResultsScene extends Phaser.Scene {
 
     keyboard.once("keydown-SPACE", () => {
       session.reset();
-      this.scene.start("InstructionsScene");
+      this.scene.start("CalibrationScene");
     });
   }
 

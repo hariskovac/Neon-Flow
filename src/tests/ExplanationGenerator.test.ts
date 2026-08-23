@@ -177,7 +177,7 @@ describe("generateExplanation", () => {
 describe("explanation accuracy against real decisions", () => {
   it("matches direction of increase", () => {
     const controller = new DifficultyController(3);
-    const decision = controller.evaluate(PERFECT);
+    const decision = controller.evaluate(PERFECT, 5);
 
     expect(decision.direction).toBe("increase");
     expect(decision.explanation.headline).toBe("Threat level increased");
@@ -186,7 +186,7 @@ describe("explanation accuracy against real decisions", () => {
 
   it("matches direction of decrease", () => {
     const controller = new DifficultyController(6);
-    const decision = controller.evaluate(COLLAPSE);
+    const decision = controller.evaluate(COLLAPSE, 5);
 
     expect(decision.direction).toBe("decrease");
     expect(decision.explanation.headline).toBe("Threat level reduced");
@@ -194,7 +194,7 @@ describe("explanation accuracy against real decisions", () => {
 
   it("doesn't claim adjustment at maximum level", () => {
     const controller = new DifficultyController(MAX_DIFFICULTY_LEVEL);
-    const decision = controller.evaluate(PERFECT);
+    const decision = controller.evaluate(PERFECT, 5);
 
     expect(decision.parameterChanges).toEqual([]);
     expect(decision.explanation.headline).toBe("Threat level unchanged");
@@ -202,7 +202,7 @@ describe("explanation accuracy against real decisions", () => {
 
   it("doesn't claim an adjustment at minimum level", () => {
     const controller = new DifficultyController(MIN_DIFFICULTY_LEVEL);
-    const decision = controller.evaluate(COLLAPSE);
+    const decision = controller.evaluate(COLLAPSE, 5);
 
     expect(decision.parameterChanges).toEqual([]);
     expect(decision.explanation.headline).toBe("Threat level unchanged");
@@ -211,9 +211,9 @@ describe("explanation accuracy against real decisions", () => {
   it("doesn't claim an adjustment when hysteresis suppresses it", () => {
     const controller = new DifficultyController(4);
 
-    controller.evaluate(MODERATE_UP);
+    controller.evaluate(MODERATE_UP, 5);
 
-    const suppressed = controller.evaluate(MODERATE_DOWN);
+    const suppressed = controller.evaluate(MODERATE_DOWN, 5);
 
     expect(suppressed.suppressedByHysteresis).toBe(true);
     expect(suppressed.explanation.changeLines).toEqual([]);

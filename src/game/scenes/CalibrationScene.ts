@@ -69,6 +69,8 @@ export class CalibrationScene extends Phaser.Scene {
 
   public create(): void {
     this.finished = false;
+    this.startedAt = null;
+    this.lastCountdownSecond = 0;
     this.aimAngle = -Math.PI / 2;
     this.hasPointerInput = false;
     this.clock.reset();

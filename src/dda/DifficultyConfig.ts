@@ -39,6 +39,8 @@ export const STABILITY_CONFIG = {
   normalStep: 1,
   acceleratedIncreaseScore: 0.94,
   acceleratedDecreaseScore: 0.3,
+  // suppresses downward hysteresis when lives are <= this value
+  safetyLivesRemaining: 2,
 };
 
 function clamp(value: number, min: number, max: number): number {

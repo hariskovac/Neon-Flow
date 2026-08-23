@@ -55,4 +55,7 @@ export interface DDAEvent {
   readonly explanation: string;
   readonly displayed: boolean;
   readonly suppressedByHysteresis: boolean;
+  readonly safetyOverride: boolean;
+  readonly performanceScore: number;
+  readonly usedAcceleratedStep: boolean;
 }

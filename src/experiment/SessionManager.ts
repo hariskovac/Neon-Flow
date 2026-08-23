@@ -1,4 +1,4 @@
-import type { GameEndReason, WavePerformance, PowerUpType, Condition } from "../types/game";
+import type { GameEndReason, WavePerformance, PowerUpType, Condition, DDAEvent } from "../types/game";
 
 export class SessionManager {
   private calibration: WavePerformance | null = null;
@@ -11,6 +11,7 @@ export class SessionManager {
   private sfxEnabled = true;
   private pauseCount = 0;
   private totalPausedMs = 0;
+  private ddaEvents: DDAEvent[] = [];
 
   // calibration run summary
   public setCalibration(summary: WavePerformance): void {
@@ -31,6 +32,14 @@ export class SessionManager {
 
   public getCompletedWaveCount(): number {
     return this.completedWaves.length;
+  }
+
+  public addDDAEvent(event: DDAEvent): void {
+    this.ddaEvents.push(event);
+  }
+
+  public getDDAEvents(): DDAEvent[] {
+    return [...this.ddaEvents];
   }
 
   public setAudioState(musicEnabled: boolean, sfxEnabled: boolean): void {
@@ -120,6 +129,7 @@ export class SessionManager {
     this.sfxEnabled = true;
     this.pauseCount = 0;
     this.totalPausedMs = 0;
+    this.ddaEvents = [];
   }
 }
 

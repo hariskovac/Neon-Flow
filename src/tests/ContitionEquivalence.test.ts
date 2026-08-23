@@ -69,7 +69,7 @@ function runSession(startingLevel: number): SessionRecord {
   const acceleratedSteps: boolean[] = [];
 
   for (const performance of SEQUENCE) {
-    const decision = controller.evaluate(performance);
+    const decision = controller.evaluate(performance, 5);
 
     levels.push(decision.nextLevel);
     directions.push(decision.direction);
@@ -123,7 +123,7 @@ describe("condition equivalence", () => {
     const second = new DifficultyController(4);
 
     for (const performance of SEQUENCE) {
-      expect(first.evaluate(performance)).toEqual(second.evaluate(performance));
+      expect(first.evaluate(performance, 5)).toEqual(second.evaluate(performance, 5));
     }
   });
 
@@ -131,7 +131,7 @@ describe("condition equivalence", () => {
     const controller = new DifficultyController(3);
 
     for (const performance of SEQUENCE) {
-      const decision = controller.evaluate(performance);
+      const decision = controller.evaluate(performance, 5);
 
       expect(decision.explanation.changeLines.length).toBe(
         decision.parameterChanges.length,
@@ -143,7 +143,7 @@ describe("condition equivalence", () => {
     const controller = new DifficultyController(3);
 
     for (const performance of SEQUENCE) {
-      const decision = controller.evaluate(performance);
+      const decision = controller.evaluate(performance, 5);
 
       expect(decision.explanation.reasonText).not.toBe("");
       expect(decision.reasons.length).toBe(3);

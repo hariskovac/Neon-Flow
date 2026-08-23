@@ -261,10 +261,6 @@ export class TutorialScene extends Phaser.Scene {
       }
     }
 
-    if (result.killed.length > 0) {
-      audio.playSfx("enemyDeath");
-    }
-
     if (result.playerHit && !this.player.isInvincible(time)) {
       if (this.powerUps.consumeShield()) {
         audio.playSfx("shieldAbsorb"); 

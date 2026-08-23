@@ -7,6 +7,7 @@ import { createEmptyKillTally } from "../types/game";
 import {
   MAX_DIFFICULTY_LEVEL,
   MIN_DIFFICULTY_LEVEL,
+  STABILITY_CONFIG,
   clampLevel,
   resolveActuators,
 } from "../dda/DifficultyConfig";
@@ -59,7 +60,7 @@ const COLLAPSE = wave({ kills: 2, livesLost: 2, persistence: 0.5 });
 describe("DifficultyController step sizing", () => {
   it("allows 2-level jump on extreme early evidence", () => {
     const controller = new DifficultyController(3);
-    const decision = controller.evaluate(PERFECT);
+    const decision = controller.evaluate(PERFECT, 5);
 
     expect(decision.nextLevel).toBe(5);
     expect(decision.usedAcceleratedStep).toBe(true);
@@ -68,8 +69,8 @@ describe("DifficultyController step sizing", () => {
   it("allows accelerated step once per session", () => {
     const controller = new DifficultyController(1);
 
-    const first = controller.evaluate(PERFECT);
-    const second = controller.evaluate(PERFECT);
+    const first = controller.evaluate(PERFECT, 5);
+    const second = controller.evaluate(PERFECT, 5);
 
     expect(first.usedAcceleratedStep).toBe(true);
     expect(second.usedAcceleratedStep).toBe(false);
@@ -78,7 +79,7 @@ describe("DifficultyController step sizing", () => {
 
   it("limits moderate evidence to 1 level up", () => {
     const controller = new DifficultyController(3);
-    const decision = controller.evaluate(MODERATE_UP);
+    const decision = controller.evaluate(MODERATE_UP, 5);
 
     expect(decision.nextLevel).toBe(4);
     expect(decision.usedAcceleratedStep).toBe(false);
@@ -87,12 +88,12 @@ describe("DifficultyController step sizing", () => {
   it("moves 1 level down on ordinary negative evidence", () => {
     const controller = new DifficultyController(6);
 
-    expect(controller.evaluate(MODERATE_DOWN).nextLevel).toBe(5);
+    expect(controller.evaluate(MODERATE_DOWN, 5).nextLevel).toBe(5);
   });
 
   it("holds level when performance is in target range", () => {
     const controller = new DifficultyController(4);
-    const decision = controller.evaluate(STEADY);
+    const decision = controller.evaluate(STEADY, 5);
 
     expect(decision.nextLevel).toBe(4);
     expect(decision.direction).toBe("unchanged");
@@ -100,7 +101,7 @@ describe("DifficultyController step sizing", () => {
 
   it("drops 2 levels on extreme struggle", () => {
     const controller = new DifficultyController(7);
-    const decision = controller.evaluate(COLLAPSE);
+    const decision = controller.evaluate(COLLAPSE, 5);
 
     expect(decision.nextLevel).toBe(5);
     expect(decision.usedAcceleratedStep).toBe(true);
@@ -111,9 +112,9 @@ describe("DifficultyController hysteresis", () => {
   it("suppresses moderate reversal immediately after a change", () => {
     const controller = new DifficultyController(4);
 
-    controller.evaluate(MODERATE_UP);
+    controller.evaluate(MODERATE_UP, 5);
 
-    const reversal = controller.evaluate(MODERATE_DOWN);
+    const reversal = controller.evaluate(MODERATE_DOWN, 5);
 
     expect(reversal.suppressedByHysteresis).toBe(true);
     expect(reversal.direction).toBe("unchanged");
@@ -123,10 +124,10 @@ describe("DifficultyController hysteresis", () => {
   it("allows reversal once a 2nd wave confirms it", () => {
     const controller = new DifficultyController(4);
 
-    controller.evaluate(MODERATE_UP);
-    controller.evaluate(MODERATE_DOWN);
+    controller.evaluate(MODERATE_UP, 5);
+    controller.evaluate(MODERATE_DOWN, 5);
 
-    const confirmed = controller.evaluate(MODERATE_DOWN);
+    const confirmed = controller.evaluate(MODERATE_DOWN, 5);
 
     expect(confirmed.direction).toBe("decrease");
     expect(controller.getLevel()).toBe(4);
@@ -135,9 +136,9 @@ describe("DifficultyController hysteresis", () => {
   it("lets strong evidence override suppression", () => {
     const controller = new DifficultyController(4);
 
-    controller.evaluate(MODERATE_UP);
+    controller.evaluate(MODERATE_UP, 5);
 
-    const override = controller.evaluate(STRONG_DOWN);
+    const override = controller.evaluate(STRONG_DOWN, 5);
 
     expect(override.suppressedByHysteresis).toBe(false);
     expect(override.direction).toBe("decrease");
@@ -146,9 +147,9 @@ describe("DifficultyController hysteresis", () => {
   it("reports no parameter changes when change is suppressed", () => {
     const controller = new DifficultyController(4);
 
-    controller.evaluate(MODERATE_UP);
+    controller.evaluate(MODERATE_UP, 5);
 
-    const suppressed = controller.evaluate(MODERATE_DOWN);
+    const suppressed = controller.evaluate(MODERATE_DOWN, 5);
 
     expect(suppressed.parameterChanges).toEqual([]);
     expect(suppressed.explanation.headline).toBe("Threat level unchanged");
@@ -156,10 +157,34 @@ describe("DifficultyController hysteresis", () => {
 
   it("doesn't suppress first change of a session", () => {
     const controller = new DifficultyController(5);
-    const decision = controller.evaluate(MODERATE_DOWN);
+    const decision = controller.evaluate(MODERATE_DOWN, 5);
 
     expect(decision.suppressedByHysteresis).toBe(false);
     expect(decision.direction).toBe("decrease");
+  });
+
+  it("suppresses decrease when the participant has >2 lives", () => {
+    const controller = new DifficultyController(5);
+
+    controller.evaluate(MODERATE_UP, 5);
+
+    const reversal = controller.evaluate(MODERATE_DOWN, 4);
+
+    expect(reversal.suppressedByHysteresis).toBe(true);
+  });
+
+  it("allows a decrease when the participant has <= 2 lives", () => {
+    const controller = new DifficultyController(5);
+
+    controller.evaluate(MODERATE_UP, 5);
+
+    const reversal = controller.evaluate(
+      MODERATE_DOWN,
+      STABILITY_CONFIG.safetyLivesRemaining,
+    );
+
+    expect(reversal.suppressedByHysteresis).toBe(false);
+    expect(reversal.direction).toBe("decrease");
   });
 });
 
@@ -169,7 +194,7 @@ describe("DifficultyController bounds", () => {
         const controller = new DifficultyController(MAX_DIFFICULTY_LEVEL);
 
     for (let index = 0; index < 6; index += 1) {
-      controller.evaluate(PERFECT);
+      controller.evaluate(PERFECT, 5);
     }
 
     expect(controller.getLevel()).toBe(MAX_DIFFICULTY_LEVEL);
@@ -179,7 +204,7 @@ describe("DifficultyController bounds", () => {
     const controller = new DifficultyController(MIN_DIFFICULTY_LEVEL);
 
     for (let index = 0; index < 6; index += 1) {
-      controller.evaluate(COLLAPSE);
+      controller.evaluate(COLLAPSE, 5);
     }
 
     expect(controller.getLevel()).toBe(MIN_DIFFICULTY_LEVEL);
@@ -194,7 +219,7 @@ describe("DifficultyController bounds", () => {
     const first = new DifficultyController(4);
     const second = new DifficultyController(4);
 
-    expect(first.evaluate(MODERATE_UP)).toEqual(second.evaluate(MODERATE_UP));
+    expect(first.evaluate(MODERATE_UP, 5)).toEqual(second.evaluate(MODERATE_UP, 5));
   });
 });
 

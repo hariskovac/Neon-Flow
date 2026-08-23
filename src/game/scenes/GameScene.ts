@@ -21,7 +21,11 @@ import { mapCalibration } from "../../dda/CalibrationMapper";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { PowerUpSystem } from "../systems/PowerUpSystem";
 import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
-import { generateCalibrationExplanation, generateNeutralExplanation } from "../../dda/ExplanationGenerator";
+import { 
+  generateCalibrationExplanation,
+  generateNeutralExplanation,
+  flattenExplanation 
+} from "../../dda/ExplanationGenerator";
 import type { Explanation } from "../../dda/ExplanationGenerator";
 import { drawArenaBackground } from "../render/ArenaBackground";
 import { audio } from "../../audio/AudioSystem";
@@ -217,7 +221,7 @@ export class GameScene extends Phaser.Scene {
       const summary = session.getCompletedWaves().at(-1);
 
       if (summary !== undefined) {
-        const decision = this.difficulty.evaluate(summary);
+        const decision = this.difficulty.evaluate(summary, this.lives.getLivesRemaining());
 
         console.log("DDA", {
           wave: summary.waveNumber,
@@ -238,6 +242,22 @@ export class GameScene extends Phaser.Scene {
 
         console.log("DDA decision", decision);
         this.showOverlay(decision.explanation);
+
+        session.addDDAEvent({
+          waveNumber: summary.waveNumber,
+          elapsedTimeMs: time,
+          previousLevel: decision.previousLevel,
+          nextLevel: decision.nextLevel,
+          direction: decision.direction,
+          metricSnapshot: summary,
+          parameterChanges: decision.parameterChanges,
+          explanation: flattenExplanation(decision.explanation),
+          displayed: session.isTransparent(),
+          suppressedByHysteresis: decision.suppressedByHysteresis,
+          safetyOverride: decision.safetyOverride,
+          performanceScore: decision.performanceScore,
+          usedAcceleratedStep: decision.usedAcceleratedStep,
+        });
       }
 
       this.score.addWaveSurvivalBonus();

@@ -18,6 +18,7 @@ export interface DifficultyDecision {
   readonly evidence: EvidenceClass;
   readonly reasons: string[];
   readonly suppressedByHysteresis: boolean;
+  readonly safetyOverride: boolean;
   readonly parameterChanges: ParameterChange[];
   readonly explanation: Explanation;
   readonly performanceScore: number;
@@ -64,13 +65,14 @@ export class DifficultyController {
     return this.acceleratedStepUsed;
   }
 
-  public evaluate(performance: WavePerformance): DifficultyDecision {
+  public evaluate(performance: WavePerformance, livesRemaining: number): DifficultyDecision {
     const previousLevel = this.level;
     const result = classifyPerformance(performance);
     const desired = resolveDirection(result.evidence);
     const strong = isStrongEvidence(result.evidence);
 
     let suppressedByHysteresis = false;
+    let safetyOverride = false;
     let usedAcceleratedStep = false;
     let nextLevel = previousLevel;
 
@@ -78,7 +80,11 @@ export class DifficultyController {
       const reverses =
         this.lastDirection !== "unchanged" && desired !== this.lastDirection;
 
-      if (reverses && !strong) {
+        const inSafetyZone =
+          desired === "decrease" &&
+          livesRemaining <= STABILITY_CONFIG.safetyLivesRemaining;
+
+      if (reverses && !strong && !inSafetyZone) {
         suppressedByHysteresis = true;
       } else {
         usedAcceleratedStep = this.qualifiesForAcceleratedStep(desired, result.performanceScore, performance.livesLost, );
@@ -119,6 +125,7 @@ export class DifficultyController {
       evidence: result.evidence,
       reasons: result.reasons,
       suppressedByHysteresis,
+      safetyOverride,
       parameterChanges,
       explanation: generateExplanation(
         direction,
