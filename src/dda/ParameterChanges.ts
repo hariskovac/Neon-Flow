@@ -17,7 +17,7 @@
     powerUpDropChance: false,
   };
 
-  const ACTUATOR_KEYS: ActuatorKey[] = [
+  export const ACTUATOR_KEYS: ActuatorKey[] = [
     "spawnIntervalMs",
     "enemySpeedMultiplier",
     "spawnIntensity",

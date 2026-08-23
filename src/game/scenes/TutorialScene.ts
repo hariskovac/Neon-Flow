@@ -557,7 +557,7 @@ export class TutorialScene extends Phaser.Scene {
         title: "Between waves",
         body:
           "You will be shown whether the difficulty changed, what changed, " +
-          "and why. It will look like this.\n\nPress SPACE to continue.",
+          "and why. It will look like this. Press SPACE to continue.",
         onEnter: () => {
           this.spacePressed = false;
           this.overlay.show(generateExampleExplanation());

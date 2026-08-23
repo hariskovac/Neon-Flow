@@ -137,7 +137,7 @@ export class CalibrationScene extends Phaser.Scene {
 
     this.roundLabel = this.add.text(
       ARENA.x + ARENA.width / 2,
-      ARENA.y + ARENA.height / 2 - 140,
+      ARENA.y + ARENA.height / 2 - 210,
       "Calibration Round",
       { ...HUD_TEXT_STYLE, fontSize: "30px", color: PALETTE.textAccent },
     );

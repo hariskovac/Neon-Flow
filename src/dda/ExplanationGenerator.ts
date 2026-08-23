@@ -1,10 +1,13 @@
 import type { DifficultyDirection } from "./DifficultyController";
 import type { ActuatorKey, ParameterChange } from "./ParameterChanges";
-import { MAX_DIFFICULTY_LEVEL } from "./DifficultyConfig";
+import { MAX_DIFFICULTY_LEVEL, resolveActuatorPressure } from "./DifficultyConfig";
+import { ACTUATOR_KEYS, resolveParameterChanges } from "./ParameterChanges";
 
 export interface ParameterLine {
   readonly label: string;
-  readonly direction: "up" | "down";
+  readonly direction: "up" | "down" | "unchanged";
+  readonly previousPressure: number;
+  readonly nextPressure: number;
 }
 
 export interface Explanation {
@@ -19,27 +22,31 @@ export interface Explanation {
 
 const PARAMETER_WORDING: Record<
   ActuatorKey,
-  { rising: string; falling: string; labelRisesWithValue: boolean }
+  { rising: string; falling: string; unchanged: string; labelRisesWithValue: boolean }
 > = {
   spawnIntervalMs: {
     rising: "Enemies spawn more often",
     falling: "Enemies spawn less often",
+    unchanged: "Enemy spawn rate unchanged",
     labelRisesWithValue: false,
   },
   enemySpeedMultiplier: {
     rising: "Enemies move faster",
     falling: "Enemies move slower",
+    unchanged: "Enemy speed unchanged",
     labelRisesWithValue: true,
   },
   spawnIntensity: {
-    rising: "Enemies arrive in larger groups",
-    falling: "Enemies arrive in smaller groups",
+    rising: "Enemy group size increased",
+    falling: "Enemies group size decreased",
+    unchanged: "Enemy group size unchanged",
     labelRisesWithValue: true,
   },
   powerUpDropChance: {
-    rising: "Power-ups appear more often",
-    falling: "Power-ups appear less often",
-    labelRisesWithValue: true,
+    rising: "Power-ups become scarcer",
+    falling: "Power-ups are more common",
+    unchanged: "Power-up scarcity unchanged",
+    labelRisesWithValue: false,
   },
 };
 
@@ -60,18 +67,44 @@ function buildReasonText(reasons: string[]): string {
     .filter((phrase): phrase is string => phrase !== undefined)
     .join("  \u2022  ");
 }
- 
-function buildChangeLines(changes: ParameterChange[]): ParameterLine[] {
-  return changes.map((change) => {
-    const wording = PARAMETER_WORDING[change.parameter];
+
+function buildChangeLines(
+  previousLevel: number, 
+  nextLevel: number, 
+  changes: ParameterChange[],
+): ParameterLine[] {
+  const lines: ParameterLine[] = [];
+
+  for (const parameter of ACTUATOR_KEYS) {
+    const wording = PARAMETER_WORDING[parameter];
+    const change = changes.find((entry) => entry.parameter === parameter);
+
+    const previousPressure = resolveActuatorPressure(parameter, previousLevel);
+    const nextPressure = resolveActuatorPressure(parameter, nextLevel);
+
+    if (change === undefined) {
+      lines.push({
+        label: wording.unchanged,
+        direction: "unchanged",
+        previousPressure,
+        nextPressure,
+      });
+
+      continue;
+    }
+
     const valueRose = change.nextValue > change.previousValue;
     const labelRises = valueRose === wording.labelRisesWithValue;
- 
-    return {
+
+    lines.push({
       label: labelRises ? wording.rising : wording.falling,
       direction: labelRises ? "up" : "down",
-    };
-  });
+      previousPressure,
+      nextPressure,
+    });
+  }
+
+  return lines;
 }
 
 export function generateExplanation(
@@ -103,7 +136,7 @@ export function generateExplanation(
     levelLabel: null,
     levelValue: `${String(previousLevel)} \u2192 ${String(nextLevel)}`,
     note: null,
-    changeLines: buildChangeLines(changes),
+    changeLines: buildChangeLines(previousLevel, nextLevel, changes),
     reasonText,
     footer: null,
   };
@@ -114,7 +147,7 @@ export function generateCalibrationExplanation(
   maxStartingLevel: number,
 ): Explanation {
   const atCap = startingLevel >= maxStartingLevel;
- 
+
   return {
     headline: "Calibration complete",
     levelLabel: "Starting threat level",
@@ -142,7 +175,7 @@ export function generateNeutralExplanation(
       footer: "The first wave begins shortly.",
     };
   }
- 
+
   return {
     headline: "Wave complete",
     levelLabel: null,
@@ -160,12 +193,7 @@ export function generateExampleExplanation(): Explanation {
     levelLabel: null,
     levelValue: "3 \u2192 4",
     note: null,
-    changeLines: [
-      { label: "Enemies spawn more often", direction: "up" },
-      { label: "Enemies move faster", direction: "up" },
-      { label: "Enemies arrive in larger groups", direction: "up" },
-      { label: "Power-ups appear less often", direction: "down" },
-    ],
+    changeLines: buildChangeLines(3, 4, resolveParameterChanges(3, 4)),
     reasonText: "Example only",
     footer: "This is an example, not a result.",
   };
@@ -173,26 +201,26 @@ export function generateExampleExplanation(): Explanation {
 
 export function flattenExplanation(explanation: Explanation): string {
   const parts: string[] = [explanation.headline];
- 
+
   if (explanation.levelValue !== "") {
     parts.push(explanation.levelValue);
   }
- 
+
   if (explanation.note !== null) {
     parts.push(explanation.note);
   }
- 
+
   for (const line of explanation.changeLines) {
-    parts.push(`${line.direction === "up" ? "up" : "down"}: ${line.label}`);
+    parts.push(`${line.direction}: ${line.label}`);
   }
- 
+
   if (explanation.reasonText !== "") {
     parts.push(explanation.reasonText);
   }
- 
+
   if (explanation.footer !== null) {
     parts.push(explanation.footer);
   }
- 
+
   return parts.join(" | ");
 }

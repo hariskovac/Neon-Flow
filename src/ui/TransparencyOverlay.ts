@@ -7,6 +7,7 @@ import {
   HUD_TEXT_STYLE,
   PALETTE,
 } from "../game/gameplayConfig";
+import { PipBar } from "./PipBar";
 
 interface LayoutBlock {
   readonly label: Phaser.GameObjects.Text;
@@ -15,9 +16,10 @@ interface LayoutBlock {
 }
 
 export class TransparencyOverlay {
-  private static readonly PANEL_WIDTH = 460;
+  private static readonly PANEL_WIDTH = 560;
+  private static readonly LABEL_WIDTH = 270;
   private static readonly PADDING = 30;
-  private static readonly ROW_HEIGHT = 26;
+  private static readonly ROW_HEIGHT = 44;
   private static readonly LEFT_EDGE = -TransparencyOverlay.PANEL_WIDTH / 2 + 34;
   private readonly panel: Phaser.GameObjects.Rectangle;
 
@@ -33,6 +35,7 @@ export class TransparencyOverlay {
   private readonly reasonHeading: Phaser.GameObjects.Text;
   private readonly footerLabel: Phaser.GameObjects.Text;
   private readonly changeRows: Phaser.GameObjects.Text[] = [];
+  private readonly changeBars: PipBar[] = [];
 
   public constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -129,14 +132,15 @@ export class TransparencyOverlay {
       );
 
       while (this.changeRows.length < explanation.changeLines.length) {
-        const row = this.addLabel(this.scene, "24px", PALETTE.textPrimary, 0);
+        const row = this.addLabel(this.scene, "18px", PALETTE.textPrimary, 0);
 
         this.changeRows.push(row);
         this.container.add(row);
+        this.changeBars.push(new PipBar(this.scene, this.container));
       }
 
       explanation.changeLines.forEach((line, index) => {
-        const arrow = line.direction === "up" ? "\u2191" : "\u2193";
+        const arrow = this.resolveArrow(line.direction);
 
         blocks.push(
           this.block(
@@ -193,7 +197,31 @@ export class TransparencyOverlay {
       y += item.advance;
     }
 
+    explanation.changeLines.forEach((line, index) => {
+      const row = this.changeRows[index];
+      const bar = this.changeBars[index];
+
+      bar.update(
+        TransparencyOverlay.LEFT_EDGE + TransparencyOverlay.LABEL_WIDTH,
+        row.y,
+        line.previousPressure,
+        line.nextPressure,
+      );
+    });
+
     this.container.setVisible(true);
+  }
+
+  private resolveArrow(direction: "up" | "down" | "unchanged"): string {
+    if (direction === "up") {
+      return "\u2191";
+    }
+
+    if (direction === "down") {
+      return "\u2193";
+    }
+
+    return "\u2013";
   }
 
   public hide(): void {
@@ -223,6 +251,10 @@ export class TransparencyOverlay {
 
     for (const row of this.changeRows) {
       row.setVisible(false);
+    }
+
+    for (const bar of this.changeBars) {
+      bar.setVisible(false);
     }
   }
 }

@@ -1,3 +1,5 @@
+import type { ActuatorKey } from "./ParameterChanges";
+
 export const MIN_DIFFICULTY_LEVEL = 1;
 export const MAX_DIFFICULTY_LEVEL = 10;
 
@@ -33,6 +35,28 @@ export const ACTUATOR_BOUNDS = {
   powerUpDropChance: { min: 0.08, max: 0.50 },
 };
 
+export const ACTUATOR_RANGES: Record < ActuatorKey, { min: number; max: number } > = (() => {
+  const keys: ActuatorKey[] = [
+    "spawnIntervalMs",
+    "enemySpeedMultiplier",
+    "spawnIntensity",
+    "powerUpDropChance",
+  ];
+
+  const ranges = {} as Record<ActuatorKey, { min: number; max: number }>;
+
+  for (const key of keys) {
+    const values = DIFFICULTY_TABLE.map((row) => row[key]);
+
+    ranges[key] = {
+      min: Math.min(...values),
+      max: Math.max(...values),
+    };
+  }
+
+  return ranges;
+})();
+
 export const STABILITY_CONFIG = {
   earlyCorrectionWaves: 2,
   acceleratedStep: 2,
@@ -42,6 +66,25 @@ export const STABILITY_CONFIG = {
   // suppresses downward hysteresis when lives are <= this value
   safetyLivesRemaining: 2,
 };
+
+export function resolveActuatorPressure(
+  parameter: ActuatorKey,
+  level: number,
+): number {
+  const range = ACTUATOR_RANGES[parameter];
+  const span = range.max - range.min;
+
+  if (span === 0) {
+    return 0;
+  }
+
+  const value = resolveActuators(level)[parameter];
+  const position = (value - range.min) / span;
+
+  const risesWithDifficulty = parameter === "enemySpeedMultiplier" || parameter === "spawnIntensity";
+
+  return risesWithDifficulty ? position : 1 - position;
+}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
