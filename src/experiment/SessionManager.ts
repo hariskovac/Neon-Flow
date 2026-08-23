@@ -4,8 +4,12 @@ import type {
   PowerUpType,
   Condition,
   DDAEvent,
-  ConsentRecord
+  ConsentRecord,
+  QuestionnaireResponse,
+  StudyPhase,
+  PersistedSession,
 } from "../types/game";
+import { sessionStore } from "./SessionStore";
 
 export class SessionManager {
   private calibration: WavePerformance | null = null;
@@ -20,6 +24,14 @@ export class SessionManager {
   private totalPausedMs = 0;
   private ddaEvents: DDAEvent[] = [];
   private consent: ConsentRecord | null = null;
+  private questionnaire: QuestionnaireResponse | null = null;
+  private identity: PersistedSession;
+
+  public constructor() {
+    this.identity = sessionStore.load() ?? sessionStore.createLocal();
+
+    sessionStore.save(this.identity);
+  }
 
   // calibration run summary
   public setCalibration(summary: WavePerformance): void {
@@ -40,6 +52,14 @@ export class SessionManager {
 
   public getCompletedWaveCount(): number {
     return this.completedWaves.length;
+  }
+
+  public getSessionId(): string {
+    return this.identity.sessionId;
+  }
+
+  public getPhase(): StudyPhase {
+    return this.identity.phase;
   }
 
   public addDDAEvent(event: DDAEvent): void {
@@ -74,6 +94,14 @@ export class SessionManager {
 
   public getTotalPausedMs(): number {
     return this.totalPausedMs;
+  }
+
+  public setQuestionnaire(response: QuestionnaireResponse): void {
+    this.questionnaire = response;
+  }
+
+  public getQuestionnaire(): QuestionnaireResponse | null {
+    return this.questionnaire;
   }
 
   public setOutcome(outcome: {
@@ -132,7 +160,23 @@ export class SessionManager {
     return this.consent;
   }
 
-  public reset(): void {
+  public setPhase(phase: StudyPhase): void {
+    this.identity = { ...this.identity, phase };
+
+    sessionStore.save(this.identity);
+  }
+
+  public setIdentity(sessionId: string, condition: Condition): void {
+    this.identity = { ...this.identity, sessionId, condition };
+
+    sessionStore.save(this.identity);
+  }
+
+  public isRecording(): boolean {
+    return this.identity.phase === "researchRun";
+  }
+
+  public resetRun(): void {
     this.calibration = null;
     this.completedWaves = [];
     this.livesRemaining = 0;
@@ -140,9 +184,6 @@ export class SessionManager {
     this.terminationReason = "completed";
     this.powerUpsCollectedByType = { shield: 0, speed: 0, fireRate: 0 };
     // TODO: replace by server-assigned value
-    this.condition = Math.random() < 0.5 ? "hidden" : "transparent";
-    this.musicEnabled = true;
-    this.sfxEnabled = true;
     this.pauseCount = 0;
     this.totalPausedMs = 0;
     this.ddaEvents = [];

@@ -409,6 +409,8 @@ export const WAVE_CONFIG = {
 export const CALIBRATION_CONFIG = {
   durationMs: 45000,
   fixedLevel: 3,
+  labelHoldMs: 2500,
+  labelFadeMs: 900,
 };
 
 export const POWERUP_CONFIG = {

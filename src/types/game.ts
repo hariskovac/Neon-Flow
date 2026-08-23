@@ -17,17 +17,6 @@ export interface ArenaBounds {
   readonly height: number;
 }
 
-export function createEmptyKillTally(): Record<EnemyType, number> {
-  return {
-    chaser: 0,
-    dodger: 0,
-    dasher: 0,
-    splitter: 0,
-    shard: 0,
-    winder: 0,
-  };
-}
-
 export interface WavePerformance {
   readonly waveNumber: number;
   readonly durationMs: number;
@@ -65,4 +54,39 @@ export interface ConsentRecord {
   readonly signature: string;
   readonly printedName: string;
   readonly signedAt: string;
+}
+
+export interface QuestionnaireResponse {
+  readonly scaleResponses: Record<string, number>;
+  readonly choiceResponses: Record<string, string>;
+  readonly unansweredCount: number;
+  readonly submittedAt: string;
+}
+
+export interface PersistedSession {
+  readonly sessionId: string;
+  readonly condition: Condition;
+  readonly phase: StudyPhase;
+  readonly startedAt: string;
+}
+
+export type { ScaleItem } from "../survey/questionnaireContent.ts";
+
+export type StudyPhase =
+  | "consent"
+  | "tutorial"
+  | "calibration"
+  | "researchRun"
+  | "questionnaireRequired"
+  | "studyComplete";
+
+export function createEmptyKillTally(): Record<EnemyType, number> {
+  return {
+    chaser: 0,
+    dodger: 0,
+    dasher: 0,
+    splitter: 0,
+    shard: 0,
+    winder: 0,
+  };
 }

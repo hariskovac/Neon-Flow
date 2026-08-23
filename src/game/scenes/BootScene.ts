@@ -26,7 +26,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   public create(): void {
-    session.reset();
+    session.resetRun();
     this.scene.start("TutorialScene");
   }
 }

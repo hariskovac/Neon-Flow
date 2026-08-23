@@ -549,6 +549,8 @@ export class GameScene extends Phaser.Scene {
       this.clock.getTotalPausedMs(),
     );
 
+    session.setPhase("questionnaireRequired");
+
     this.scene.start("ResultsScene");
   }
 }

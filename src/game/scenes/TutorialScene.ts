@@ -395,7 +395,7 @@ export class TutorialScene extends Phaser.Scene {
         title: "Dodgers",
         body:
           "Dodgers move towards you and dodge your attacks. " +
-          "Pinning them against walls and firing is a good strategy.",
+          "Try pinning them against walls or spraying them with fire.",
         onEnter: (context) => {
           const positions = [
             { x: centerX - 260, y: centerY - 200 },
@@ -485,8 +485,8 @@ export class TutorialScene extends Phaser.Scene {
         id: "winder",
         title: "Winders",
         body:
-          "Winders weave toward you in a chain. Shoot the head to destroy " +
-          "it. ",
+          "Winders weave toward you in a chain. The tail cannot hurt you. " +
+          "Shoot the head to destroy them. ",
         enterDelayMs: TUTORIAL_CONFIG.enemyIntroDelayMs,
         onEnter: (context) => {
           const spawnX = ARENA.x + ARENA.width - 200;
@@ -724,6 +724,7 @@ export class TutorialScene extends Phaser.Scene {
 
   private finish(): void {
     this.prompt.hide();
+    session.setPhase("calibration");
     this.scene.start("CalibrationScene");
   }
 

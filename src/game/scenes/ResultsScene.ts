@@ -1,16 +1,9 @@
 import Phaser from "phaser";
 
-import type { GameEndReason, WavePerformance } from "../../types/game";
 import { CANVAS, HUD_TEXT_STYLE, PALETTE } from "../gameplayConfig";
 import { session } from "../../experiment/SessionManager";
 import { AudioControls } from "../../ui/AudioControls";
-
-export interface ResultsData {
-  readonly finalScore: number;
-  readonly completedWaves: WavePerformance[];
-  readonly gameEndReason: GameEndReason;
-  readonly livesRemaining: number;
-}
+import { QuestionnaireFlow } from "../../survey/questionnaireFlow";
 
 export class ResultsScene extends Phaser.Scene {
 
@@ -56,8 +49,16 @@ export class ResultsScene extends Phaser.Scene {
     this.addCenteredText(
       centerX,
       380,
-      "Press SPACE to play again",
-      "18px",
+      "Please complete a short questionnaire about your experience.",
+      "22px",
+      PALETTE.hudMuted,
+    );
+
+    this.addCenteredText(
+      centerX,
+      412,
+      "It takes about three minutes. Press SPACE to continue.",
+      "22px",
       PALETTE.hudMuted,
     );
 
@@ -68,8 +69,7 @@ export class ResultsScene extends Phaser.Scene {
     }
 
     keyboard.once("keydown-SPACE", () => {
-      session.reset();
-      this.scene.start("CalibrationScene");
+      void this.startQuestionnaire();
     });
   }
 
@@ -87,5 +87,30 @@ export class ResultsScene extends Phaser.Scene {
     });
 
     label.setOrigin(0.5, 0.5);
+  }
+
+  private async startQuestionnaire(): Promise<void> {
+    const gameRoot = document.querySelector<HTMLElement>("#game-root");
+    const surveyRoot = document.querySelector<HTMLElement>("#survey-root");
+
+    if (gameRoot === null || surveyRoot === null) {
+      throw new Error("The game or survey container is missing from the page.");
+    }
+
+    gameRoot.hidden = true;
+
+    const flow = new QuestionnaireFlow(surveyRoot);
+    const response = await flow.start();
+
+    session.setQuestionnaire(response);
+    session.setPhase("studyComplete");
+
+    // TODO: replace with Supabase upload and debrief screen
+    console.log("Questionnaire complete", response);
+
+    gameRoot.hidden = false;
+
+    session.resetRun();
+    this.scene.start("CalibrationScene");
   }
 }

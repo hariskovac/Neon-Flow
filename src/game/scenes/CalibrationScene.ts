@@ -7,7 +7,9 @@ import {
   CALIBRATION_CONFIG,
   PALETTE,
   WEAPON_CONFIG,
-  WAVE_CONFIG
+  WAVE_CONFIG,
+  HUD_TEXT_STYLE,
+  DEPTH,
 } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { PerformanceMonitor } from "../systems/PerformanceMonitor";
@@ -54,6 +56,7 @@ export class CalibrationScene extends Phaser.Scene {
   private effects!: EffectSystem;
   private readonly clock = new GameClock();
   private pauseOverlay!: PauseOverlay;
+  private roundLabel!: Phaser.GameObjects.Text;
 
   private startedAt: number | null = null;
   private aimAngle = -Math.PI / 2;
@@ -131,6 +134,26 @@ export class CalibrationScene extends Phaser.Scene {
       this.player,
       this.drops,
     );
+
+    this.roundLabel = this.add.text(
+      ARENA.x + ARENA.width / 2,
+      ARENA.y + ARENA.height / 2 - 140,
+      "Calibration Round",
+      { ...HUD_TEXT_STYLE, fontSize: "30px", color: PALETTE.textAccent },
+    );
+
+    this.roundLabel.setOrigin(0.5, 0.5);
+    this.roundLabel.setDepth(DEPTH.overlay);
+
+    this.tweens.add({
+      targets: this.roundLabel,
+      alpha: 0,
+      delay: CALIBRATION_CONFIG.labelHoldMs,
+      duration: CALIBRATION_CONFIG.labelFadeMs,
+      onComplete: () => {
+        this.roundLabel.destroy();
+      },
+    });
 
     const keyboard = this.input.keyboard;
 
@@ -338,6 +361,8 @@ export class CalibrationScene extends Phaser.Scene {
     this.spawner.clearAll();
 
     console.log("Calibration complete", summary);
+
+    session.setPhase("researchRun");
 
     this.scene.start("GameScene");
   }

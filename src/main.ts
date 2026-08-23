@@ -8,19 +8,21 @@ import "./style.css";
 async function start(): Promise<void> {
   const consentRoot = document.querySelector<HTMLElement>("#consent-root");
   const gameRoot = document.querySelector<HTMLElement>("#game-root");
- 
+
   if (consentRoot === null || gameRoot === null) {
     throw new Error("The consent or game container is missing from the page.");
   }
- 
+
   const flow = new ConsentFlow(consentRoot);
   const record = await flow.start();
- 
+
   session.setConsent(record);
- 
+  session.setConsent(record);
+  session.setPhase("tutorial");
+
   gameRoot.hidden = false;
- 
+
   new Phaser.Game(gameConfig);
 }
- 
+
 void start();
