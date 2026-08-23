@@ -370,18 +370,21 @@ export class TutorialScene extends Phaser.Scene {
           "Chasers pursue you. They start slow but get faster the longer " +
           "they survive. Destroy them quickly.",
         onEnter: (context) => {
-          this.beginSpawn(
-            "chaser",
-            ARENA.x + 120,
-            ARENA.y + 120,
-            context.now,
-            () => new Chaser(
-              this,
-              ARENA.x + 120,
-              ARENA.y + 120,
-              this.enemySpeedMultiplier(),
-            ),
-          );
+          const positions = [
+            { x: ARENA.x + 160, y: ARENA.y + 160 },
+            { x: ARENA.x + ARENA.width - 160, y: ARENA.y + 160 },
+            { x: ARENA.x + ARENA.width / 2, y: ARENA.y + 140 },
+          ];
+
+          for (const point of positions) {
+            this.beginSpawn(
+              "chaser",
+              point.x,
+              point.y,
+              context.now,
+              () => new Chaser(this, point.x, point.y, this.enemySpeedMultiplier()),
+            );
+          }
         },
         enterDelayMs: 4000,
         isComplete: () => this.allTargetsCleared(),
@@ -394,24 +397,28 @@ export class TutorialScene extends Phaser.Scene {
           "Dodgers move towards you and dodge your attacks. " +
           "Pinning them against walls and firing is a good strategy.",
         onEnter: (context) => {
-          const actuators = resolveActuators(TUTORIAL_CONFIG.enemyLevel);
-          const spawnX = centerX + TUTORIAL_CONFIG.dodgerSpawnDistance / 2;
-          const spawnY = centerY;
+          const positions = [
+            { x: centerX - 260, y: centerY - 200 },
+            { x: centerX + 260, y: centerY - 200 },
+            { x: centerX, y: centerY - 280 },
+          ];
 
-          this.beginSpawn(
-            "dodger",
-            spawnX,
-            spawnY,
-            context.now,
-            () =>
-              new Dodger(
-                this,
-                spawnX,
-                spawnY,
-                this.projectiles,
-                actuators.enemySpeedMultiplier,
-              ),
-          );
+          for (const point of positions) {
+            this.beginSpawn(
+              "dodger",
+              point.x,
+              point.y,
+              context.now,
+              () =>
+                new Dodger(
+                  this,
+                  point.x,
+                  point.y,
+                  this.projectiles,
+                  this.enemySpeedMultiplier(),
+                ),
+            );
+          }
         },
         enterDelayMs: 4000,
         isComplete: () => this.allTargetsCleared(),
@@ -425,17 +432,27 @@ export class TutorialScene extends Phaser.Scene {
           "Dashers lock onto your position, then charge. Dodge the dash and " +
           "attack while they recover.",
         onEnter: (context) => {
-          const spawnX = ARENA.x + ARENA.width - 140;
-          const spawnY = ARENA.y + 140;
+          const positions = [
+            { x: ARENA.x + 200, y: ARENA.y + 200 },
+            { x: ARENA.x + ARENA.width - 200, y: ARENA.y + ARENA.height - 200 },
+          ];
 
-          this.beginSpawn(
-            "dasher",
-            spawnX,
-            spawnY,
-            context.now,
-            () =>
-              new Dasher(this, spawnX, spawnY, this.enemySpeedMultiplier(), context.now),
-          );
+          for (const point of positions) {
+            this.beginSpawn(
+              "dasher",
+              point.x,
+              point.y,
+              context.now,
+              () =>
+                new Dasher(
+                  this,
+                  point.x,
+                  point.y,
+                  this.enemySpeedMultiplier(),
+                  context.now,
+                ),
+            );
+          }
         },
         enterDelayMs: 4000,
         isComplete: () => this.allTargetsCleared(),
