@@ -13,6 +13,34 @@ async function start(): Promise<void> {
     throw new Error("The consent or game container is missing from the page.");
   }
 
+  const button = document.createElement("button");
+
+  button.textContent = "Test Supabase";
+  button.style.cssText = "position:fixed;top:8px;right:8px;z-index:9999";
+
+  button.addEventListener("click", () => {
+  void fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ping`,
+      {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ note: "from browser" }),
+      },
+  )
+      .then((response) => response.json())
+      .then((result: unknown) => {
+      console.log("ping result", result);
+      })
+      .catch((error: unknown) => {
+      console.error("ping failed", error);
+      });
+  });
+
+  document.body.append(button);
+
   const flow = new ConsentFlow(consentRoot);
   const record = await flow.start();
 

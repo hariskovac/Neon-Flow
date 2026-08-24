@@ -34,7 +34,6 @@ import { classifyPerformance, resolveKillRatio } from "../../dda/PerformanceEval
 import { GameClock } from "../systems/GameClock";
 import { PauseOverlay } from "../../ui/PauseOverlay";
 import { AudioControls } from "../../ui/AudioControls";
-import { resolveActuatorPressure } from "../../dda/DifficultyConfig";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -173,15 +172,6 @@ export class GameScene extends Phaser.Scene {
       "mousemove",
       this.handleWindowPointer,
     );
-
-    for (let level = 1; level <= 10; level += 1) {
-  console.log(level, {
-    spawn: resolveActuatorPressure("spawnIntervalMs", level).toFixed(2),
-    speed: resolveActuatorPressure("enemySpeedMultiplier", level).toFixed(2),
-    groups: resolveActuatorPressure("spawnIntensity", level).toFixed(2),
-    scarcity: resolveActuatorPressure("powerUpDropChance", level).toFixed(2),
-  });
-}
 
     this.events.once("shutdown", () => {
       this.game.canvas.ownerDocument.removeEventListener(
