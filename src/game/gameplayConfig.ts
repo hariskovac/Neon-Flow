@@ -68,7 +68,7 @@ export const CHASER_CONFIG = {
   radius: 15,
   maxHealth: 1,
   baseSpeed: 140,
-  accelerationPerSecond: 22,
+  accelerationPerSecond: 20,
   maxSpeed: 290,
   hullOutline: [
     { x: 0, y: -16 },
@@ -151,7 +151,7 @@ export const WINDER_CONFIG = {
   segmentCount: 11,
   maxHealth: 3,
   speed: 200,
-  maxSpeed: 420,
+  maxSpeed: 400,
   weaveAmplitude: 2,
   weavePeriodMs: 2000,
   weavePeriodVariance: 0.25,
