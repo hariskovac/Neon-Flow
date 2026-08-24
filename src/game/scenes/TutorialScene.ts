@@ -33,8 +33,6 @@ import { HudSystem } from "../systems/HudSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
 import { resolveActuators } from "../../dda/DifficultyConfig";
 import { session } from "../../experiment/SessionManager";
-import { generateExampleExplanation } from "../../dda/ExplanationGenerator";
-import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
 import type { PowerUpType, EnemyType } from "../../types/game";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { drawArenaBackground } from "../render/ArenaBackground";
@@ -75,7 +73,6 @@ export class TutorialScene extends Phaser.Scene {
   private score!: ScoreSystem;
   private hitMessageUntil = 0;
   private hitLabel!: Phaser.GameObjects.Text;
-  private overlay!: TransparencyOverlay;
   private powerUps!: PowerUpEffects;
   private effects!: EffectSystem;
   private readonly clock = new GameClock();
@@ -163,8 +160,6 @@ export class TutorialScene extends Phaser.Scene {
     this.prompt = new TutorialPrompt(this);
     this.pauseOverlay = new PauseOverlay(this);
     this.registerInput();
-
-    this.overlay = new TransparencyOverlay(this);
 
     for (let index = 0; index < 4; index += 1) {
       this.spawnEffects.push(new SpawnEffect(this));
@@ -553,22 +548,6 @@ export class TutorialScene extends Phaser.Scene {
         minimumMs: 6000,
       },
       {
-        id: "transparencyExample",
-        title: "Between waves",
-        body:
-          "You will be shown whether the difficulty changed, what changed, " +
-          "and why. It will look like this. Press SPACE to continue.",
-        onEnter: () => {
-          this.spacePressed = false;
-          this.overlay.show(generateExampleExplanation());
-        },
-        isComplete: () => this.spacePressed,
-        minimumMs: 2000,
-        onExit: () => {
-          this.overlay.hide();
-        },
-      },
-      {
         id: "ready",
         title: "Ready",
         body:
@@ -581,9 +560,7 @@ export class TutorialScene extends Phaser.Scene {
       },
     ];
 
-    return steps.filter(
-      (step) => step.id !== "transparencyExample" || session.isTransparent(),
-    );
+    return steps;
   }
 
   private enterStep(time: number): void {

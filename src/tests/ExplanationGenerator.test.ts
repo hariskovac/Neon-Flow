@@ -134,37 +134,37 @@ describe("generateExplanation", () => {
   it("points the arrow at labelled rate, not pressure", () => {
     const result = generateExplanation(
       "increase",
-      3,
-      5,
-      resolveParameterChanges(3, 5),
-      ["highKillRate"],
+      1,
+      10,
+      resolveParameterChanges(1, 10),
+      [],
     );
 
-    const byLabel = (label: string): string | undefined =>
-      result.changeLines.find((line) => line.label.startsWith(label))?.direction;
+    const byParameter = (parameter: string): string | undefined =>
+      result.changeLines.find((line) => line.parameter === parameter)?.direction;
 
-    expect(byLabel("Enemies spawn")).toBe("up");
-    expect(byLabel("Enemies move")).toBe("up");
-    expect(byLabel("Enemies arrive")).toBe("up");
-    expect(byLabel("Power-ups")).toBe("down");
+    expect(byParameter("spawnIntervalMs")).toBe("up");
+    expect(byParameter("enemySpeedMultiplier")).toBe("up");
+    expect(byParameter("spawnIntensity")).toBe("up");
+    expect(byParameter("powerUpDropChance")).toBe("up");
   });
 
   it("reverses every arrow when the level falls", () => {
     const result = generateExplanation(
       "decrease",
-      5,
-      3,
-      resolveParameterChanges(5, 3),
-      ["livesLost"],
+      10,
+      1,
+      resolveParameterChanges(10, 1),
+      [],
     );
 
-    const byLabel = (label: string): string | undefined =>
-      result.changeLines.find((line) => line.label.startsWith(label))?.direction;
+    const byParameter = (parameter: string): string | undefined =>
+      result.changeLines.find((line) => line.parameter === parameter)?.direction;
 
-    expect(byLabel("Enemies spawn")).toBe("down");
-    expect(byLabel("Enemies move")).toBe("down");
-    expect(byLabel("Enemies arrive")).toBe("down");
-    expect(byLabel("Power-ups")).toBe("up");
+    expect(byParameter("spawnIntervalMs")).toBe("down");
+    expect(byParameter("enemySpeedMultiplier")).toBe("down");
+    expect(byParameter("spawnIntensity")).toBe("down");
+    expect(byParameter("powerUpDropChance")).toBe("down");
   });
 
   it("omits reason line when no reasons are given", () => {

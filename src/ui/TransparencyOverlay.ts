@@ -83,13 +83,14 @@ export class TransparencyOverlay {
   private addLabel(
     scene: Phaser.Scene,
     fontSize: string,
-    colour: string,
+    color: string,
     originX: number,
   ): Phaser.GameObjects.Text {
     const label = scene.add.text(0, 0, "", {
       ...HUD_TEXT_STYLE,
       fontSize,
-      color: colour,
+      color: color,
+      align: "center",
       wordWrap: { width: TransparencyOverlay.PANEL_WIDTH - 68 },
     });
 

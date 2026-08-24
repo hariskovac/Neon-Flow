@@ -24,6 +24,7 @@ import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
 import { 
   generateCalibrationExplanation,
   generateNeutralExplanation,
+  generateExampleExplanation,
   flattenExplanation 
 } from "../../dda/ExplanationGenerator";
 import type { Explanation } from "../../dda/ExplanationGenerator";
@@ -34,6 +35,7 @@ import { classifyPerformance, resolveKillRatio } from "../../dda/PerformanceEval
 import { GameClock } from "../systems/GameClock";
 import { PauseOverlay } from "../../ui/PauseOverlay";
 import { AudioControls } from "../../ui/AudioControls";
+import { TutorialPrompt } from "../tutorial/TutorialPrompt";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -57,6 +59,9 @@ export class GameScene extends Phaser.Scene {
   private effects!: EffectSystem;
   private readonly clock = new GameClock();
   private pauseOverlay!: PauseOverlay;
+  private briefingComplete = false;
+  private showingBriefing = false;
+  private briefingPrompt!: TutorialPrompt;
 
   private aimAngle = -Math.PI / 2;
   private hasPointerInput = false;
@@ -77,15 +82,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.performance = new PerformanceMonitor();
-    const calibration = mapCalibration(session.getCalibration());
     audio.attach(this);
     new AudioControls(this);
 
     this.clock.reset();
+    this.performance = new PerformanceMonitor();
+    this.effects = new EffectSystem(this);
     this.pauseOverlay = new PauseOverlay(this);
 
-    this.effects = new EffectSystem(this);
+    this.overlay = new TransparencyOverlay(this);
+    this.briefingPrompt = new TutorialPrompt(this);
+    this.briefingPrompt.hide();
+
+    const calibration = mapCalibration(session.getCalibration());
+    console.log("Calibration", calibration);
 
     this.difficulty = new DifficultyController(calibration.startingLevel);
     this.waves = new WaveSystem();
@@ -93,10 +103,9 @@ export class GameScene extends Phaser.Scene {
     this.overlay = new TransparencyOverlay(this);
 
     this.showOverlay(
-      generateCalibrationExplanation(calibration.startingLevel, 5),
+      generateCalibrationExplanation(calibration.startingLevel, 5, session.isTransparent()),
     );
 
-    console.log("Calibration", calibration);
 
     this.physics.world.setBounds(
       ARENA.x,
@@ -151,6 +160,12 @@ export class GameScene extends Phaser.Scene {
 
     if (!keyboard) {
       throw new Error("Keyboard input is unavailable.");
+    }
+
+    this.briefingComplete = !session.isTransparent();
+
+    if (session.isTransparent()) {
+      keyboard.once("keydown-SPACE", this.advanceBriefing, this);
     }
 
     this.movementKeys = keyboard.addKeys({
@@ -208,7 +223,7 @@ export class GameScene extends Phaser.Scene {
 
     const time = this.clock.now(rawTime);
 
-    const transition = this.waves.update(time);
+    const transition = this.briefingComplete ? this.waves.update(time) : null;
 
     if (transition === "spawningStopped") {
       this.spawner.setSpawningEnabled(false);
@@ -450,6 +465,37 @@ export class GameScene extends Phaser.Scene {
       isCalibration: false,
       isTutorial: false,
     });
+  }
+
+  private advanceBriefing(): void {
+    const keyboard = this.input.keyboard;
+
+    if (keyboard === null) {
+      return;
+    }
+
+    if (!this.showingBriefing) {
+      this.showingBriefing = true;
+
+      this.briefingPrompt.show(
+        "Between waves",
+        "After each wave you will see a card like the one below, showing " +
+          "whether the difficulty changed, what changed, and why. The card " +
+          "below is an example.",
+      );
+
+      this.overlay.show(generateExampleExplanation());
+
+      keyboard.once("keydown-SPACE", this.advanceBriefing, this);
+
+      return;
+    }
+
+    this.showingBriefing = false;
+    this.briefingComplete = true;
+
+    this.briefingPrompt.hide();
+    this.overlay.hide();
   }
 
   private togglePause(): void {

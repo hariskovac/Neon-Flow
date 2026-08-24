@@ -133,9 +133,11 @@ describe("condition equivalence", () => {
     for (const performance of SEQUENCE) {
       const decision = controller.evaluate(performance, 5);
 
-      expect(decision.explanation.changeLines.length).toBe(
-        decision.parameterChanges.length,
+      const claimingMovement = decision.explanation.changeLines.filter(
+        (line) => line.direction !== "unchanged",
       );
+
+      expect(claimingMovement.length).toBe(decision.parameterChanges.length);
     }
   });
 

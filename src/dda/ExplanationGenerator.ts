@@ -4,6 +4,7 @@ import { MAX_DIFFICULTY_LEVEL, resolveActuatorPressure } from "./DifficultyConfi
 import { ACTUATOR_KEYS, resolveParameterChanges } from "./ParameterChanges";
 
 export interface ParameterLine {
+  readonly parameter: ActuatorKey;
   readonly label: string;
   readonly direction: "up" | "down" | "unchanged";
   readonly previousPressure: number;
@@ -61,6 +62,40 @@ const REASON_PHRASES: Record<string, string> = {
   slowClearing: "Enemies cleared slowly",
 };
 
+const REASON_VALENCE: Record<string, "positive" | "negative"> = {
+  noLivesLost: "positive",
+  highKillRate: "positive",
+  fastClearing: "positive",
+  livesLost: "negative",
+  lowKillRate: "negative",
+  slowClearing: "negative",
+};
+
+function selectReasons(
+  reasons: string[],
+  direction: DifficultyDirection,
+): string[] {
+  if (direction === "unchanged") {
+    return reasons;
+  }
+
+  const contradicts = direction === "increase" ? "negative" : "positive";
+
+  const consistent = reasons.filter(
+    (reason) => REASON_VALENCE[reason] !== contradicts,
+  );
+
+  const hasDirectional = consistent.some(
+    (reason) => REASON_VALENCE[reason] !== undefined,
+  );
+
+  if (hasDirectional) {
+    return consistent;
+  }
+
+  return reasons.filter((reason) => REASON_VALENCE[reason] === undefined);
+}
+
 function buildReasonText(reasons: string[]): string {
   return reasons
     .map((reason) => REASON_PHRASES[reason])
@@ -69,8 +104,8 @@ function buildReasonText(reasons: string[]): string {
 }
 
 function buildChangeLines(
-  previousLevel: number, 
-  nextLevel: number, 
+  previousLevel: number,
+  nextLevel: number,
   changes: ParameterChange[],
 ): ParameterLine[] {
   const lines: ParameterLine[] = [];
@@ -84,6 +119,7 @@ function buildChangeLines(
 
     if (change === undefined) {
       lines.push({
+        parameter,
         label: wording.unchanged,
         direction: "unchanged",
         previousPressure,
@@ -97,6 +133,7 @@ function buildChangeLines(
     const labelRises = valueRose === wording.labelRisesWithValue;
 
     lines.push({
+      parameter,
       label: labelRises ? wording.rising : wording.falling,
       direction: labelRises ? "up" : "down",
       previousPressure,
@@ -114,7 +151,7 @@ export function generateExplanation(
   changes: ParameterChange[],
   reasons: string[],
 ): Explanation {
-  const reasonText = buildReasonText(reasons);
+  const reasonText = buildReasonText(selectReasons(reasons, direction));
 
   if (direction === "unchanged" || changes.length === 0) {
     return {
@@ -145,8 +182,13 @@ export function generateExplanation(
 export function generateCalibrationExplanation(
   startingLevel: number,
   maxStartingLevel: number,
+  awaitsKeypress = false,
 ): Explanation {
   const atCap = startingLevel >= maxStartingLevel;
+
+  const note = atCap
+    ? "Difficulty may continue to increase during play."
+    : "Based on your calibration performance.";
 
   return {
     headline: "Calibration complete",
@@ -155,9 +197,7 @@ export function generateCalibrationExplanation(
     note: atCap ? "Highest possible starting level" : null,
     changeLines: [],
     reasonText: "",
-    footer: atCap
-      ? "Difficulty may continue to increase during play."
-      : "Based on your calibration performance.",
+    footer: awaitsKeypress ? `${note} Press SPACE to continue.` : note,
   };
 }
 
@@ -195,32 +235,22 @@ export function generateExampleExplanation(): Explanation {
     note: null,
     changeLines: buildChangeLines(3, 4, resolveParameterChanges(3, 4)),
     reasonText: "Example only",
-    footer: "This is an example, not a result.",
+    footer: "Press SPACE to begin.",
   };
 }
 
 export function flattenExplanation(explanation: Explanation): string {
   const parts: string[] = [explanation.headline];
 
-  if (explanation.levelValue !== "") {
-    parts.push(explanation.levelValue);
-  }
-
-  if (explanation.note !== null) {
-    parts.push(explanation.note);
-  }
+  if (explanation.levelValue !== "") parts.push(explanation.levelValue);
+  if (explanation.note !== null) parts.push(explanation.note);
 
   for (const line of explanation.changeLines) {
-    parts.push(`${line.direction}: ${line.label}`);
+    parts.push(`${line.direction === "up" ? "up" : "down"}: ${line.label}`);
   }
 
-  if (explanation.reasonText !== "") {
-    parts.push(explanation.reasonText);
-  }
-
-  if (explanation.footer !== null) {
-    parts.push(explanation.footer);
-  }
+  if (explanation.reasonText !== "") parts.push(explanation.reasonText);
+  if (explanation.footer !== null) parts.push(explanation.footer);
 
   return parts.join(" | ");
 }
