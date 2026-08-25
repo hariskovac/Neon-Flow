@@ -4,7 +4,7 @@ import {
   CONSENT_QUESTIONS,
   INFORMATION_SHEET,
   STUDY_CONTACTS,
-} from "./ConsentContent";
+} from "./consentContent";
 
 export class ConsentFlow {
   private readonly root: HTMLElement;
@@ -18,6 +18,7 @@ export class ConsentFlow {
     return new Promise<ConsentRecord>((resolve) => {
       this.resolveFlow = resolve;
 
+      this.root.hidden = false;
       this.showInformationSheet();
     });
   }

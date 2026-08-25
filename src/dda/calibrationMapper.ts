@@ -1,6 +1,6 @@
 import type { WavePerformance } from "../types/game";
-import { clampLevel } from "./DifficultyConfig";
-import { resolveKillRatio } from "./PerformanceEvaluator";
+import { clampLevel } from "./difficultyConfig";
+import { resolveKillRatio } from "./performanceEvaluator";
 
 export type CalibrationBand =
   | "veryLow"

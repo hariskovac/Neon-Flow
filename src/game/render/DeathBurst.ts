@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 
 import { BURST_CONFIG, PLAYER_BURST_CONFIG, DEPTH } from "../gameplayConfig";
-import { drawNeonLine, drawNeonCircle } from "./Neon";
+import { drawNeonLine, drawNeonCircle } from "./neon";
 
 interface BurstShape {
   readonly particleCount: number;

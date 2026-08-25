@@ -5,11 +5,11 @@ import {
   DEFAULT_STARTING_LEVEL,
   CALIBRATION_THRESHOLDS,
   mapCalibration,
-} from "../dda/CalibrationMapper";
+} from "../dda/calibrationMapper";
 import {
   MAX_DIFFICULTY_LEVEL,
   MIN_DIFFICULTY_LEVEL,
-} from "../dda/DifficultyConfig";
+} from "../dda/difficultyConfig";
 import { createEmptyKillTally } from "../types/game";
 
 interface CalibrationOverrides {

@@ -17,8 +17,8 @@ import { Chaser } from "../entities/enemies/Chaser";
 import { Dodger } from "../entities/enemies/Dodger";
 import { Dasher } from "../entities/enemies/Dasher";
 import type { ProjectileSystem } from "./ProjectileSystem";
-import type { ActuatorValues } from "../../dda/DifficultyConfig";
-import { resolveActuators } from "../../dda/DifficultyConfig";
+import type { ActuatorValues } from "../../dda/difficultyConfig.ts";
+import { resolveActuators } from "../../dda/difficultyConfig.ts";
 import { audio } from "../../audio/AudioSystem";
 import { SpawnEffect } from "../render/SpawnEffect";
 import { Shard } from "../entities/enemies/Shard";
@@ -30,11 +30,11 @@ import {
   resolveCornerAnchors,
   resolveIntensityValue,
   resolveSurroundPoints,
-} from "./SpawnPatterns";
+} from "./spawnPatterns";
 import { PersistenceTracker } from "./PersistenceTracker";
 
 interface QueuedSpawn {
-  readonly type: EnemyType;
+  readonly type: EnemyType; 
   readonly x: number;
   readonly y: number;
   readonly startAt: number;

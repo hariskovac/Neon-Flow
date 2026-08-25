@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 
-import type { Explanation } from "../dda/ExplanationGenerator";
+import type { Explanation } from "../dda/explanationGenerator";
 import {
   ARENA,
   DEPTH,

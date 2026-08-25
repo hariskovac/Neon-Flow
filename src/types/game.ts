@@ -1,4 +1,4 @@
-import type { ParameterChange } from "../dda/ParameterChanges";
+import type { ParameterChange } from "../dda/parameterChanges.ts";
 
 export type EnemyType = "chaser" | "dodger" | "dasher" | "splitter" | "shard" | "winder";
 export type PowerUpType = "shield" | "speed" | "fireRate";
@@ -47,6 +47,7 @@ export interface DDAEvent {
   readonly safetyOverride: boolean;
   readonly performanceScore: number;
   readonly usedAcceleratedStep: boolean;
+  readonly reasons: string[];
 }
 
 export interface ConsentRecord {
@@ -68,6 +69,8 @@ export interface PersistedSession {
   readonly condition: Condition;
   readonly phase: StudyPhase;
   readonly startedAt: string;
+
+  readonly verified: boolean;
 }
 
 export type { ScaleItem } from "../survey/questionnaireContent.ts";

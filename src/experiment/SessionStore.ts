@@ -56,6 +56,7 @@ export class SessionStore {
       condition: Math.random() < 0.5 ? "hidden" : "transparent",
       phase: "consent",
       startedAt: new Date().toISOString(),
+      verified: false
     };
   }
 
@@ -86,6 +87,7 @@ export class SessionStore {
     const conditions: Condition[] = ["hidden", "transparent"];
 
     return (
+      typeof candidate.verified === "boolean" &&
       typeof candidate.sessionId === "string" &&
       typeof candidate.startedAt === "string" &&
       typeof candidate.condition === "string" &&

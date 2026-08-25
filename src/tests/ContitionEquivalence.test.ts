@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { DifficultyController } from "../dda/DifficultyController";
-import { resolveActuators } from "../dda/DifficultyConfig";
-import { mapCalibration } from "../dda/CalibrationMapper";
-import { flattenExplanation } from "../dda/ExplanationGenerator";
+import { resolveActuators } from "../dda/difficultyConfig";
+import { mapCalibration } from "../dda/calibrationMapper";
+import { flattenExplanation } from "../dda/explanationGenerator";
 import type { EnemyType, WavePerformance } from "../types/game";
 import { createEmptyKillTally } from "../types/game";
 

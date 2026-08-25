@@ -167,13 +167,22 @@ export class SessionManager {
   }
 
   public setIdentity(sessionId: string, condition: Condition): void {
-    this.identity = { ...this.identity, sessionId, condition };
+    this.identity = {
+      ...this.identity,
+      sessionId,
+      condition,
+      verified: true,
+    };
 
     sessionStore.save(this.identity);
   }
 
   public isRecording(): boolean {
     return this.identity.phase === "researchRun";
+  }
+
+  public isVerified(): boolean {
+    return this.identity.verified;
   }
 
   public resetRun(): void {

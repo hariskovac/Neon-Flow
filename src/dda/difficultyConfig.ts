@@ -1,4 +1,4 @@
-import type { ActuatorKey } from "./ParameterChanges";
+import type { ActuatorKey } from "./parameterChanges";
 
 export const MIN_DIFFICULTY_LEVEL = 1;
 export const MAX_DIFFICULTY_LEVEL = 10;

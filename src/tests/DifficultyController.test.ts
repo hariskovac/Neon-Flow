@@ -10,7 +10,7 @@ import {
   STABILITY_CONFIG,
   clampLevel,
   resolveActuators,
-} from "../dda/DifficultyConfig";
+} from "../dda/difficultyConfig";
 
 interface WaveOverrides {
   kills?: number;

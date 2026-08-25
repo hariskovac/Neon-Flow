@@ -3,12 +3,12 @@ import Phaser from "phaser";
 import type { EnemyType, Vector2 } from "../../../types/game";
 import { DEPTH, PALETTE, WINDER_CONFIG } from "../../gameplayConfig";
 import type { Enemy } from "./Enemy";
-import type { PathSample } from "../../systems/WinderMovement";
-import { drawNeonShape } from "../../render/Neon";
+import type { PathSample } from "../../systems/winderMovement";
+import { drawNeonShape } from "../../render/neon";
 import {
   resolveWinderHeading,
   samplePathAt,
-} from "../../systems/WinderMovement";
+} from "../../systems/winderMovement";
 
 export class Winder implements Enemy {
   private readonly hitbox: Phaser.GameObjects.Rectangle;

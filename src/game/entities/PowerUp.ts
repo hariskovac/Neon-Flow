@@ -2,9 +2,9 @@ import Phaser from "phaser";
 
 import type { PowerUpType, Vector2 } from "../../types/game";
 import { DEPTH, PALETTE, POWERUP_CONFIG } from "../gameplayConfig";
-import { drawNeonLine, drawNeonShape } from "../render/Neon";
+import { drawNeonLine, drawNeonShape } from "../render/neon";
 
-const TYPE_COLOURS: Record<PowerUpType, number> = {
+const TYPE_COLORS: Record<PowerUpType, number> = {
   shield: PALETTE.powerUpShield,
   speed: PALETTE.powerUpSpeed,
   fireRate: PALETTE.powerUpFireRate,
@@ -126,7 +126,7 @@ export class PowerUp {
   }
 
   private draw(): void {
-    const colour = TYPE_COLOURS[this.type];
+    const color = TYPE_COLORS[this.type];
     const glyph = TYPE_GLYPHS[this.type];
 
     this.view.clear();
@@ -135,7 +135,7 @@ export class PowerUp {
       drawNeonShape(
         this.view,
         glyph.outline,
-        colour,
+        color,
         POWERUP_CONFIG.glyphLineWidth,
       );
     }
@@ -145,7 +145,7 @@ export class PowerUp {
         this.view,
         stroke[0],
         stroke[1],
-        colour,
+        color,
         POWERUP_CONFIG.glyphLineWidth,
       );
     }
@@ -156,7 +156,7 @@ export class PowerUp {
           this.view,
           stroke[0],
           stroke[1],
-          colour,
+          color,
           POWERUP_CONFIG.glyphLineWidth,
           segment.alpha,
         );

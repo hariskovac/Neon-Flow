@@ -1,7 +1,7 @@
 import type { DifficultyDirection } from "./DifficultyController";
-import type { ActuatorKey, ParameterChange } from "./ParameterChanges";
-import { MAX_DIFFICULTY_LEVEL, resolveActuatorPressure } from "./DifficultyConfig";
-import { ACTUATOR_KEYS, resolveParameterChanges } from "./ParameterChanges";
+import type { ActuatorKey, ParameterChange } from "./parameterChanges";
+import { MAX_DIFFICULTY_LEVEL, resolveActuatorPressure } from "./difficultyConfig";
+import { ACTUATOR_KEYS, resolveParameterChanges } from "./parameterChanges";
 
 export interface ParameterLine {
   readonly parameter: ActuatorKey;

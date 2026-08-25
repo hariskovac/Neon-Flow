@@ -2,9 +2,9 @@ import Phaser from "phaser";
 
 import type { EnemyType } from "../../../types/game";
 import { DASHER_CONFIG, DEPTH, PALETTE } from "../../gameplayConfig";
-import { resolveDash } from "../../systems/SplitterMovement";
+import { resolveDash } from "../../systems/splitterMovement.ts";
 import type { Enemy } from "./Enemy";
-import { drawNeonShape } from "../../render/Neon";
+import { drawNeonShape } from "../../render/neon";
 
 type DasherState = "locking" | "dashing" | "pausing";
 

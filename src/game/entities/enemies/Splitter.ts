@@ -2,8 +2,8 @@ import Phaser from "phaser";
 
 import type { EnemyType } from "../../../types/game";
 import { DEPTH, PALETTE, SPLITTER_CONFIG } from "../../gameplayConfig";
-import { drawNeonShape } from "../../render/Neon";
-import { setPursuitVector } from "../../systems/ChaserMovement";
+import { drawNeonShape } from "../../render/neon";
+import { setPursuitVector } from "../../systems/chaserMovement";
 import type { Enemy } from "./Enemy";
 
 export class Splitter implements Enemy {

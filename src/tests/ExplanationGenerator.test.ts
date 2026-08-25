@@ -4,12 +4,12 @@ import { DifficultyController } from "../dda/DifficultyController";
 import {
   MAX_DIFFICULTY_LEVEL,
   MIN_DIFFICULTY_LEVEL,
-} from "../dda/DifficultyConfig";
+} from "../dda/difficultyConfig";
 import {
   generateExplanation,
   generateNeutralExplanation,
-} from "../dda/ExplanationGenerator";
-import { resolveParameterChanges } from "../dda/ParameterChanges";
+} from "../dda/explanationGenerator";
+import { resolveParameterChanges } from "../dda/parameterChanges";
 import type { WavePerformance } from "../types/game";
 import { createEmptyKillTally } from "../types/game";
 

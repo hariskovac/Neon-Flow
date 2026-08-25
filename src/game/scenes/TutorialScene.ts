@@ -15,8 +15,8 @@ import {
   SPLITTER_CONFIG,
 } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
-import type { MovementInput } from "../systems/PlayerMovement";
-import { resolveMovementVector } from "../systems/PlayerMovement";
+import type { MovementInput } from "../systems/playerMovement";
+import { resolveMovementVector } from "../systems/playerMovement";
 import { PowerUpSystem } from "../systems/PowerUpSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { WeaponSystem } from "../systems/WeaponSystem";
@@ -31,11 +31,11 @@ import { Shard } from "../entities/enemies/Shard";
 import { Winder } from "../entities/enemies/Winder";
 import { HudSystem } from "../systems/HudSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
-import { resolveActuators } from "../../dda/DifficultyConfig";
+import { resolveActuators } from "../../dda/difficultyConfig";
 import { session } from "../../experiment/SessionManager";
 import type { PowerUpType, EnemyType } from "../../types/game";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
-import { drawArenaBackground } from "../render/ArenaBackground";
+import { drawArenaBackground } from "../render/arenaBackground";
 import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
 import { SpawnEffect } from "../render/SpawnEffect";
@@ -43,6 +43,7 @@ import { SPAWN_APPEARANCE } from "../systems/SpawnSystem";
 import { GameClock } from "../systems/GameClock";
 import { PauseOverlay } from "../../ui/PauseOverlay";
 import { AudioControls } from "../../ui/AudioControls";
+import { requireVerifiedSession } from "../../experiment/sessionGate";
 
 type MovementKeys = {
   W: Phaser.Input.Keyboard.Key;
@@ -617,7 +618,7 @@ export class TutorialScene extends Phaser.Scene {
     this.stepIndex += 1;
 
     if (this.stepIndex >= this.steps.length) {
-      this.finish();
+      void this.finish();
 
       return;
     }
@@ -699,8 +700,22 @@ export class TutorialScene extends Phaser.Scene {
     this.targets.push(first, second);
   }
 
-  private finish(): void {
+  private async finish(): Promise<void> {
     this.prompt.hide();
+
+    const gateRoot = document.querySelector<HTMLElement>("#gate-root");
+    const gameRoot = document.querySelector<HTMLElement>("#game-root");
+
+    if (gateRoot === null || gameRoot === null) {
+      throw new Error("A required container is missing from the page.");
+    }
+
+    gameRoot.hidden = true;
+
+    await requireVerifiedSession(gateRoot);
+
+    gameRoot.hidden = false;
+
     session.setPhase("calibration");
     this.scene.start("CalibrationScene");
   }

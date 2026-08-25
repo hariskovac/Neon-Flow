@@ -1,5 +1,5 @@
-  import type { ActuatorValues } from "./DifficultyConfig";
-  import { resolveActuators } from "./DifficultyConfig";
+  import type { ActuatorValues } from "./difficultyConfig.ts";
+  import { resolveActuators } from "./difficultyConfig.ts";
 
   export type ActuatorKey = keyof ActuatorValues;
 

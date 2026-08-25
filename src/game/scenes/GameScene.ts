@@ -6,8 +6,8 @@ import { HudSystem } from "../systems/HudSystem";
 import { LivesSystem } from "../systems/LivesSystem";
 import { ScoreSystem } from "../systems/ScoreSystem";
 import { Player } from "../entities/Player";
-import type { MovementInput } from "../systems/PlayerMovement";
-import { resolveMovementVector } from "../systems/PlayerMovement";
+import type { MovementInput } from "../systems/playerMovement";
+import { resolveMovementVector } from "../systems/playerMovement";
 import { ARENA, PALETTE, WEAPON_CONFIG, WAVE_CONFIG, POWERUP_CONFIG } from "../gameplayConfig";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
@@ -16,8 +16,8 @@ import { PerformanceMonitor } from "../systems/PerformanceMonitor";
 import type { GameEndReason } from "../../types/game";
 import { session } from "../../experiment/SessionManager";
 import { DifficultyController } from "../../dda/DifficultyController";
-import { resolveActuators } from "../../dda/DifficultyConfig";
-import { mapCalibration } from "../../dda/CalibrationMapper";
+import { resolveActuators } from "../../dda/difficultyConfig";
+import { mapCalibration } from "../../dda/calibrationMapper";
 import { PowerUpEffects } from "../systems/PowerUpEffects";
 import { PowerUpSystem } from "../systems/PowerUpSystem";
 import { TransparencyOverlay } from "../../ui/TransparencyOverlay";
@@ -26,12 +26,12 @@ import {
   generateNeutralExplanation,
   generateExampleExplanation,
   flattenExplanation 
-} from "../../dda/ExplanationGenerator";
-import type { Explanation } from "../../dda/ExplanationGenerator";
-import { drawArenaBackground } from "../render/ArenaBackground";
+} from "../../dda/explanationGenerator";
+import type { Explanation } from "../../dda/explanationGenerator";
+import { drawArenaBackground } from "../render/arenaBackground";
 import { audio } from "../../audio/AudioSystem";
 import { EffectSystem } from "../systems/EffectSystem";
-import { classifyPerformance, resolveKillRatio } from "../../dda/PerformanceEvaluator";
+import { classifyPerformance, resolveKillRatio } from "../../dda/performanceEvaluator";
 import { GameClock } from "../systems/GameClock";
 import { PauseOverlay } from "../../ui/PauseOverlay";
 import { AudioControls } from "../../ui/AudioControls";
@@ -272,6 +272,7 @@ export class GameScene extends Phaser.Scene {
           safetyOverride: decision.safetyOverride,
           performanceScore: decision.performanceScore,
           usedAcceleratedStep: decision.usedAcceleratedStep,
+          reasons: decision.reasons,
         });
       }
 

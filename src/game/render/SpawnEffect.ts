@@ -2,7 +2,7 @@ import Phaser from "phaser";
 
 import type { Vector2 } from "../../types/game";
 import { DEPTH, SPAWN_EFFECT_CONFIG } from "../gameplayConfig";
-import { drawNeonShape } from "./Neon";
+import { drawNeonShape } from "./neon";
 
 export interface SpawnShape {
   readonly durationMs: number;

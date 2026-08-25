@@ -7,7 +7,7 @@ import {
   resolvePersistenceScore,
   resolveSurvivalScore,
   EVIDENCE_THRESHOLDS,
-  EVIDENCE_WEIGHTS, } from "../dda/PerformanceEvaluator";
+  EVIDENCE_WEIGHTS, } from "../dda/performanceEvaluator";
 import { createEmptyKillTally } from "../types/game";
 
 interface WaveOverrides {

@@ -2,9 +2,9 @@ import Phaser from "phaser";
 
 import type { EnemyType } from "../../../types/game";
 import { DEPTH, PALETTE, SHARD_CONFIG } from "../../gameplayConfig";
-import { drawNeonShape } from "../../render/Neon";
+import { drawNeonShape } from "../../render/neon";
 import type { Enemy } from "./Enemy";
-import { setPursuitVector } from "../../systems/ChaserMovement";
+import { setPursuitVector } from "../../systems/chaserMovement";
 
 export class Shard implements Enemy {
   private readonly hitbox: Phaser.GameObjects.Rectangle;

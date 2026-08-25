@@ -2,7 +2,7 @@ import Phaser from "phaser";
 
 import type { Vector2 } from "../../types/game";
 import { DEPTH, PALETTE, PLAYER_CONFIG, PLAYER_SPAWN_CONFIG } from "../gameplayConfig";
-import { drawNeonShape, drawNeonCircle } from "../render/Neon";
+import { drawNeonShape, drawNeonCircle } from "../render/neon";
 import { audio } from "../../audio/AudioSystem";
 import { SpawnEffect } from "../render/SpawnEffect";
 

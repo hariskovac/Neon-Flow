@@ -2,7 +2,7 @@ import Phaser from "phaser";
 
 import { DEPTH } from "../gameplayConfig";
 import type { ShotRequest } from "../systems/WeaponSystem";
-import { drawNeonCircle } from "../render/Neon";
+import { drawNeonCircle } from "../render/neon";
 
 export class Projectile {
   private readonly view: Phaser.GameObjects.Graphics;

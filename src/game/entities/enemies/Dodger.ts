@@ -4,11 +4,11 @@ import type { ProjectileSystem } from "../../systems/ProjectileSystem";
 import { DEPTH, PALETTE, DODGER_CONFIG } from "../../gameplayConfig";
 import {
   resolveEvasion,
-} from "../../systems/DodgerMovement";
+} from "../../systems/dodgerMovement.ts";
 import type { Vector2, EnemyType } from "../../../types/game";
 import type { Enemy } from "./Enemy";
-import { drawNeonShape } from "../../render/Neon";
-import { setPursuitVector } from "../../systems/ChaserMovement";
+import { drawNeonShape } from "../../render/neon";
+import { setPursuitVector } from "../../systems/chaserMovement";
 
 export class Dodger implements Enemy {
   private readonly hitbox: Phaser.GameObjects.Rectangle;

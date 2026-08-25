@@ -3,7 +3,8 @@ import Phaser from "phaser";
 import { CANVAS, HUD_TEXT_STYLE, PALETTE } from "../gameplayConfig";
 import { session } from "../../experiment/SessionManager";
 import { AudioControls } from "../../ui/AudioControls";
-import { QuestionnaireFlow } from "../../survey/questionnaireFlow";
+import { QuestionnaireFlow } from "../../survey/QuestionnaireFlow";
+import { submitWithRetry } from "../../experiment/studySubmission";
 
 export class ResultsScene extends Phaser.Scene {
 
@@ -78,12 +79,12 @@ export class ResultsScene extends Phaser.Scene {
     y: number,
     text: string,
     fontSize: string,
-    colour: string,
+    color: string,
   ): void {
     const label = this.add.text(x, y, text, {
       ...HUD_TEXT_STYLE,
       fontSize,
-      color: colour,
+      color: color,
     });
 
     label.setOrigin(0.5, 0.5);
@@ -92,9 +93,10 @@ export class ResultsScene extends Phaser.Scene {
   private async startQuestionnaire(): Promise<void> {
     const gameRoot = document.querySelector<HTMLElement>("#game-root");
     const surveyRoot = document.querySelector<HTMLElement>("#survey-root");
+    const gateRoot = document.querySelector<HTMLElement>("#gate-root");
 
-    if (gameRoot === null || surveyRoot === null) {
-      throw new Error("The game or survey container is missing from the page.");
+    if (gameRoot === null || surveyRoot === null || gateRoot === null) {
+      throw new Error("A required container is missing from the page.");
     }
 
     gameRoot.hidden = true;
@@ -105,8 +107,11 @@ export class ResultsScene extends Phaser.Scene {
     session.setQuestionnaire(response);
     session.setPhase("studyComplete");
 
-    // TODO: replace with Supabase upload and debrief screen
-    console.log("Questionnaire complete", response);
+    const saved = await submitWithRetry(gateRoot);
+
+    if (!saved) {
+      console.warn("Study data was not submitted.");
+    }
 
     gameRoot.hidden = false;
 

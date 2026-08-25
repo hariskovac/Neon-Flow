@@ -1,11 +1,11 @@
 import type { WavePerformance } from "../types/game";
-import { STABILITY_CONFIG, clampLevel } from "./DifficultyConfig";
-import type { EvidenceClass } from "./PerformanceEvaluator";
-import { classifyPerformance } from "./PerformanceEvaluator";
-import type { Explanation } from "./ExplanationGenerator";
-import { generateExplanation } from "./ExplanationGenerator";
-import type { ParameterChange } from "./ParameterChanges";
-import { resolveParameterChanges } from "./ParameterChanges";
+import { STABILITY_CONFIG, clampLevel } from "./difficultyConfig";
+import type { EvidenceClass } from "./performanceEvaluator";
+import { classifyPerformance } from "./performanceEvaluator";
+import type { Explanation } from "./explanationGenerator";
+import { generateExplanation } from "./explanationGenerator";
+import type { ParameterChange } from "./parameterChanges";
+import { resolveParameterChanges } from "./parameterChanges";
 
 
 export type DifficultyDirection = "increase" | "decrease" | "unchanged";

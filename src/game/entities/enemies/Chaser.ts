@@ -4,10 +4,10 @@ import { CHASER_CONFIG, DEPTH, PALETTE } from "../../gameplayConfig";
 import {
   adjustChaserSpeed,
   setPursuitVector,
-} from "../../systems/ChaserMovement";
+} from "../../systems/chaserMovement";
 import type { Enemy } from "./Enemy";
 import type { EnemyType } from "../../../types/game";
-import { drawNeonShape } from "../../render/Neon";
+import { drawNeonShape } from "../../render/neon";
 
 export class Chaser implements Enemy {
   private readonly body: Phaser.Physics.Arcade.Body;
