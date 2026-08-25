@@ -17,16 +17,14 @@ export class SessionManager {
   private livesRemaining = 0;
   private finalScore = 0;
   private terminationReason: GameEndReason = "completed";
-  private condition: Condition = Math.random() < 0.5 ? "hidden" : "transparent";
   private musicEnabled = true;
   private sfxEnabled = true;
   private pauseCount = 0;
   private totalPausedMs = 0;
   private ddaEvents: DDAEvent[] = [];
-  private consent: ConsentRecord | null = null;
   private questionnaire: QuestionnaireResponse | null = null;
   private identity: PersistedSession;
-
+  
   public constructor() {
     this.identity = sessionStore.load() ?? sessionStore.createLocal();
 
@@ -140,24 +138,22 @@ export class SessionManager {
     return { ...this.powerUpsCollectedByType };
   }
 
-  public setCondition(condition: Condition): void {
-    this.condition = condition;
-  }
-
-  public getCondition(): Condition {
-    return this.condition;
+  public getCondition(): Condition |null {
+    return this.identity.condition;
   }
 
   public isTransparent(): boolean {
-    return this.condition === "transparent";
+    return this.identity.condition === "transparent";
   }
 
   public setConsent(record: ConsentRecord): void {
-    this.consent = record;
+    this.identity = { ...this.identity, consent: record };
+
+    sessionStore.save(this.identity);
   }
 
   public getConsent(): ConsentRecord | null {
-    return this.consent;
+    return this.identity.consent;
   }
 
   public setPhase(phase: StudyPhase): void {

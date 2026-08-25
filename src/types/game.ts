@@ -66,11 +66,11 @@ export interface QuestionnaireResponse {
 
 export interface PersistedSession {
   readonly sessionId: string;
-  readonly condition: Condition;
+  condition: Condition | null
   readonly phase: StudyPhase;
   readonly startedAt: string;
-
   readonly verified: boolean;
+  readonly consent: ConsentRecord | null;
 }
 
 export type { ScaleItem } from "../survey/questionnaireContent.ts";

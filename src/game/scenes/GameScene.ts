@@ -82,6 +82,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create(): void {
+    console.log("GameScene", {
+      sessionId: session.getSessionId(),
+      condition: session.getCondition(),
+      verified: session.isVerified(),
+      phase: session.getPhase(),
+    }); 
     audio.attach(this);
     new AudioControls(this);
 

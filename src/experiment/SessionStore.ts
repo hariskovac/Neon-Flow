@@ -53,10 +53,11 @@ export class SessionStore {
   public createLocal(): PersistedSession {
     return {
       sessionId: this.createLocalId(),
-      condition: Math.random() < 0.5 ? "hidden" : "transparent",
+      condition: null,
       phase: "consent",
       startedAt: new Date().toISOString(),
-      verified: false
+      verified: false,
+      consent: null
     };
   }
 
@@ -86,12 +87,20 @@ export class SessionStore {
 
     const conditions: Condition[] = ["hidden", "transparent"];
 
+    const conditionValid =
+      candidate.condition === null ||
+      (typeof candidate.condition === "string" &&
+        conditions.includes(candidate.condition as Condition));
+
+    const consentValid =
+      candidate.consent === null || typeof candidate.consent === "object";
+
     return (
-      typeof candidate.verified === "boolean" &&
       typeof candidate.sessionId === "string" &&
       typeof candidate.startedAt === "string" &&
-      typeof candidate.condition === "string" &&
-      conditions.includes(candidate.condition as Condition) &&
+      typeof candidate.verified === "boolean" &&
+      conditionValid &&
+      consentValid &&
       typeof candidate.phase === "string" &&
       phases.includes(candidate.phase as StudyPhase)
     );
