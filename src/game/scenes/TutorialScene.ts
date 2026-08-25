@@ -92,6 +92,7 @@ export class TutorialScene extends Phaser.Scene {
   private windowPointerY = 0;
   private stepEntered = false;
   private spacePressed = false;
+  private pauseUsed = false;
 
   private readonly keysUsed = new Set<string>();
 
@@ -540,6 +541,18 @@ export class TutorialScene extends Phaser.Scene {
         centerY + 130,
       ),
       {
+        id: "pause",
+        title: "Pausing",
+        body:
+          "Press ESC at any time to pause. The game and its timers stop " +
+          "while paused, so you will not lose time.\n\n" +
+          "Try it now, then press ESC again to resume.",
+        onEnter: () => {
+          this.pauseUsed = false;
+        },
+        isComplete: () => this.pauseUsed,
+      },
+      {
         id: "adaptiveDifficulty",
         title: "Adaptive difficulty",
         body:
@@ -795,6 +808,7 @@ export class TutorialScene extends Phaser.Scene {
       this.physics.pause();
       this.pauseOverlay.setVisible(true);
       audio.setPaused(true);
+      this.pauseUsed = true;
     }
   }
 
