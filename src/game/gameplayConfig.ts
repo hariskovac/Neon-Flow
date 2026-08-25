@@ -83,8 +83,8 @@ export const CHASER_CONFIG = {
 export const DODGER_CONFIG = {
   radius: 15,
   maxHealth: 1,
-  evasionRadius: 70,
-  evasionSpeed: 150,
+  evasionRadius: 55,
+  evasionSpeed: 130,
   evasionLookaheadMs: 350,
   hullOutline: buildRegularPolygon(5, 17),
   hullLineWidth: 2,
