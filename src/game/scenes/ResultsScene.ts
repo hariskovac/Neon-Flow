@@ -5,6 +5,7 @@ import { session } from "../../experiment/SessionManager";
 import { AudioControls } from "../../ui/AudioControls";
 import { QuestionnaireFlow } from "../../survey/QuestionnaireFlow";
 import { submitWithRetry } from "../../experiment/studySubmission";
+import { showCompletion } from "../../experiment/completionScreen";
 
 export class ResultsScene extends Phaser.Scene {
 
@@ -105,17 +106,17 @@ export class ResultsScene extends Phaser.Scene {
     const response = await flow.start();
 
     session.setQuestionnaire(response);
+
     session.setPhase("studyComplete");
 
     const saved = await submitWithRetry(gateRoot);
 
-    if (!saved) {
-      console.warn("Study data was not submitted.");
-    }
+    await showCompletion(gateRoot, { saved });
 
     gameRoot.hidden = false;
 
     session.resetRun();
     this.scene.start("CalibrationScene");
+
   }
 }

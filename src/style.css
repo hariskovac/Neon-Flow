@@ -437,3 +437,7 @@ main {
   color: #8fa3c4;
   line-height: 1.6;
 }
+
+.completion-contact {
+  font-size: 0.92rem;
+}
