@@ -115,7 +115,7 @@ export class ConsentFlow {
 
     const signature = this.createTextField(
       "signature",
-      "Signature (type your full name)",
+      "Name/Signature (Typing your name here constitutes your electronic signature)",
     );
 
     page.append(signature.wrapper);
