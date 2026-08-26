@@ -24,7 +24,7 @@ export const INFORMATION_SHEET: InformationSection[] = [
     paragraphs: [],
     bullets: [
       "Participants should be over 18 and should be able to provide written consent on the form provided.",
-      "Participation in this study is voluntary. If you decide to take part, you will be asked to provide written consent. You are free to withdraw during the study at any time and without having to give a reason.",
+      "Participation in this study is voluntary. If you decide to take part, you will be asked to provide written consent. You are free to withdraw at any time prior to data anonymization and without having to give a reason.",
     ],
   },
   {
@@ -36,8 +36,8 @@ export const INFORMATION_SHEET: InformationSection[] = [
   {
     heading: "Data management and Confidentiality",
     paragraphs: [
-      "No personally identifying information (PII) will be recorded on the questionnaire or during any part of the study. Any information recorded as part of the consent process will be kept strictly confidential by the development teams and the lecturing staff. Any final write-ups of the data gathered will not include any information that can be linked directly to you.",
-      "All data will be stored so that no PII is associated with it (using an arbitrary participant number) and no photographs, audio recordings, or video recordings will be made. All data will be handled confidentially and anonymously. The data collected from this study will be used in a coursework submission to the University of Bristol. Results from the research will be presented in accordance with rules for anonymity such that the results cannot be traced to individual participants.",
+      "The name/signature provided on the consent form is stored separately from the gameplay and questionnaire data. This information will be kept strictly confidential by the development team and the lecturing staff. Any final write-ups of the data gathered will not include any information that can be linked directly to you.", 
+      "All data will be stored so that no identifying information is associated with it, and no photographs, audio recordings, or video recordings will be made. All data will be handled confidentially and anonymously. The data collected from this study will be used in a coursework submission to the University of Bristol. Results from the research will be presented in accordance with rules for anonymity such that the results cannot be traced to individual participants.",
       "If you have any questions about the management of your data, please do not hesitate to ask.",
     ],
   },
@@ -83,7 +83,7 @@ export const CONSENT_QUESTIONS: ConsentQuestion[] = [
   },
   {
     id: "noPreventingCondition",
-    text: "Ascertained that you don't have any known condition that prevents you from taking part in this study?",
+    text: "Determined that you don't have any known condition that prevents you from taking part in this study?",
   },
   {
     id: "withdrawAnyTime",

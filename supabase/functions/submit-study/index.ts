@@ -158,7 +158,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         answers: payload.consent.answers,
         signature: payload.consent.signature,
         printed_name: payload.consent.printedName,
-        signed_at: payload.consent.signedAt,
+        signed_at: payload.consent.signedAt.slice(0, 10),
       });
 
       if (consentError !== null) {
