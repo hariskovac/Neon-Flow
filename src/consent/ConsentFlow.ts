@@ -118,13 +118,7 @@ export class ConsentFlow {
       "Signature (type your full name)",
     );
 
-    const printedName = this.createTextField(
-      "printedName",
-      "Name in BLOCK letters",
-    );
-
     page.append(signature.wrapper);
-    page.append(printedName.wrapper);
 
     const error = document.createElement("p");
 
@@ -139,7 +133,7 @@ export class ConsentFlow {
 
     actions.append(
       this.createButton("I consent — begin the study", () => {
-        this.submit(signature.input, printedName.input, error);
+        this.submit(signature.input, error);
       }),
     );
 
@@ -157,7 +151,6 @@ export class ConsentFlow {
   // validates and completes the form
   private submit(
     signature: HTMLInputElement,
-    printedName: HTMLInputElement,
     error: HTMLElement,
   ): void {
     const answers: Record<string, boolean> = {};
@@ -195,19 +188,21 @@ export class ConsentFlow {
       return;
     }
 
-    if (signature.value.trim() === "" || printedName.value.trim() === "") {
+    if (signature.value.trim() === "") {
       error.textContent =
-        "Please provide both your signature and your name in block letters.";
+        "Please provide your signature.";
 
       return;
     }
 
     error.textContent = "";
 
+    const name = signature.value.trim();
+
     this.complete({
       answers,
-      signature: signature.value.trim(),
-      printedName: printedName.value.trim(),
+      signature: name,
+      printedName: name,
       signedAt: new Date().toISOString(),
     });
   }
